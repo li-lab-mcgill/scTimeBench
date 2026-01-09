@@ -7,9 +7,7 @@ from config import Config, register_metric
 
 # also store a registry of metrics of name to class
 class BaseMetric:
-    def __init__(self, name: str, dataset: str, config: Config):
-        self.name = name
-        self.dataset = dataset
+    def __init__(self, config: Config):
         self.config = config
         self.populate_feature_specs()
 
