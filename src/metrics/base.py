@@ -20,8 +20,8 @@ class BaseMetric:
         """
         register_metric(cls)
 
-        if not hasattr(cls, "submetrics"):
-            cls.submetrics = []
+        # we want to clear the submetrics list for each subclass
+        cls.submetrics = []
 
         for base in cls.__bases__:
             if hasattr(base, "submetrics"):

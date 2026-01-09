@@ -3,4 +3,4 @@ cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
 cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
 model: scNODE
 metrics:
- - GraphSimMetric
+ - L1Norm
