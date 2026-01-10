@@ -4,6 +4,11 @@ data, so this base class will define the necessary interface for dataset preproc
 """
 
 from enum import Enum
+import scanpy as sc
+import os
+import hashlib
+import json
+
 
 # ** DATASET FILTERING SECTION **
 DATASET_FILTER_REGISTRY = {}
@@ -24,7 +29,7 @@ class BaseDatasetFilter:
         """
         register_dataset_filter(cls)
 
-    def filter(self, dataset):
+    def filter(self, ann_data):
         """
         Subclasses should implement this method to filter and split the dataset
         according to the metric's requirements.
@@ -61,7 +66,26 @@ class BaseDataset:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def load_data(self):
+    def encode_dataset_path(self, dataset_filters):
+        """
+        Generate a hash for the processed dataset based on the applied filters
+        and the original dataset configuration.
+
+        This can be used to cache processed datasets.
+        """
+        # Create a unique string based on dataset config and filter names
+        filter_names = [type(f).__name__ for f in dataset_filters]
+        unique_string = json.dumps(
+            {
+                "dataset_config": self.config.dataset,
+                "filters": filter_names,
+            },
+            sort_keys=True,
+        )
+        # Generate a base64 encoded string of the unique string
+        return hashlib.sha256(unique_string.encode()).hexdigest() + ".h5ad"
+
+    def load_data(self, filters):
         """
         This ensures that the dataset loading is done properly.
 
@@ -69,6 +93,8 @@ class BaseDataset:
         1. Load the data from the source.
         2. Include observation metadata of cell_type, and timepoint.
         3. Drop everything else not required, to speed up processing.
+        4. Apply the dataset filters provided.
+        5. Write to cache.
         """
         self._load_data()
 
@@ -83,10 +109,34 @@ class BaseDataset:
             ObservationColumns.TIMEPOINT.value in self.data.obs.columns
         ), f"Dataset must have '{ObservationColumns.TIMEPOINT.value}' in observation metadata."
 
-    def apply_filters(self, filters):
-        """
-        Apply a list of dataset filters to the dataset.
-        """
+        # then we put this through the dataset filtering process
         for dataset_filter in filters:
-            self = dataset_filter.filter(self)
-        return self
+            self.data = dataset_filter.filter(self.data)
+
+        # now we cache the processed dataset for future use
+        os.makedirs(self.config.dataset["preprocessed_dir"], exist_ok=True)
+        dataset_hash = self.encode_dataset_path(filters)
+        cached_dataset_path = (
+            f"{self.config.dataset['preprocessed_dir']}/{dataset_hash}"
+        )
+        self.data.write_h5ad(cached_dataset_path)
+        return cached_dataset_path
+
+    def load_cached_data(self, cached_dataset_path):
+        """
+        This ensures that the dataset loading is done properly.
+
+        We require the following:
+        1. Load the data from the source.
+        2. Include observation metadata of cell_type, and timepoint.
+        3. Drop everything else not required, to speed up processing.
+        """
+        self.data = sc.read_h5ad(cached_dataset_path)
+
+        # now let's verify that the necessary columns exist
+        assert (
+            ObservationColumns.CELL_TYPE.value in self.data.obs.columns
+        ), f"Dataset must have '{ObservationColumns.CELL_TYPE.value}' in observation metadata."
+        assert (
+            ObservationColumns.TIMEPOINT.value in self.data.obs.columns
+        ), f"Dataset must have '{ObservationColumns.TIMEPOINT.value}' in observation metadata."

@@ -6,6 +6,8 @@ from config import Config
 from typing import final
 from models.base import MODEL_REGISTRY
 from dataset.base import DATASET_REGISTRY
+from database import DatabaseManager
+
 
 METRIC_REGISTRY = {}
 
@@ -17,7 +19,8 @@ def register_metric(cls):
 
 # also store a registry of metrics of name to class
 class BaseMetric:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, db_manager: DatabaseManager):
+        self.db_manager = db_manager
         self.config = config
         # 1) check the required feature specs match up
         self._check_feature_specs()
@@ -110,16 +113,10 @@ class BaseMetric:
                 )
 
     # ** PREPROCESSING DATASET SECTION **
-    def _preprocess_dataset(self):
-        """
-        Subclasses should implement this method to define
-        their required dataset splits.
-        """
-        raise NotImplementedError("Subclasses should implement this method.")
-
     def _populate_dataset_filters(self):
         """
         Populate the dataset filters required for the metric.
+        Expect a list of dataset filter instances.
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
@@ -135,16 +132,27 @@ class BaseMetric:
         3. Applies each filter to the dataset in sequence.
         4. Caches the processed dataset for future use.
         """
+        # 1) initialize the dataset and the dataset filters based on the metric
+        self.dataset = DATASET_REGISTRY[self.config.dataset["name"]](self.config)
         self._populate_dataset_filters()
 
-        # TODO
         # now we check the cache based on the set preprocessed directory
         # stop if the cache exists
+        cached_dataset_path = self.db_manager.get_processed_dataset_path(
+            self.dataset.config.dataset.get("name"), self.dataset_filters
+        )
+
+        if cached_dataset_path is not None:
+            print("Processed dataset cache found. Loading from cache.")
+            self.dataset.load_cached_data(cached_dataset_path)
+            return
 
         # if the cache does not exist, we go ahead and process the dataset
-        self.dataset = DATASET_REGISTRY[self.config.dataset["name"]](self.config)
-        self.dataset.load_data()
-        self.dataset.apply_filters(self.dataset_filters)
+        # this will save out a cached version as well, which we will then
+        # insert into the database
+        print("No processed dataset cache found. Processing dataset.")
+        save_path = self.dataset.load_data(self.dataset_filters)
 
-        # TODO
-        # now we cache the processed dataset for future use
+        self.db_manager.insert_processed_dataset(
+            self.dataset.config.dataset["name"], self.dataset_filters, save_path
+        )

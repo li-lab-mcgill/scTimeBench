@@ -3,6 +3,7 @@ Graph Similarity Metric Base Class
 """
 from metrics.base import BaseMetric
 from models.base import FeatureSpec
+from dataset.filters.lineage import LineageDatasetFilter
 
 
 class GraphSimMetric(BaseMetric):
@@ -30,4 +31,4 @@ class GraphSimMetric(BaseMetric):
         """
         Populate the dataset filters required for the metric.
         """
-        self.dataset_filters = []
+        self.dataset_filters = [LineageDatasetFilter(self.config)]

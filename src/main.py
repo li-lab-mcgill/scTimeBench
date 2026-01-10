@@ -18,6 +18,8 @@ from metrics.base import METRIC_REGISTRY
 from models.base import MODEL_REGISTRY
 from dataset.base import DATASET_REGISTRY
 
+import database
+
 
 def print_available():
     """
@@ -40,12 +42,17 @@ def run_metrics(config: Config):
     """
     Run the specified metrics based on the provided configuration.
     """
+    # initialize the database connection
+    db_manager = database.DatabaseManager(config)
+
     for metric_name in config.metrics:
         if metric_name not in METRIC_REGISTRY:
             raise ValueError(f"Metric {metric_name} not found in registry.")
         metric_class = METRIC_REGISTRY[metric_name]
-        metric_instance = metric_class(config=config)
+        metric_instance = metric_class(config=config, db_manager=db_manager)
         metric_instance.eval()
+
+    db_manager.close()
 
 
 if __name__ == "__main__":

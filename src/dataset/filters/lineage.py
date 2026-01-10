@@ -2,11 +2,11 @@
 Filter based on only the cells existing in the lineage information.
 """
 
-from dataset.base import BaseDataset, BaseDatasetFilter
+from dataset.base import BaseDataset, BaseDatasetFilter, ObservationColumns
 
 
 class LineageDatasetFilter(BaseDatasetFilter):
-    def filter(self, dataset: BaseDataset) -> BaseDataset:
+    def filter(self, ann_data) -> BaseDataset:
         """
         Filter the dataset to only include cells present in the lineage information.
         """
@@ -25,7 +25,16 @@ class LineageDatasetFilter(BaseDatasetFilter):
 
         print(f"Lineage: {lineage_dict}")
 
-        # TODO: implement the actual filtering of the dataset based on lineage_dict
+        # now let's filter the dataset based on this lineage information
+        cells_in_lineage = set(lineage_dict.keys())
+        for targets in lineage_dict.values():
+            for target in targets:
+                cells_in_lineage.add(target)
+
+        # filter the dataset
+        return ann_data[
+            ann_data.obs[ObservationColumns.CELL_TYPE.value].isin(cells_in_lineage)
+        ].copy()
 
     def _parse_equivalence(self, file_path):
         """

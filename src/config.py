@@ -54,6 +54,12 @@ class Config:
             help="Show available models, datasets, and metrics",
         )
 
+        parser.add_argument(
+            "--database_path",
+            type=str,
+            help="Path to the SQLite database file for storing results",
+        )
+
         # Parse known arguments
         args = parser.parse_args()
 
@@ -84,7 +90,9 @@ class Config:
                 setattr(self, key, value)
 
         # Set defaults for optional parameters
-        defaults = {}
+        defaults = {
+            "database_path": "crispy_fishstick.db",
+        }
 
         for key, value in defaults.items():
             if not hasattr(self, key) or getattr(self, key) is None:
@@ -118,3 +126,5 @@ class Config:
 
         for path in paths:
             assert os.path.exists(path), f"Path for '{path}' does not exist: {path}"
+
+        print(f"Configuration successfully loaded: {self.__dict__}")
