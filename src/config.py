@@ -170,12 +170,3 @@ class Config:
             ), "Model must specify 'train_and_test_script' to use --auto_train_test"
 
         print(f"Configuration successfully loaded: {self.__dict__}")
-
-    def get_available_models(self):
-        """
-        Return the available models by reading the model features YAML file.
-        """
-        with open(self.model_features_path, "r") as f:
-            features_config = yaml.safe_load(f)
-
-        return [model["name"] for model in features_config]

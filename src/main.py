@@ -30,10 +30,6 @@ def print_available(config: Config):
     """
     Print available models, datasets, and metrics.
     """
-    print("Available Models:")
-    for model_name in config.get_available_models():
-        print(f" - {model_name}")
-
     print("\nAvailable Datasets:")
     for dataset_name in DATASET_REGISTRY.keys():
         print(f" - {dataset_name}")
@@ -41,6 +37,9 @@ def print_available(config: Config):
     print("\nAvailable Metrics:")
     for metric_name in METRIC_REGISTRY.keys():
         print(f" - {metric_name}")
+        print(
+            f"   Required Feature Specs: {METRIC_REGISTRY[metric_name](config, None).required_feature_specs}"
+        )
 
 
 def run_metrics(config: Config):
