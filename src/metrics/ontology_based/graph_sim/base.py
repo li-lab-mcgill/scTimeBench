@@ -3,7 +3,8 @@ Graph Similarity Metric Base Class
 """
 from metrics.base import BaseMetric, OutputPathName
 from models.base import FeatureSpec
-from dataset.filters.lineage import LineageDatasetFilter
+from shared.dataset.filters.lineage import LineageDatasetFilter
+from shared.dataset.filters.naive_split import NaiveSplitDatasetFilter
 
 
 class GraphSimMetric(BaseMetric):
@@ -13,12 +14,17 @@ class GraphSimMetric(BaseMetric):
         # ** NOTE: must define the following two attributes **
         self.required_feature_specs = [FeatureSpec.TRAJECTORY]
         self.output_path_name = OutputPathName.GRAPH_SIM
-        self.dataset_filters = [LineageDatasetFilter(self.config)]
+        self.dataset_filters = [
+            LineageDatasetFilter(self.config),
+            NaiveSplitDatasetFilter(self.config, 0.8),
+        ]
 
-    def _eval(self, output_path, test_data_path):
+    def _eval(self, output_path):
         """
         The graph similarity metrics we will be using will take in
         """
+        # TODO: build the predicted and reference graphs from the given data
+        print(f"Model outputs are found: {output_path}")
         self.graph_pred = None
         self.graph_ref = None
 

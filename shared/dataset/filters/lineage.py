@@ -2,7 +2,8 @@
 Filter based on only the cells existing in the lineage information.
 """
 
-from dataset.base import BaseDataset, BaseDatasetFilter, ObservationColumns
+from shared.dataset.base import BaseDatasetFilter
+from shared.constants import ObservationColumns
 
 
 class LineageDatasetFilter(BaseDatasetFilter):
@@ -17,7 +18,7 @@ class LineageDatasetFilter(BaseDatasetFilter):
             ),
         }
 
-    def filter(self, ann_data) -> BaseDataset:
+    def filter(self, ann_data):
         """
         Filter the dataset to only include cells present in the lineage information.
         """

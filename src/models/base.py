@@ -7,7 +7,7 @@ import yaml
 import json
 import hashlib
 import subprocess
-from dataset.base import BaseDataset
+from shared.dataset.base import BaseDataset
 
 
 class FeatureSpec(Enum):

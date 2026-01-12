@@ -2,7 +2,7 @@
 Suo et al. (2022) dataset.
 """
 
-from dataset.base import BaseDataset, ObservationColumns
+from shared.dataset.base import BaseDataset, ObservationColumns
 import scanpy as sc
 
 

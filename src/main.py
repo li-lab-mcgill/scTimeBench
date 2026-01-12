@@ -12,16 +12,16 @@ from config import Config
 
 # required to register metrics
 import metrics
-import dataset
+import shared.dataset
 import models
 
 if False:
     metrics  # to avoid unused import warning
-    dataset  # to avoid unused import warning
+    shared.dataset  # to avoid unused import warning
     models  # to avoid unused import warning
 
 from metrics.base import METRIC_REGISTRY
-from dataset.base import DATASET_REGISTRY
+from shared.dataset.base import DATASET_REGISTRY
 
 import database
 

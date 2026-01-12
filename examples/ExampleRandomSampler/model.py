@@ -12,7 +12,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 
 from model_utils.parser import main, BaseModel
-from model_utils.shared import ObservationColumns
+from shared.constants import ObservationColumns
 import random
 import numpy as np
 import scanpy as sc

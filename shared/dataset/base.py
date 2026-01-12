@@ -2,11 +2,9 @@
 Base filter for datasets. Every metric will likely require different splits of the
 data, so this base class will define the necessary interface for dataset preprocessing.
 """
-from model_utils.shared import ObservationColumns
-import os
+from shared.constants import ObservationColumns
 import hashlib
 import json
-
 
 # ** DATASET FILTERING SECTION **
 DATASET_FILTER_REGISTRY = {}
@@ -20,6 +18,7 @@ def register_dataset_filter(cls):
 class BaseDatasetFilter:
     def __init__(self, config):
         self.config = config
+        self.splits = False  # whether this filter produces train-test splits
 
     def __init_subclass__(cls):
         """
@@ -123,7 +122,7 @@ class BaseDataset:
         2. Include observation metadata of cell_type, and timepoint.
         3. Drop everything else not required, to speed up processing.
         4. Apply the dataset filters provided.
-        5. Write to cache.
+        5. Return the train and test splits.
         """
         self._load_data()
 
@@ -139,14 +138,31 @@ class BaseDataset:
         ), f"Dataset must have '{ObservationColumns.TIMEPOINT.value}' in observation metadata."
 
         # then we put this through the dataset filtering process
+        encountered_split = False
         for dataset_filter in self.dataset_filters:
-            self.data = dataset_filter.filter(self.data)
+            # error out if we have multiple split filters
+            if dataset_filter.splits and encountered_split:
+                raise ValueError(
+                    "Multiple dataset filters producing splits are not supported."
+                )
 
-        # now we cache the processed dataset for future use
-        os.makedirs(self.config.dataset["preprocessed_dir"], exist_ok=True)
-        dataset_hash = self.encode_dataset_path()
-        cached_dataset_path = os.path.join(
-            self.config.dataset["preprocessed_dir"], dataset_hash
-        )
-        self.data.write_h5ad(cached_dataset_path)
-        return cached_dataset_path
+            # otherwise, if this is the first time we're seeing split, we handle it differently
+            if dataset_filter.splits:
+                encountered_split = True
+                train_data, test_data = dataset_filter.filter(self.data)
+                self.data = (train_data, test_data)
+
+            # if we have already encountered a split, we need to apply the filter to both splits
+            elif encountered_split:
+                train_data = dataset_filter.filter(self.data[0])
+                test_data = dataset_filter.filter(self.data[1])
+                self.data = (train_data, test_data)
+
+            # otherwise, just apply the filter normally
+            else:
+                self.data = dataset_filter.filter(self.data)
+
+        assert (
+            encountered_split
+        ), "At least one dataset filter must produce train-test splits."
+        return self.data
