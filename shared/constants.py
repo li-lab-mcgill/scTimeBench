@@ -5,12 +5,10 @@ from enum import Enum
 
 
 class ObservationColumns(Enum):
-    CELL_TYPE = "cell_type"
-    TIMEPOINT = "timepoint"
+    # need to prefix it so that it does not conflict with user data
+    CELL_TYPE = "crispy_fishstick_cell_type"
+    TIMEPOINT = "crispy_fishstick_timepoint"
 
 
-class RequiredGeneExpressionColumns(Enum):
-    EXPRESSION = "expression"
-    # so we can map back to original cells after processing
-    # in case the model changes the order of cells
-    CELL_ID = "cell_id"
+# TODO: add in required constraints for what the model outputs
+# TODO: should look like per metric

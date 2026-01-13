@@ -3,7 +3,6 @@ dataset:
   data_path: ../data/suo/main.h5ad
   cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
   cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-  preprocessed_dir: ../data/preprocessed/
 
 model:
   name: scNODE

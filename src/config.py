@@ -88,7 +88,7 @@ class Config:
         config_keys = list(args.__dict__.keys())
 
         # other keys to add from the yaml file
-        config_keys.extend(["model", "dataset"])
+        config_keys.extend(["model", "datasets"])
 
         # First read the config file if provided
         assert (
@@ -116,6 +116,7 @@ class Config:
             "run_type": RunType.PREPROCESS.value,
             "model_features_path": "model_utils/features.yaml",
             "output_dir": "outputs/",
+            "datasets": [],
         }
 
         for key, value in defaults.items():
@@ -123,19 +124,38 @@ class Config:
                 setattr(self, key, value)
 
         # Validate required fields
-        required_fields = ["dataset", "model", "metrics"]
+        required_fields = ["model", "metrics"]
         for field in required_fields:
             assert (
                 hasattr(self, field) and getattr(self, field) is not None
             ), f"Required field '{field}' must be specified in config file or as --{field}"
 
-        dataset_required_fields = ["data_path", "preprocessed_dir", "name"]
+        dataset_required_fields = ["data_path", "name", "filters"]
+        dataset_alternate_field = "tag"
         model_required_fields = ["name"]
 
-        for field in dataset_required_fields:
-            assert (
-                field in self.dataset
-            ), f"Required dataset field '{field}' must be specified in config file"
+        for dataset in self.datasets:
+            # we want to make sure either all of the required fields are specified,
+            # or the alternate field is specified, but not a mix of both
+            if dataset_alternate_field in dataset:
+                if any([field in dataset for field in dataset_required_fields]):
+                    raise ValueError(
+                        f"Dataset config cannot have both '{dataset_alternate_field}' and any other fields {dataset_required_fields}."
+                    )
+                continue
+
+            for field in dataset_required_fields:
+                assert (
+                    field in dataset
+                ), f"Required dataset field '{field}' must be specified in config file."
+
+            # also ensure that all the fields found in the dataset are only of the required fields
+            # this is to ensure caching also works properly
+            for field in dataset.keys():
+                if field not in dataset_required_fields:
+                    raise ValueError(
+                        f"Unknown field '{field}' found in dataset config. Allowed fields are {dataset_required_fields} or '{dataset_alternate_field}'."
+                    )
 
         for field in model_required_fields:
             assert (
@@ -153,7 +173,12 @@ class Config:
             "train_and_test_script",
         ]
         paths = {
-            *{value for key, value in self.dataset.items() if key in dataset_path_keys},
+            *{
+                value
+                for dataset in self.datasets
+                for key, value in dataset.items()
+                if key in dataset_path_keys
+            },
             *{value for key, value in self.model.items() if key in model_path_keys},
         }
 
@@ -170,12 +195,3 @@ class Config:
             ), "Model must specify 'train_and_test_script' to use --auto_train_test"
 
         print(f"Configuration successfully loaded: {self.__dict__}")
-
-    def get_available_models(self):
-        """
-        Return the available models by reading the model features YAML file.
-        """
-        with open(self.model_features_path, "r") as f:
-            features_config = yaml.safe_load(f)
-
-        return [model["name"] for model in features_config]

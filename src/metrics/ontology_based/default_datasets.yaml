@@ -1,5 +1,7 @@
+# this defines the default datasets to use for ontology-based metrics
 datasets:
   - name: SuoDataset
+    tag: defaultSuo
     data_path: ../data/suo/main.h5ad
     # note: these filters need to be in order!
     filters:
@@ -10,6 +12,7 @@ datasets:
         train_pct: 0.8
 
   - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonso1
     data_path: ../data/garcia-alonso/human_germ.h5ad
     # these filters need to be in order!
     filters:
@@ -20,6 +23,7 @@ datasets:
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
 
   - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonso2
     data_path: ../data/garcia-alonso/human_germ.h5ad
     # these filters need to be in order!
     filters:
@@ -28,11 +32,3 @@ datasets:
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
       - name: NaiveSplitDatasetFilter
         train_pct: 0.8
-
-model:
-  name: ExampleRandomSampler
-  train_and_test_script: ./examples/ExampleRandomSampler/train_and_test.sh
-
-metrics:
- - L1Norm
- - GraphEditDistance

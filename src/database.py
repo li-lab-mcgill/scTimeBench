@@ -12,7 +12,7 @@ including the setup of tables for storing:
 import sqlite3
 from config import Config
 
-from models.base import BaseModel
+from metrics.model_manager import ModelManager
 
 
 class DatabaseManager:
@@ -28,27 +28,27 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY,
                 name TEXT,
                 dataset_name TEXT,
-                dataset_config TEXT,
+                dataset_dict TEXT,
                 dataset_filters TEXT,
                 metadata TEXT,
                 path TEXT,
-                UNIQUE(name, dataset_name, dataset_config, dataset_filters, metadata, path)
+                UNIQUE(name, dataset_name, dataset_dict, dataset_filters, metadata, path)
             )
         """
         )
         self.conn.commit()
 
-    def insert_model_output(self, model: BaseModel, output_path: str):
+    def insert_model_output(self, model: ModelManager, output_path: str):
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            INSERT INTO model_outputs (name, dataset_name, dataset_config, dataset_filters, metadata, path)
+            INSERT INTO model_outputs (name, dataset_name, dataset_dict, dataset_filters, metadata, path)
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
                 model._get_name(),
                 model.dataset.get_name(),
-                model.dataset.encode_config(),
+                model.dataset.encode_dataset_dict(),
                 model.dataset.encode_filters(),
                 model._encode_metadata(),
                 output_path,
@@ -56,18 +56,18 @@ class DatabaseManager:
         )
         self.conn.commit()
 
-    def get_model_output_path(self, model: BaseModel):
+    def get_model_output_path(self, model: ModelManager):
         cursor = self.conn.cursor()
 
         cursor.execute(
             """
             SELECT path FROM model_outputs
-            WHERE name = ? AND dataset_name = ? AND dataset_config = ? AND dataset_filters = ? AND metadata = ?
+            WHERE name = ? AND dataset_name = ? AND dataset_dict = ? AND dataset_filters = ? AND metadata = ?
         """,
             (
                 model._get_name(),
                 model.dataset.get_name(),
-                model.dataset.encode_config(),
+                model.dataset.encode_dataset_dict(),
                 model.dataset.encode_filters(),
                 model._encode_metadata(),
             ),

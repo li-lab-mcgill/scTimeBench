@@ -1,0 +1,25 @@
+"""
+Ontology-Based Metrics.
+"""
+from metrics.base import BaseMetric
+from shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
+
+import os
+
+
+class OntologyBasedMetrics(BaseMetric):
+    def __init__(self, config, db_manager):
+        super().__init__(config, db_manager)
+
+        # ** NOTE: must define the following two attributes, though each subclass **
+        # ** Must also define required_feature_specs and output_path_name individually, as they likely require **
+        # ** different output files. **
+        self.supported_datasets = [
+            SuoDataset.__name__,
+            GarciaAlonsoDataset.__name__,
+        ]
+
+        # get the path to the default datasets, under ./default_datasets.yaml
+        self.default_datasets_path = os.path.join(
+            os.path.dirname(__file__), "default_datasets.yaml"
+        )

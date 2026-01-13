@@ -16,8 +16,8 @@ def register_dataset_filter(cls):
 
 
 class BaseDatasetFilter:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, dataset_dict):
+        self.dataset_dict = dataset_dict
         self.splits = False  # whether this filter produces train-test splits
 
     def __init_subclass__(cls):
@@ -52,8 +52,8 @@ def register_dataset(cls):
 
 
 class BaseDataset:
-    def __init__(self, config, dataset_filters):
-        self.config = config
+    def __init__(self, dataset_dict, dataset_filters):
+        self.dataset_dict = dataset_dict
         self.dataset_filters = dataset_filters
 
     def __init_subclass__(cls):
@@ -80,19 +80,19 @@ class BaseDataset:
         ]
         return json.dumps(filter_names, sort_keys=True)
 
-    def encode_config(self):
+    def encode_dataset_dict(self):
         """
         Generate a string representation of the dataset configuration.
 
         This can be used to cache processed datasets.
         """
-        return json.dumps(self.config.dataset, sort_keys=True)
+        return json.dumps(self.dataset_dict, sort_keys=True)
 
     def get_name(self):
         """
         Get the name of the dataset from the configuration.
         """
-        return self.config.dataset["name"]
+        return self.dataset_dict["name"]
 
     def encode_dataset_path(self):
         """
@@ -105,7 +105,7 @@ class BaseDataset:
         filter_names = self.encode_filters()
         unique_string = json.dumps(
             {
-                "dataset_config": self.config.dataset,
+                "dataset_dict": self.dataset_dict,
                 "filters": filter_names,
             },
             sort_keys=True,
@@ -166,3 +166,10 @@ class BaseDataset:
             encountered_split
         ), "At least one dataset filter must produce train-test splits."
         return self.data
+
+    def print(self):
+        print(f"Dataset Name: {self.get_name()}")
+        print(f"Dataset Config: {self.dataset_dict}")
+        print(
+            f"Applied Filters: {[type(f).__name__ + ', parameters: ' + str(f._parameters()) for f in self.dataset_filters]}"
+        )

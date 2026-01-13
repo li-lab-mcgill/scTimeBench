@@ -1,0 +1,2 @@
+PGC => GC => GC_mitotic => oogonia_STRA8 => oogonia_meiotic => pre_oocyte => oocyte
+             GC_mitotic => pre_spermatogonia

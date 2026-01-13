@@ -13,12 +13,10 @@ from config import Config
 # required to register metrics
 import metrics
 import shared.dataset
-import models
 
 if False:
     metrics  # to avoid unused import warning
     shared.dataset  # to avoid unused import warning
-    models  # to avoid unused import warning
 
 from metrics.base import METRIC_REGISTRY
 from shared.dataset.base import DATASET_REGISTRY
@@ -30,17 +28,16 @@ def print_available(config: Config):
     """
     Print available models, datasets, and metrics.
     """
-    print("Available Models:")
-    for model_name in config.get_available_models():
-        print(f" - {model_name}")
-
     print("\nAvailable Datasets:")
     for dataset_name in DATASET_REGISTRY.keys():
         print(f" - {dataset_name}")
 
     print("\nAvailable Metrics:")
     for metric_name in METRIC_REGISTRY.keys():
+        metric_inst = METRIC_REGISTRY[metric_name](config, None)
         print(f" - {metric_name}")
+        print(f"   Required Feature Specs: {metric_inst.required_feature_specs}")
+        print(f"   Supported datasets: {metric_inst.supported_datasets}")
 
 
 def run_metrics(config: Config):

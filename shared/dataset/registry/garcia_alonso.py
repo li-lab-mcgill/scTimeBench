@@ -1,18 +1,18 @@
 """
-Suo et al. (2022) dataset.
+Garcia-Alonso et al. (2022) dataset.
 """
 
 from shared.dataset.base import BaseDataset, ObservationColumns
 import scanpy as sc
 
 
-class SuoDataset(BaseDataset):
+class GarciaAlonsoDataset(BaseDataset):
     def _load_data(self):
         """
-        Load the Suo et al. dataset.
+        Load the Garcia-Alonso et al. dataset.
         """
-        print("Loading Suo et al. dataset...")
-        # read from the config data_path
+        print("Loading Garcia-Alonso et al. dataset...")
+        # read from the dataset data_path
         data_path = self.dataset_dict["data_path"]
         self.data = sc.read_h5ad(data_path)
 
@@ -21,8 +21,8 @@ class SuoDataset(BaseDataset):
         # rename these columns to standard names
         self.data.obs = self.data.obs.rename(
             columns={
-                "celltype_annotation": ObservationColumns.CELL_TYPE.value,
-                "age": ObservationColumns.TIMEPOINT.value,
+                "celltype": ObservationColumns.CELL_TYPE.value,
+                "PCW": ObservationColumns.TIMEPOINT.value,
             }
         )
-        print("Suo et al. dataset loaded successfully.")
+        print("Garcia-Alonso et al. dataset loaded successfully.")
