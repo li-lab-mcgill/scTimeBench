@@ -5,7 +5,7 @@ depend on the dataset that they belong to.
 from config import Config, RunType
 from typing import final
 from metrics.model_manager import ModelManager
-from shared.dataset.base import DATASET_REGISTRY
+from shared.dataset.base import DATASET_REGISTRY, DATASET_FILTER_REGISTRY
 from database import DatabaseManager
 from enum import Enum
 
@@ -189,10 +189,46 @@ class BaseMetric:
         if self.config.datasets == []:
             self.config.datasets = self.supported_datasets
 
-        # 3) initialize the dataset and the dataset filters based on the metric
-        self.datasets = [
-            DATASET_REGISTRY[dataset["name"]](
-                dataset, [builder(dataset) for builder in self.dataset_filters_builders]
+        # 3) initialize the dataset and the dataset filters based on the config
+        # for some reason, we need to create a wrapper function here, as lambdas don't work well...
+        # searching it up, it's because of late binding
+        def dataset_filters_builder_wrapper(dataset_filter):
+            def builder(dataset_dict):
+                return DATASET_FILTER_REGISTRY[dataset_filter["name"]](
+                    dataset_dict,
+                    **{k: v for k, v in dataset_filter.items() if k != "name"},
+                )
+
+            return builder
+
+        # start with a list of list of dataset filter builders
+        # where each inner list corresponds to the filters for a dataset,
+        # and the outer list corresponds to the datasets
+        self.dataset_filters_builders_list = []
+
+        for dataset in self.config.datasets:
+            builders = []
+            for dataset_filter in dataset["filters"]:
+                builders.append(dataset_filters_builder_wrapper(dataset_filter))
+            self.dataset_filters_builders_list.append(builders)
+
+        assert len(self.dataset_filters_builders_list) == len(
+            self.config.datasets
+        ), "Mismatch in number of datasets and dataset filter builders."
+
+        self.datasets = []
+        for dataset, builders in zip(
+            self.config.datasets, self.dataset_filters_builders_list
+        ):
+            # now we create a dataset instance with the appropriate filters
+            self.datasets.append(
+                DATASET_REGISTRY[dataset["name"]](
+                    dataset, [builder(dataset) for builder in builders]
+                )
             )
-            for dataset in self.config.datasets
-        ]
+
+        # verify that the datasets are properly initialized
+        # TODO: add a unit test for this!
+        for dataset in self.datasets:
+            print("-" * 100)
+            dataset.print()

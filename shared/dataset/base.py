@@ -166,3 +166,10 @@ class BaseDataset:
             encountered_split
         ), "At least one dataset filter must produce train-test splits."
         return self.data
+
+    def print(self):
+        print(f"Dataset Name: {self.get_name()}")
+        print(f"Dataset Config: {self.dataset_dict}")
+        print(
+            f"Applied Filters: {[type(f).__name__ + ', parameters: ' + str(f._parameters()) for f in self.dataset_filters]}"
+        )

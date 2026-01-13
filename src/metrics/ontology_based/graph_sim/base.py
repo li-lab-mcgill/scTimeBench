@@ -3,8 +3,6 @@ Graph Similarity Metric Base Class
 """
 from metrics.base import BaseMetric, OutputPathName, FeatureSpec
 from shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
-from shared.dataset.filters.lineage import LineageDatasetFilter
-from shared.dataset.filters.naive_split import NaiveSplitDatasetFilter
 
 
 class GraphSimMetric(BaseMetric):
@@ -16,10 +14,6 @@ class GraphSimMetric(BaseMetric):
         # ** that take in a dataset_dict and return a dataset filter instance. **
         self.required_feature_specs = [FeatureSpec.TRAJECTORY]
         self.output_path_name = OutputPathName.GRAPH_SIM
-        self.dataset_filters_builders = [
-            lambda dataset_dict: LineageDatasetFilter(dataset_dict),
-            lambda dataset_dict: NaiveSplitDatasetFilter(dataset_dict, 0.8),
-        ]
         # this needs to be the name of the class
         self.supported_datasets = [
             SuoDataset.__name__,

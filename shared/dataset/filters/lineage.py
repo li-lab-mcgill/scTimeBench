@@ -7,15 +7,18 @@ from shared.constants import ObservationColumns
 
 
 class LineageDatasetFilter(BaseDatasetFilter):
+    def __init__(self, dataset_dict, cell_lineage_file, cell_equivalence_file=None):
+        super().__init__(dataset_dict)
+        self.cell_lineage_file = cell_lineage_file
+        self.cell_equivalence_file = cell_equivalence_file
+
     def _parameters(self):
         """
         Return filter-specific parameters.
         """
         return {
-            "cell_lineage_file": self.dataset_dict.get("cell_lineage_file", None),
-            "cell_equivalence_file": self.dataset_dict.get(
-                "cell_equivalence_file", None
-            ),
+            "cell_lineage_file": self.cell_lineage_file,
+            "cell_equivalence_file": self.cell_equivalence_file,
         }
 
     def filter(self, ann_data):
@@ -25,15 +28,9 @@ class LineageDatasetFilter(BaseDatasetFilter):
 
         # based off the config, we should filter our dataset
         # for only the cells that are in the lineage information
-        lineage_file = self.dataset_dict.get("cell_lineage_file", None)
-        if lineage_file is None:
-            raise ValueError(
-                "Cell lineage file must be specified in the config for LineageDatasetFilter."
-            )
-
-        equivalence_file = self.dataset_dict.get("cell_equivalence_file", None)
-
-        lineage_dict = self._parse_cell_lineage(lineage_file, equivalence_file)
+        lineage_dict = self._parse_cell_lineage(
+            self.cell_lineage_file, self.cell_equivalence_file
+        )
 
         print(f"Lineage: {lineage_dict}")
 
