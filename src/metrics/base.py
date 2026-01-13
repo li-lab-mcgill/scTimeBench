@@ -163,8 +163,7 @@ class BaseMetric:
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the model
-                # TODO: change this so that it's the test data that's loaded instead
-                self._eval(output_path)
+                self._eval(output_path, dataset)
 
     # ** PREPROCESSING DATASET SECTION **
     @final
