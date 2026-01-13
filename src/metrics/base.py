@@ -12,6 +12,7 @@ from enum import Enum
 import os
 import pickle
 import yaml
+import logging
 
 
 # feature specifications that the metrics can require from models
@@ -87,7 +88,7 @@ class BaseMetric:
             assert os.path.exists(
                 cached_output_path
             ), f"Cached model output path not found: {cached_output_path}"
-            print("Model output cache found. Loading from cache.")
+            logging.debug("Model output cache found. Loading from cache.")
             return cached_output_path
 
         # 3) create the output directory for this model that is parametrized by
@@ -145,10 +146,10 @@ class BaseMetric:
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
             if self.config.run_type == RunType.PREPROCESS:
-                print(
+                logging.debug(
                     "Run type is PREPROCESS. Skipping model training and metric evaluation."
                 )
-                print(f"Output path for model: {output_path}")
+                logging.info(f"Output path for model: {output_path}")
             elif self.config.run_type == RunType.AUTO_TRAIN_TEST:
                 self.model.train_and_test(
                     os.path.join(output_path, self.MODEL_CONFIG_FILENAME)
@@ -217,9 +218,9 @@ class BaseMetric:
             {k: v for k, v in dataset.items() if k != "tag"} for dataset in new_datasets
         ]
 
-        print("-" * 50 + "Datasets" + "-" * 50)
-        print(self.config.datasets)
-        print("-" * 100)
+        logging.debug("-" * 50 + "Datasets" + "-" * 50)
+        logging.debug(self.config.datasets)
+        logging.debug("-" * 100)
 
         # 1) check that all the specified datasets are supported by this metric
         for dataset in self.config.datasets:
@@ -269,5 +270,5 @@ class BaseMetric:
         # verify that the datasets are properly initialized
         # TODO: add a unit test for this!
         for dataset in self.datasets:
-            print("-" * 100)
-            dataset.print()
+            logging.debug("-" * 100)
+            logging.debug(dataset)

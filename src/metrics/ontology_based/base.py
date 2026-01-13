@@ -1,7 +1,7 @@
 """
 Ontology-Based Metrics.
 """
-from metrics.base import BaseMetric
+from metrics.base import BaseMetric, FeatureSpec
 from shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
 
 import os
@@ -23,3 +23,5 @@ class OntologyBasedMetrics(BaseMetric):
         self.default_datasets_path = os.path.join(
             os.path.dirname(__file__), "default_datasets.yaml"
         )
+
+        self.required_feature_specs = [FeatureSpec.TRAJECTORY]

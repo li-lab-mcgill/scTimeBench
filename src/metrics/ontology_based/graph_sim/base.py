@@ -1,7 +1,7 @@
 """
 Graph Similarity Metric Base Class
 """
-from metrics.base import OutputPathName, FeatureSpec
+from metrics.base import OutputPathName
 from metrics.ontology_based.base import OntologyBasedMetrics
 
 
@@ -9,8 +9,7 @@ class GraphSimMetric(OntologyBasedMetrics):
     def __init__(self, config, db_manager):
         super().__init__(config, db_manager)
 
-        # ** NOTE: must define the following two attributes **
-        self.required_feature_specs = [FeatureSpec.TRAJECTORY]
+        # ** NOTE: must define the following attribute **
         self.output_path_name = OutputPathName.GRAPH_SIM
 
     def _eval(self, output_path):

@@ -6,6 +6,7 @@ Handles both YAML file loading and command-line argument parsing.
 """
 
 import argparse
+import logging
 import os
 import yaml
 
@@ -81,6 +82,19 @@ class Config:
             help="Directory to store outputs",
         )
 
+        parser.add_argument(
+            "--log_level",
+            type=str,
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Logging level for the run (default: INFO)",
+        )
+
+        parser.add_argument(
+            "--log_file",
+            type=str,
+            help="Optional path to a log file; if omitted logs only go to stdout",
+        )
+
         # Parse known arguments
         args = parser.parse_args()
 
@@ -117,11 +131,28 @@ class Config:
             "model_features_path": "model_utils/features.yaml",
             "output_dir": "outputs/",
             "datasets": [],
+            "log_level": "INFO",
+            "log_file": None,
         }
 
         for key, value in defaults.items():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
+
+        # Configure logging with stdout always enabled and optional file output.
+        resolved_log_level = getattr(logging, str(self.log_level).upper(), logging.INFO)
+        handlers = [logging.StreamHandler()]
+        if self.log_file:
+            log_dir = os.path.dirname(self.log_file)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            handlers.append(logging.FileHandler(self.log_file))
+
+        logging.basicConfig(
+            level=resolved_log_level,
+            format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+            handlers=handlers,
+        )
 
         # Validate required fields
         required_fields = ["model", "metrics"]
@@ -194,4 +225,5 @@ class Config:
                 "train_and_test_script" in self.model
             ), "Model must specify 'train_and_test_script' to use --auto_train_test"
 
-        print(f"Configuration successfully loaded: {self.__dict__}")
+        logging.info("Configuration successfully loaded")
+        logging.debug("Configuration details: %s", self.__dict__)
