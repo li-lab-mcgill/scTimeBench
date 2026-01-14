@@ -161,6 +161,15 @@ class Config:
                 hasattr(self, field) and getattr(self, field) is not None
             ), f"Required field '{field}' must be specified in config file or as --{field}"
 
+        # make sure no other fields exist besides this + datasets in the yaml
+        allowed_fields = set(required_fields + ["datasets"])
+        for field in data.keys():
+            if field not in allowed_fields:
+                raise ValueError(
+                    f"Unknown field '{field}' found in config. Allowed fields are {allowed_fields}."
+                )
+
+        # validate the fields within each larger section
         dataset_required_fields = ["data_path", "name", "filters"]
         dataset_alternate_field = "tag"
         model_required_fields = ["name"]

@@ -1,15 +1,15 @@
 datasets:
-  - tag: defaultSuo
   - tag: defaultGarciaAlonso1
-  - name: SuoDataset
-    data_path: ../data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
-        train_pct: 0.8
+  # - tag: defaultSuo
+  # - name: SuoDataset
+  #   data_path: ../data/suo/main.h5ad
+  #   # note: these filters need to be in order!
+  #   filters:
+  #     - name: LineageDatasetFilter
+  #       cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+  #       cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+  #     - name: NaiveSplitDatasetFilter
+  #       train_pct: 0.8
 
 model:
   name: ExampleRandomSampler

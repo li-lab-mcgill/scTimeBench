@@ -20,7 +20,6 @@ datasets:
         train_pct: 0.8
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
 
   - name: GarciaAlonsoDataset
     tag: defaultGarciaAlonso2
@@ -29,6 +28,5 @@ datasets:
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
       - name: NaiveSplitDatasetFilter
         train_pct: 0.8
