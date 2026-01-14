@@ -67,4 +67,10 @@ if __name__ == "__main__":
         print_available(config)
         exit()
 
+    if config.print_all:
+        db_manager = database.DatabaseManager(config)
+        db_manager.print_all()
+        db_manager.close()
+        exit()
+
     run_metrics(config)

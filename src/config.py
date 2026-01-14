@@ -58,6 +58,12 @@ class Config:
         )
 
         parser.add_argument(
+            "--print_all",
+            action="store_true",
+            help="Print all entries in the database tables",
+        )
+
+        parser.add_argument(
             "--database_path",
             type=str,
             help="Path to the SQLite database file for storing results",

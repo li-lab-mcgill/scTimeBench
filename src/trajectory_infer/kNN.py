@@ -5,6 +5,7 @@ from trajectory_infer.base import BaseTrajectoryInferMethod
 from sklearn.neighbors import NearestNeighbors
 from shared.constants import ObservationColumns, RequiredOutputColumns
 import numpy as np
+import json
 
 
 # TODO: build a unit test for this class, to ensure that we're doing this properly
@@ -77,3 +78,11 @@ class kNN(BaseTrajectoryInferMethod):
                 cell_lineage[source_cell_type][target_cell_type] /= total_counts
 
         return cell_lineage
+
+    def __str__(self):
+        return json.dumps(
+            {
+                "method": "kNN",
+                "n_neighbors": self.n_neighbors,
+            }
+        )

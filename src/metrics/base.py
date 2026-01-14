@@ -15,6 +15,7 @@ import os
 import pickle
 import yaml
 import logging
+import json
 
 
 # feature specifications that the metrics can require from models
@@ -44,7 +45,11 @@ def register_metric(cls):
 # also store a registry of metrics of name to class
 class BaseMetric:
     def __init__(
-        self, config: Config, db_manager: DatabaseManager, metric_config: dict
+        self,
+        config: Config,
+        db_manager: DatabaseManager,
+        metric_config: dict,
+        default_params: dict,
     ):
         self.db_manager = db_manager
         self.config = config
@@ -56,6 +61,19 @@ class BaseMetric:
                 self.metric_config.get("trajectory_infer_model", {})
             )
         )
+
+        self.params = {
+            "trajectory_infer_model": str(self.trajectory_infer_model),
+        }
+
+        # then we set the defaults if not provided
+        # and also store them in params for database logging
+        for key, value in default_params.items():
+            setattr(self, key, metric_config.get(key, value))
+            self.params[key] = getattr(self, key)
+
+    def _get_param_encoding(self):
+        return json.dumps(self.params)
 
     def __init_subclass__(cls):
         """
@@ -154,6 +172,14 @@ class BaseMetric:
         3) evaluate the metric
         """
         # always have to preprocess - self.datasets is required for eval
+
+        # 0) insert the metric if it's not already in the database
+        if not self.db_manager.has_metric(
+            self.__class__.__name__, self._get_param_encoding()
+        ):
+            self.db_manager.insert_metric(
+                self.__class__.__name__, self._get_param_encoding()
+            )
 
         # 1) initialize the dataset splits dependent on the metric and initialize the model
         # with the dataset as its parameter

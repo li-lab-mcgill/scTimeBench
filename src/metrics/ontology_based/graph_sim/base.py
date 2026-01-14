@@ -12,8 +12,6 @@ import numpy as np
 import os
 import logging
 
-DEFAULT_EDGE_THRESHOLD = 0.1
-
 
 class AdjacencyMatrixType:
     UNWEIGHTED = "adjacency_matrix"
@@ -22,7 +20,11 @@ class AdjacencyMatrixType:
 
 class GraphSimMetric(OntologyBasedMetrics):
     def __init__(self, config, db_manager, metric_config):
-        super().__init__(config, db_manager, metric_config)
+        # ** NOTE: must define the following if you want default parameters **
+        DEFAULTS = {
+            "edge_threshold": 0.1,
+        }
+        super().__init__(config, db_manager, metric_config, DEFAULTS)
 
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
@@ -32,10 +34,6 @@ class GraphSimMetric(OntologyBasedMetrics):
             RequiredOutputColumns.EMBEDDING,
             RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
         ]
-
-        self.edge_threshold = metric_config.get(
-            "edge_threshold", DEFAULT_EDGE_THRESHOLD
-        )
 
     def _build_ref_graph(self, dataset):
         """
@@ -135,9 +133,23 @@ class GraphSimMetric(OntologyBasedMetrics):
         if self.submetrics:
             for submetric in self.submetrics:
                 submetric_instance = submetric(self.config)
-                submetric_instance._graph_sim_eval(self.graph_pred, self.graph_ref)
+                submetric_instance._graph_sim_eval_wrapper(
+                    self.graph_pred, self.graph_ref
+                )
         else:
-            self._graph_sim_eval(self.graph_pred, self.graph_ref)
+            self._graph_sim_eval_wrapper(self.graph_pred, self.graph_ref)
+
+    def _graph_sim_eval_wrapper(self, graph_pred, graph_ref):
+        """
+        Wrapper function to call the graph similarity evaluation, and handle database
+        logging.
+        """
+        self.db_manager.insert_eval(
+            self.model,
+            self.__class__.__name__,
+            self._get_param_encoding(),
+            self._graph_sim_eval(graph_pred, graph_ref),
+        )
 
     def _graph_sim_eval(self, graph_pred, graph_ref):
         raise NotImplementedError("Subclasses should implement this method.")
