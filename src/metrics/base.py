@@ -28,7 +28,7 @@ class FeatureSpec(Enum):
 
 class OutputPathName(Enum):
     EMBEDDING = "embedding.pkl"
-    GRAPH_SIM = "graph_sim.pkl"
+    GRAPH_SIM = "graph_sim.h5ad"
 
 
 METRIC_REGISTRY = {}
@@ -82,16 +82,12 @@ class BaseMetric:
 
         self.model = ModelManager(self.config, dataset)
 
-        # 2) we check if the database already has this model output cached
-        cached_output_path = self.db_manager.get_model_output_path(self.model)
-        if cached_output_path is not None:
-            assert os.path.exists(
-                cached_output_path
-            ), f"Cached model output path not found: {cached_output_path}"
-            logging.debug("Model output cache found. Loading from cache.")
-            return cached_output_path
+        # ** NOTE **
+        # because it doesn't cost much (as it did before with the dataset preprocessing)
+        # we'll simply always preprocess the model output directory (here used to be caching)
+        # but we still should save it to the database for future reference
 
-        # 3) create the output directory for this model that is parametrized by
+        # 2) create the output directory for this model that is parametrized by
         # this dataset. So that if we run the same model on the same dataset
         # with the same filters, we will get the same output directory
         # Each output directory can contain multiple files required by different metrics
@@ -114,6 +110,7 @@ class BaseMetric:
             "output_path": output_path,
             "output_file_name": self.output_path_name.value,
             "dataset_pkl_path": pickled_dataset_path,
+            "model": self.config.model_yaml_data,
         }
 
         # write out the yaml config file for the model
@@ -121,8 +118,10 @@ class BaseMetric:
         with open(yaml_config_path, "w") as f:
             yaml.safe_dump(yaml_config, f)
 
-        # now let's save this hash output dir to the database as well
-        self.db_manager.insert_model_output(self.model, output_path)
+        # now let's save this hash output dir to the database as well, only if it doesn't exist
+        if self.db_manager.get_model_output_path(self.model) is None:
+            self.db_manager.insert_model_output(self.model, output_path)
+
         return output_path
 
     @final

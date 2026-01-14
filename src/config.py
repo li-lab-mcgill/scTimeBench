@@ -234,5 +234,9 @@ class Config:
                 "train_and_test_script" in self.model
             ), "Model must specify 'train_and_test_script' to use --auto_train_test"
 
+        # finally, to be used later for saving the original config
+        # into the model output yaml config:
+        self.model_yaml_data = data["model"]
+
         logging.info("Configuration successfully loaded")
         logging.debug("Configuration details: %s", self.__dict__)
