@@ -37,9 +37,9 @@ def print_available(config: Config):
 
     print("\nAvailable Metrics:")
     for metric_name in METRIC_REGISTRY.keys():
-        metric_inst = METRIC_REGISTRY[metric_name](config, None)
+        metric_inst = METRIC_REGISTRY[metric_name](config, None, {})
         print(f" - {metric_name}")
-        print(f"   Required Feature Specs: {metric_inst.required_feature_specs}")
+        print(f"   Required Outputs: {metric_inst.required_outputs}")
         print(f"   Supported datasets: {metric_inst.supported_datasets}")
 
 

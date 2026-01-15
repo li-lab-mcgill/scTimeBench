@@ -18,17 +18,6 @@ import logging
 import json
 
 
-# feature specifications that the metrics can require from models
-class FeatureSpec(Enum):
-    """Enum for different feature specifications of models, and required features for metrics."""
-
-    CONTINUOUS = "continuous"
-    EMBEDDING = "embedding"
-    TRAJECTORY = "trajectory"
-    GENE_EXPRESSION = "gene_expression"
-    GRN_INFERENCE = "grn_inference"
-
-
 class OutputPathName(Enum):
     EMBEDDING = "embedding.pkl"
     GRAPH_SIM = "graph_sim.h5ad"
@@ -73,11 +62,14 @@ class BaseMetric:
 
         # now we call the setups that need to be defined by subclasses
         self._setup_supported_datasets()
-        self._setup_required_feature_specs()
         self._setup_model_output_requirements()
 
         # finally we setup the datasets and metrics db
         # insert the metric if it's not already in the database
+        if self.db_manager is None:
+            # skip here because it might be just getting information
+            return
+
         if not self.db_manager.has_metric(
             self.__class__.__name__, self._get_param_encoding()
         ):
@@ -90,9 +82,6 @@ class BaseMetric:
         self._init_datasets()
 
     def _setup_supported_datasets(self):
-        raise NotImplementedError("Subclasses should implement this method.")
-
-    def _setup_required_feature_specs(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
     def _setup_model_output_requirements(self):

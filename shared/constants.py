@@ -13,7 +13,3 @@ class ObservationColumns(Enum):
 class RequiredOutputColumns(Enum):
     EMBEDDING = "crispy_fishstick_embedding"
     NEXT_TIMEPOINT_EMBEDDING = "crispy_fishstick_next_timepoint_embedding"
-
-
-# TODO: add in required constraints for what the model outputs
-# TODO: should look like per metric
