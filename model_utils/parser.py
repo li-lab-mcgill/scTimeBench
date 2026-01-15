@@ -3,6 +3,7 @@ import os
 import pickle
 import sys
 import yaml
+from shared.constants import RequiredOutputColumns
 
 # ** The following is needed for src/config imports!**
 sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))
@@ -13,12 +14,6 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Train ExampleRandomSampler model.")
     parser.add_argument(
         "--yaml_config", type=str, help="Path to YAML configuration file"
-    )
-    parser.add_argument(
-        "--train", action="store_true", help="Flag to indicate training mode"
-    )
-    parser.add_argument(
-        "--test", action="store_true", help="Flag to indicate training mode"
     )
     return parser
 
@@ -48,13 +43,18 @@ def process_yaml(yaml_path):
 
 # Class to be inherited by all models
 class BaseModel:
-    def __init__(self):
-        pass
+    def __init__(self, yaml_config):
+        self.config = yaml_config
+
+        # let's set the required columns properly
+        self.required_outputs = [
+            RequiredOutputColumns(output) for output in self.config["required_outputs"]
+        ]
 
     def train(self, ann_data):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def generate(self, ann_data):
+    def generate(self, test_ann_data, expected_output_path):
         raise NotImplementedError("Subclasses should implement this method.")
 
 
@@ -64,9 +64,10 @@ def main(model_class: BaseModel):
     yaml_config = process_yaml(args.yaml_config)
 
     # if the model outputs already exist, then we skip generation
-    if os.path.exists(
-        os.path.join(yaml_config["output_path"], yaml_config["output_file_name"])
-    ):
+    model_output_path = os.path.join(
+        yaml_config["output_path"], yaml_config["output_file_name"]
+    )
+    if os.path.exists(model_output_path):
         print(
             f'Generated samples found at {os.path.join(yaml_config["output_path"], yaml_config["output_file_name"])}. Skipping generation.'
         )
@@ -75,34 +76,15 @@ def main(model_class: BaseModel):
     # Otherwise we have to load the data and train/test the model
     train_ann_data, test_ann_data = yaml_config["dataset"].load_data()
 
-    if args.train:
-        # first we check to see if the checkpointed model exists
-        if os.path.exists(os.path.join(yaml_config["output_path"], "model.pkl")):
-            print(
-                f'Checkpointed model found at {os.path.join(yaml_config["output_path"], "model.pkl")}. Skipping training.'
-            )
-            # we don't exit here because the user may want to run testing right after
-        else:
-            # Initialize and train model
-            model = model_class()
-            print(f"Training model: {model_class.__name__}")
-            model.train(train_ann_data)
-            print("Training complete.")
+    # Initialize the model
+    model: BaseModel = model_class(yaml_config)
 
-            # Save the trained model
-            print(f'Saving trained model to {yaml_config["output_path"]}/model.pkl')
-            with open(os.path.join(yaml_config["output_path"], "model.pkl"), "wb") as f:
-                pickle.dump(model, f)
+    print(f"Training and/or loading the model: {model_class.__name__}")
+    # let's let the train() function handle the caching as well
+    model.train(train_ann_data)
+    print("Training/loading complete.")
 
-    if args.test:
-        model = model_class()
-        # Load the trained model
-        print(f'Loading trained model from {yaml_config["output_path"]}/model.pkl')
-        with open(os.path.join(yaml_config["output_path"], "model.pkl"), "rb") as f:
-            model = pickle.load(f)
-
-        # Generate samples -- we'll move the saving of generated samples outside of this script
-        model.generate(
-            test_ann_data,
-            os.path.join(yaml_config["output_path"], yaml_config["output_file_name"]),
-        )
+    # Generate samples -- we'll move the saving of generated samples outside of this script
+    print(f"Starting generation to {model_output_path}")
+    model.generate(test_ann_data, expected_output_path=model_output_path)
+    print("Generation complete.")

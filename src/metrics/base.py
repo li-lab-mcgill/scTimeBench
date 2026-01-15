@@ -6,12 +6,16 @@ from config import Config, RunType
 from typing import final
 from metrics.model_manager import ModelManager
 from shared.dataset.base import DATASET_REGISTRY, DATASET_FILTER_REGISTRY
+from shared.constants import RequiredOutputColumns
 from database import DatabaseManager
 from enum import Enum
+from trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import os
 import pickle
 import yaml
+import logging
+import json
 
 
 # feature specifications that the metrics can require from models
@@ -27,7 +31,7 @@ class FeatureSpec(Enum):
 
 class OutputPathName(Enum):
     EMBEDDING = "embedding.pkl"
-    GRAPH_SIM = "graph_sim.pkl"
+    GRAPH_SIM = "graph_sim.h5ad"
 
 
 METRIC_REGISTRY = {}
@@ -40,11 +44,65 @@ def register_metric(cls):
 
 # also store a registry of metrics of name to class
 class BaseMetric:
-    def __init__(self, config: Config, db_manager: DatabaseManager):
+    def __init__(
+        self,
+        config: Config,
+        db_manager: DatabaseManager,
+        metric_config: dict,
+    ):
         self.db_manager = db_manager
         self.config = config
+        self.metric_config = metric_config
         self.MODEL_CONFIG_FILENAME = "model_config.yaml"
         self.PICKLED_DATASET_FILENAME = "dataset.pkl"
+        self.trajectory_infer_model = (
+            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
+                self.metric_config.get("trajectory_infer_model", {})
+            )
+        )
+
+        self.params = {
+            "trajectory_infer_model": str(self.trajectory_infer_model),
+        }
+
+        # then we set the defaults if not provided
+        # and also store them in params for database logging
+        for key, value in self._defaults().items():
+            setattr(self, key, metric_config.get(key, value))
+            self.params[key] = getattr(self, key)
+
+        # now we call the setups that need to be defined by subclasses
+        self._setup_supported_datasets()
+        self._setup_required_feature_specs()
+        self._setup_model_output_requirements()
+
+        # finally we setup the datasets and metrics db
+        # insert the metric if it's not already in the database
+        if not self.db_manager.has_metric(
+            self.__class__.__name__, self._get_param_encoding()
+        ):
+            self.db_manager.insert_metric(
+                self.__class__.__name__, self._get_param_encoding()
+            )
+
+        # initialize the dataset splits dependent on the metric and initialize the model
+        # with the dataset as its parameter
+        self._init_datasets()
+
+    def _setup_supported_datasets(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _setup_required_feature_specs(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _setup_model_output_requirements(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _defaults(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _get_param_encoding(self):
+        return json.dumps(self.params)
 
     def __init_subclass__(cls):
         """
@@ -81,16 +139,12 @@ class BaseMetric:
 
         self.model = ModelManager(self.config, dataset)
 
-        # 2) we check if the database already has this model output cached
-        cached_output_path = self.db_manager.get_model_output_path(self.model)
-        if cached_output_path is not None:
-            assert os.path.exists(
-                cached_output_path
-            ), f"Cached model output path not found: {cached_output_path}"
-            print("Model output cache found. Loading from cache.")
-            return cached_output_path
+        # ** NOTE **
+        # because it doesn't cost much (as it did before with the dataset preprocessing)
+        # we'll simply always preprocess the model output directory (here used to be caching)
+        # but we still should save it to the database for future reference
 
-        # 3) create the output directory for this model that is parametrized by
+        # 2) create the output directory for this model that is parametrized by
         # this dataset. So that if we run the same model on the same dataset
         # with the same filters, we will get the same output directory
         # Each output directory can contain multiple files required by different metrics
@@ -109,10 +163,20 @@ class BaseMetric:
         with open(pickled_dataset_path, "wb") as f:
             pickle.dump(dataset, f)
 
+        assert hasattr(
+            self, "required_outputs"
+        ), "Subclasses must define required_outputs attribute."
+        assert all(
+            isinstance(output, RequiredOutputColumns)
+            for output in self.required_outputs
+        ), "All required_outputs must be of type RequiredOutputColumns"
+
         yaml_config = {
             "output_path": output_path,
             "output_file_name": self.output_path_name.value,
             "dataset_pkl_path": pickled_dataset_path,
+            "model": self.config.model_yaml_data,
+            "required_outputs": [output.value for output in self.required_outputs],
         }
 
         # write out the yaml config file for the model
@@ -120,8 +184,10 @@ class BaseMetric:
         with open(yaml_config_path, "w") as f:
             yaml.safe_dump(yaml_config, f)
 
-        # now let's save this hash output dir to the database as well
-        self.db_manager.insert_model_output(self.model, output_path)
+        # now let's save this hash output dir to the database as well, only if it doesn't exist
+        if self.db_manager.get_model_output_path(self.model) is None:
+            self.db_manager.insert_model_output(self.model, output_path)
+
         return output_path
 
     @final
@@ -135,20 +201,15 @@ class BaseMetric:
         3) evaluate the metric
         """
         # always have to preprocess - self.datasets is required for eval
-
-        # 1) initialize the dataset splits dependent on the metric and initialize the model
-        # with the dataset as its parameter
-        self._init_datasets()
-
-        # 2) for each dataset, we preprocess the output model directory and dataset,
+        # 1) for each dataset, we preprocess the output model directory and dataset,
         # train/test, and evaluate
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
             if self.config.run_type == RunType.PREPROCESS:
-                print(
+                logging.debug(
                     "Run type is PREPROCESS. Skipping model training and metric evaluation."
                 )
-                print(f"Output path for model: {output_path}")
+                logging.info(f"Output path for model: {output_path}")
             elif self.config.run_type == RunType.AUTO_TRAIN_TEST:
                 self.model.train_and_test(
                     os.path.join(output_path, self.MODEL_CONFIG_FILENAME)
@@ -162,8 +223,7 @@ class BaseMetric:
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the model
-                # TODO: change this so that it's the test data that's loaded instead
-                self._eval(output_path)
+                self._eval(output_path, dataset)
 
     # ** PREPROCESSING DATASET SECTION **
     @final
@@ -217,9 +277,9 @@ class BaseMetric:
             {k: v for k, v in dataset.items() if k != "tag"} for dataset in new_datasets
         ]
 
-        print("-" * 50 + "Datasets" + "-" * 50)
-        print(self.config.datasets)
-        print("-" * 100)
+        logging.debug("-" * 50 + "Datasets" + "-" * 50)
+        logging.debug(self.config.datasets)
+        logging.debug("-" * 100)
 
         # 1) check that all the specified datasets are supported by this metric
         for dataset in self.config.datasets:
@@ -269,5 +329,5 @@ class BaseMetric:
         # verify that the datasets are properly initialized
         # TODO: add a unit test for this!
         for dataset in self.datasets:
-            print("-" * 100)
-            dataset.print()
+            logging.debug("-" * 100)
+            logging.debug(dataset)

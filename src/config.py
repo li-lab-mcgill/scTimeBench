@@ -6,6 +6,7 @@ Handles both YAML file loading and command-line argument parsing.
 """
 
 import argparse
+import logging
 import os
 import yaml
 
@@ -57,6 +58,24 @@ class Config:
         )
 
         parser.add_argument(
+            "--print_all",
+            action="store_true",
+            help="Print all entries in the database tables",
+        )
+
+        parser.add_argument(
+            "--view_evals_by_model",
+            action="store_true",
+            help="View existing evaluations of all metrics in the database per model set in the configuration",
+        )
+
+        parser.add_argument(
+            "--view_evals_by_metric",
+            action="store_true",
+            help="View existing evaluations of all models in the database per metric set in the configuration",
+        )
+
+        parser.add_argument(
             "--database_path",
             type=str,
             help="Path to the SQLite database file for storing results",
@@ -79,6 +98,19 @@ class Config:
             "--output_dir",
             type=str,
             help="Directory to store outputs",
+        )
+
+        parser.add_argument(
+            "--log_level",
+            type=str,
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="Logging level for the run (default: INFO)",
+        )
+
+        parser.add_argument(
+            "--log_file",
+            type=str,
+            help="Optional path to a log file; if omitted logs only go to stdout",
         )
 
         # Parse known arguments
@@ -117,11 +149,28 @@ class Config:
             "model_features_path": "model_utils/features.yaml",
             "output_dir": "outputs/",
             "datasets": [],
+            "log_level": "INFO",
+            "log_file": None,
         }
 
         for key, value in defaults.items():
             if not hasattr(self, key) or getattr(self, key) is None:
                 setattr(self, key, value)
+
+        # Configure logging with stdout always enabled and optional file output.
+        resolved_log_level = getattr(logging, str(self.log_level).upper(), logging.INFO)
+        handlers = [logging.StreamHandler()]
+        if self.log_file:
+            log_dir = os.path.dirname(self.log_file)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            handlers.append(logging.FileHandler(self.log_file))
+
+        logging.basicConfig(
+            level=resolved_log_level,
+            format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+            handlers=handlers,
+        )
 
         # Validate required fields
         required_fields = ["model", "metrics"]
@@ -130,6 +179,15 @@ class Config:
                 hasattr(self, field) and getattr(self, field) is not None
             ), f"Required field '{field}' must be specified in config file or as --{field}"
 
+        # make sure no other fields exist besides this + datasets in the yaml
+        allowed_fields = set(required_fields + ["datasets"])
+        for field in data.keys():
+            if field not in allowed_fields:
+                raise ValueError(
+                    f"Unknown field '{field}' found in config. Allowed fields are {allowed_fields}."
+                )
+
+        # validate the fields within each larger section
         dataset_required_fields = ["data_path", "name", "filters"]
         dataset_alternate_field = "tag"
         model_required_fields = ["name"]
@@ -194,4 +252,9 @@ class Config:
                 "train_and_test_script" in self.model
             ), "Model must specify 'train_and_test_script' to use --auto_train_test"
 
-        print(f"Configuration successfully loaded: {self.__dict__}")
+        # finally, to be used later for saving the original config
+        # into the model output yaml config:
+        self.model_yaml_data = data["model"]
+
+        logging.info("Configuration successfully loaded")
+        logging.debug("Configuration details: %s", self.__dict__)

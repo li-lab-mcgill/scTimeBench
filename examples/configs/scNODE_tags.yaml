@@ -1,6 +1,6 @@
 datasets:
-  - tag: defaultSuo
   - tag: defaultGarciaAlonso1
+  - tag: defaultSuo
   - name: SuoDataset
     data_path: ../data/suo/main.h5ad
     # note: these filters need to be in order!
@@ -12,8 +12,8 @@ datasets:
         train_pct: 0.8
 
 model:
-  name: ExampleRandomSampler
-  train_and_test_script: ./examples/ExampleRandomSampler/train_and_test.sh
+  name: scNODE
+  train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
  - L1Norm

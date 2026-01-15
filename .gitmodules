@@ -1,0 +1,4 @@
+[submodule "models/scNODE/scNODE_module"]
+	path = models/scNODE/scNODE_module
+	url = https://github.com/ehuan2/scNODE
+	branch = eric/clean-version

@@ -1,4 +1,6 @@
-from metrics.ontology_based.graph_sim.base import GraphSimMetric
+from metrics.ontology_based.graph_sim.base import GraphSimMetric, AdjacencyMatrixType
+
+import networkx as nx
 
 
 class GraphEditDistance(GraphSimMetric):
@@ -6,6 +8,8 @@ class GraphEditDistance(GraphSimMetric):
         """
         The graph similarity metrics we will be using will take in
         """
-        print(
-            f"Running GraphEditDistance evaluation on predicted graph: {graph_pred} and reference graph: {graph_ref}"
+        graph_pred_unweighted = graph_pred[AdjacencyMatrixType.UNWEIGHTED]
+        return nx.graph_edit_distance(
+            nx.from_numpy_array(graph_pred_unweighted),
+            nx.from_numpy_array(graph_ref),
         )

@@ -25,5 +25,10 @@ fi
 echo "Success: Found $FILE_PATH"
 echo "Processing content..."
 
-# 5. Now let's run train and test on model.py with the provided YAML file
-python ./examples/ExampleRandomSampler/model.py --yaml_config "$FILE_PATH" --train --test
+# 5. Let's get the venv ready
+echo "Activating scNODE virtual environment..."
+source ./models/scNODE/scNODE_module/.venv/bin/activate
+echo "Virtual environment activated."
+
+# 6. Now let's run train and test on model.py with the provided YAML file
+python ./models/scNODE/run.py --yaml_config "$FILE_PATH"
