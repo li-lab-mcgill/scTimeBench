@@ -13,6 +13,7 @@ import sqlite3
 from config import Config
 
 from metrics.model_manager import ModelManager
+import json
 
 
 class DatabaseManager:
@@ -182,3 +183,110 @@ class DatabaseManager:
             (model_output_id, metric_id, result),
         )
         self.conn.commit()
+
+    def get_evals_per_metric(self, metric_name: str, metric_params: str):
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT id FROM metrics
+            WHERE name = ? AND parameters = ?
+        """,
+            (metric_name, metric_params),
+        )
+        metric_row = cursor.fetchone()
+        if metric_row is None:
+            raise ValueError("Metric not found in database.")
+        metric_id = metric_row[0]
+
+        # finally we get the evals
+        cursor.execute(
+            """
+            SELECT model_output_id, result FROM evals
+            WHERE metric_id = ?
+        """,
+            (metric_id,),
+        )
+        results = cursor.fetchall()
+
+        outputs = []
+        # then, let's fetch all the models and their parameters as well
+        # so we can nicely print this out
+        for row in results:
+            model_id = row[0]
+            cursor.execute(
+                """
+                SELECT name, dataset_name, dataset_dict, dataset_filters, metadata FROM model_outputs
+                WHERE id = ?
+            """,
+                (model_id,),
+            )
+            model_row = cursor.fetchone()
+
+            outputs.append(
+                {
+                    "model_name": model_row[0],
+                    "dataset_name": model_row[1],
+                    "dataset_dict": json.loads(model_row[2]),
+                    "dataset_filters": json.loads(model_row[3]),
+                    "metadata": json.loads(model_row[4]),
+                    "result": row[1],
+                }
+            )
+
+        return outputs
+
+    def get_evals_per_model(self, model: ModelManager):
+        cursor = self.conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT id FROM model_outputs
+            WHERE name = ? AND dataset_name = ? AND dataset_dict = ? AND dataset_filters = ? AND metadata = ?
+        """,
+            (
+                model._get_name(),
+                model.dataset.get_name(),
+                model.dataset.encode_dataset_dict(),
+                model.dataset.encode_filters(),
+                model._encode_metadata(),
+            ),
+        )
+        model_output_row = cursor.fetchone()
+        if model_output_row is None:
+            raise ValueError("Model output not found in database.")
+        model_output_id = model_output_row[0]
+
+        # finally we get the evals
+        cursor.execute(
+            """
+            SELECT metric_id, result FROM evals
+            WHERE model_output_id = ?
+        """,
+            (model_output_id,),
+        )
+        results = cursor.fetchall()
+
+        outputs = []
+        # then, let's fetch all the models and their parameters as well
+        # so we can nicely print this out
+        for row in results:
+            metric_id = row[0]
+            cursor.execute(
+                """
+                SELECT name, parameters FROM metrics
+                WHERE id = ?
+            """,
+                (metric_id,),
+            )
+            metric_row = cursor.fetchone()
+
+            outputs.append(
+                {
+                    "metric_name": metric_row[0],
+                    "metric_parameters": metric_row[1],
+                    "result": row[1],
+                }
+            )
+
+        return outputs

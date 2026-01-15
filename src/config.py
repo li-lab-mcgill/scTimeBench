@@ -64,6 +64,18 @@ class Config:
         )
 
         parser.add_argument(
+            "--view_evals_by_model",
+            action="store_true",
+            help="View existing evaluations of all metrics in the database per model set in the configuration",
+        )
+
+        parser.add_argument(
+            "--view_evals_by_metric",
+            action="store_true",
+            help="View existing evaluations of all models in the database per metric set in the configuration",
+        )
+
+        parser.add_argument(
             "--database_path",
             type=str,
             help="Path to the SQLite database file for storing results",

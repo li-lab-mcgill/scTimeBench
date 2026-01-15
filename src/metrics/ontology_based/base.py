@@ -8,9 +8,7 @@ import os
 
 
 class OntologyBasedMetrics(BaseMetric):
-    def __init__(self, config, db_manager, metric_config, default_params):
-        super().__init__(config, db_manager, metric_config, default_params)
-
+    def _setup_supported_datasets(self):
         # ** NOTE: must define the following two attributes, though each subclass **
         # ** Must also define required_feature_specs and output_path_name individually, as they likely require **
         # ** different output files. **
@@ -24,4 +22,6 @@ class OntologyBasedMetrics(BaseMetric):
             os.path.dirname(__file__), "default_datasets.yaml"
         )
 
+    def _setup_required_feature_specs(self):
+        # ** NOTE: must define the following attribute **
         self.required_feature_specs = [FeatureSpec.TRAJECTORY]

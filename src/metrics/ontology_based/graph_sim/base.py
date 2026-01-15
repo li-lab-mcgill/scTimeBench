@@ -19,13 +19,12 @@ class AdjacencyMatrixType:
 
 
 class GraphSimMetric(OntologyBasedMetrics):
-    def __init__(self, config, db_manager, metric_config):
-        # ** NOTE: must define the following if you want default parameters **
-        DEFAULTS = {
+    def _defaults(self):
+        return {
             "edge_threshold": 0.1,
         }
-        super().__init__(config, db_manager, metric_config, DEFAULTS)
 
+    def _setup_model_output_requirements(self):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs

@@ -49,7 +49,6 @@ class BaseMetric:
         config: Config,
         db_manager: DatabaseManager,
         metric_config: dict,
-        default_params: dict,
     ):
         self.db_manager = db_manager
         self.config = config
@@ -68,9 +67,39 @@ class BaseMetric:
 
         # then we set the defaults if not provided
         # and also store them in params for database logging
-        for key, value in default_params.items():
+        for key, value in self._defaults().items():
             setattr(self, key, metric_config.get(key, value))
             self.params[key] = getattr(self, key)
+
+        # now we call the setups that need to be defined by subclasses
+        self._setup_supported_datasets()
+        self._setup_required_feature_specs()
+        self._setup_model_output_requirements()
+
+        # finally we setup the datasets and metrics db
+        # insert the metric if it's not already in the database
+        if not self.db_manager.has_metric(
+            self.__class__.__name__, self._get_param_encoding()
+        ):
+            self.db_manager.insert_metric(
+                self.__class__.__name__, self._get_param_encoding()
+            )
+
+        # initialize the dataset splits dependent on the metric and initialize the model
+        # with the dataset as its parameter
+        self._init_datasets()
+
+    def _setup_supported_datasets(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _setup_required_feature_specs(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _setup_model_output_requirements(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _defaults(self):
+        raise NotImplementedError("Subclasses should implement this method.")
 
     def _get_param_encoding(self):
         return json.dumps(self.params)
@@ -172,20 +201,7 @@ class BaseMetric:
         3) evaluate the metric
         """
         # always have to preprocess - self.datasets is required for eval
-
-        # 0) insert the metric if it's not already in the database
-        if not self.db_manager.has_metric(
-            self.__class__.__name__, self._get_param_encoding()
-        ):
-            self.db_manager.insert_metric(
-                self.__class__.__name__, self._get_param_encoding()
-            )
-
-        # 1) initialize the dataset splits dependent on the metric and initialize the model
-        # with the dataset as its parameter
-        self._init_datasets()
-
-        # 2) for each dataset, we preprocess the output model directory and dataset,
+        # 1) for each dataset, we preprocess the output model directory and dataset,
         # train/test, and evaluate
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
