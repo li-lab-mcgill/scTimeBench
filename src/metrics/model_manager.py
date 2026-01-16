@@ -45,8 +45,6 @@ class ModelManager:
                 f"Train and test script failed with return code {return_code}"
             )
 
-        return return_code
-
     def _get_name(self) -> str:
         """
         Get the name of the model from the configuration.

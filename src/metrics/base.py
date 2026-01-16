@@ -200,9 +200,17 @@ class BaseMetric:
                 )
                 logging.info(f"Output path for model: {output_path}")
             elif self.config.run_type == RunType.AUTO_TRAIN_TEST:
-                self.model.train_and_test(
-                    os.path.join(output_path, self.MODEL_CONFIG_FILENAME)
-                )
+                # only run this if the model output doesn't already exist
+                if not os.path.exists(
+                    os.path.join(output_path, self.output_path_name.value)
+                ):
+                    self.model.train_and_test(
+                        os.path.join(output_path, self.MODEL_CONFIG_FILENAME)
+                    )
+                else:
+                    logging.info(
+                        f"Model output already exists at {os.path.join(output_path, self.output_path_name.value)}. Skipping training and generation."
+                    )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
                 # verify that there is the model output where expected

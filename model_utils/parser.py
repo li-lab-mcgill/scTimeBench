@@ -63,7 +63,6 @@ def main(model_class: BaseModel):
     args = parser.parse_args()
     yaml_config = process_yaml(args.yaml_config)
 
-    # TODO: copy this logic to the src/ folder, to avoid doing the .sh again (takes time for venv)
     # if the model outputs already exist, then we skip generation
     model_output_path = os.path.join(
         yaml_config["output_path"], yaml_config["output_file_name"]

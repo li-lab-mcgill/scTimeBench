@@ -1,5 +1,5 @@
-# datasets:
-#   - tag: defaultGarciaAlonso
+datasets:
+  - tag: defaultGarciaAlonso
 
 model:
   name: scNODE
