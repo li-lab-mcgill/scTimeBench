@@ -41,6 +41,17 @@ class LineageDatasetFilter(BaseDatasetFilter):
             for target in targets:
                 cells_in_lineage.add(target)
 
+        # let's warn the user if there is a cell type in the lineage that is not in the dataset
+        dataset_cell_types = set(
+            ann_data.obs[ObservationColumns.CELL_TYPE.value].unique()
+        )
+
+        for cell_type in cells_in_lineage:
+            if cell_type not in dataset_cell_types:
+                print(
+                    f"Warning: Cell type {cell_type} in lineage information not found in dataset. Create equivalence mapping if necessary."
+                )
+
         # filter the dataset
         return ann_data[
             ann_data.obs[ObservationColumns.CELL_TYPE.value].isin(cells_in_lineage)

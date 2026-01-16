@@ -70,7 +70,6 @@ def parse_cell_lineage(file_path, equivalence_file_path=None):
             cells[i] = cells[i].strip()
             if cells[i] in equivalence_dict:
                 cells[i] = equivalence_dict[cells[i]]
-            cells[i] = cells[i].upper().replace(" ", "_").replace("-", "_")
 
         # then let's build the lineage mapping
         for i in range(len(cells) - 1):

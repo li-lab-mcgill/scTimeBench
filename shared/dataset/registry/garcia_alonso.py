@@ -26,3 +26,7 @@ class GarciaAlonsoDataset(BaseDataset):
             }
         )
         print("Garcia-Alonso et al. dataset loaded successfully.")
+
+        print(
+            f"Cell types: {self.data.obs[ObservationColumns.CELL_TYPE.value].unique()}"
+        )
