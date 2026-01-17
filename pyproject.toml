@@ -23,3 +23,6 @@ test = [
 dev = [
     "pre-commit",
 ]
+
+[project.scripts]
+crispy_fishstick = "crispy_fishstick.main:main"

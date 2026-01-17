@@ -120,7 +120,10 @@ def view_evals_by_metric(config: Config):
     db_manager.close()
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Main entrypoint for the crispy-fishstick package.
+    """
     config = Config()
 
     if config.available:
@@ -142,3 +145,7 @@ if __name__ == "__main__":
         exit()
 
     run_metrics(config)
+
+
+if __name__ == "__main__":
+    main()

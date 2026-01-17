@@ -1,12 +1,32 @@
 # Crispy-Fishstick
-## Architecture
+## Setup
+To start, please install the crispy-fishstick package with:
+```
+pip install -e .
+```
 
-The benchmark architecture will follow:
-![Benchmark architecture](architecture.jpg)
+This allows you to create model run files that use the necessary constants and model runners under the crispy fishstick packages.
 
-1. The metric class will be the class that initiates everything. It specifies what its dataset split is, which will be used to generate the model.
-2. The metric class also has a model prediction/embedding specification of what it requires, and each model has a list of predictions it can provide. If the metric is not a subset of the model's prediction specifications, this will result in a warning.
-3. Each embedding specification/prediction specification will have a module that will manipulate the base prediction embeddings for trajectory inference.
-4. Based on the base predictions and trajectories, the metric will have separate evaluation functions.
+## Detailed Layout of File Structure
+- `examples/` defines the examples
+    -  `configs/` possible yaml config files to use as a starting point
+- `models/` defines the different models that are possible to use, including defined submodules. Add your own methodology here.
+- `src/` where the crispy-fishstick package lies. See `src/ReadMe.md` for more documentation on the modules that exist there.
+- `test/` unit tests for each model, each metric, and other important modules.
 
-The users will need to provide a script for the model class to train based on given dataset splits. We will also provide a database for this to run in at the end.
+## Example Run
+Run either using the package itself with:
+```
+crispy_fishstick --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
+```
+
+or with:
+```
+python src/crispy_fishstick/main.py --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
+```
+
+## Contributing
+If you want to contribute, please install both the test and the dev environments with:
+```
+pip install -e ".[test, dev]"
+```
