@@ -9,7 +9,7 @@ dependencies = [
     "networkx",
     "numpy",
     "PyYAML",
-    "scanpy",
+    "scanpy[leiden]",
     "scikit_learn",
     "geomloss",
     "pykeops"

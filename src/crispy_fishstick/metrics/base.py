@@ -24,7 +24,7 @@ import json
 
 
 class OutputPathName(Enum):
-    EMBEDDING = "embedding.pkl"
+    EMBEDDING = "embedding.h5ad"
     GRAPH_SIM = "graph_sim.h5ad"
 
 
@@ -145,6 +145,17 @@ class BaseMetric:
         ), "Number of models and datasets must be the same."
 
         for model, dataset in zip(self.models, self.datasets):
+            # first we skip if we already have the evaluation in the database
+            if self.db_manager.has_eval(
+                model,
+                self.__class__.__name__,
+                self._get_param_encoding(),
+            ):
+                logging.info(
+                    f"Evaluation for metric {self.__class__.__name__} with params {self.params} already exists for model {model}. Skipping evaluation."
+                )
+                continue
+
             # this preprocessing step already happens during creation, skip this here!
             output_path = self.db_manager.get_model_output_path(model)
 

@@ -149,6 +149,54 @@ class DatabaseManager:
         self.conn.commit()
 
     # ** EVAL RELATED FUNCTIONS **
+    def has_eval(
+        self, model: ModelManager, metric_name: str, metric_params: str
+    ) -> bool:
+        cursor = self.conn.cursor()
+
+        # first we get the model id
+        cursor.execute(
+            """
+            SELECT id FROM model_outputs
+            WHERE name = ? AND dataset_name = ? AND dataset_dict = ? AND dataset_filters = ? AND metadata = ?
+        """,
+            (
+                model._get_name(),
+                model.dataset.get_name(),
+                model.dataset.encode_dataset_dict(),
+                model.dataset.encode_filters(),
+                model._encode_metadata(),
+            ),
+        )
+        model_output_row = cursor.fetchone()
+        if model_output_row is None:
+            return False
+        model_output_id = model_output_row[0]
+
+        # then we get the metric id
+        cursor.execute(
+            """
+            SELECT id FROM metrics
+            WHERE name = ? AND parameters = ?
+        """,
+            (metric_name, metric_params),
+        )
+        metric_row = cursor.fetchone()
+        if metric_row is None:
+            return False
+        metric_id = metric_row[0]
+
+        # finally we check for the eval
+        cursor.execute(
+            """
+            SELECT id FROM evals
+            WHERE model_output_id = ? AND metric_id = ?
+        """,
+            (model_output_id, metric_id),
+        )
+        eval_row = cursor.fetchone()
+        return eval_row is not None
+
     def insert_eval(
         self, model: ModelManager, metric_name: str, metric_params: str, result: float
     ):
