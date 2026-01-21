@@ -165,7 +165,7 @@ def test_dummy_dataset(config_path, workspace, run_bench):
     for submetric in get_leaf_metrics(top_metric_inst):
         if len(submetric.submetrics) == 0:
             assert (
-                "Dataset {'name': 'DummyDataset', 'data_path': '../data/garcia-alonso/human_germ.h5ad'} not supported by this metric "
+                "Dataset {'name': 'DummyDataset', 'data_path': './data/garcia-alonso/human_germ.h5ad'} not supported by this metric "
                 + f"{submetric.__class__.__name__}."
                 in log_contents
             ), f"Expected line not found for metric {submetric.__class__.__name__}."

@@ -1,7 +1,10 @@
 # Database files
 *.db
+outputs
 outputs/
 logs/
+data
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

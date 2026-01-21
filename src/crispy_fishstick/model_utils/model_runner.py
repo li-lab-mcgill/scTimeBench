@@ -62,6 +62,7 @@ class BaseModel:
 
 
 def main(model_class: BaseModel):
+    print(f"Starting train and testing for model...")
     parser = get_parser()
     args = parser.parse_args()
     yaml_config = process_yaml(args.yaml_config)
@@ -77,6 +78,7 @@ def main(model_class: BaseModel):
         return
 
     # Otherwise we have to load the data and train/test the model
+    print("Loading dataset...")
     train_ann_data, test_ann_data = yaml_config["dataset"].load_data()
 
     # Initialize the model

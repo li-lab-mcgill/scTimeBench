@@ -1,6 +1,6 @@
 datasets:
   - name: GarciaAlonsoDataset
-    data_path: ../data/garcia-alonso/human_germ.h5ad
+    data_path: ./data/garcia-alonso/human_germ.h5ad
     # these filters need to be in order!
     filters:
       - name: LineageDatasetFilter
@@ -11,7 +11,8 @@ model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
   metadata:
-    epochs: 1
+    epochs: 0
+    pretrain_iters: 1
 
 metrics:
   - name: GraphSimMetric

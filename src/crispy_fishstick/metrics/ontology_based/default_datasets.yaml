@@ -2,18 +2,17 @@
 datasets:
   - name: SuoDataset
     tag: defaultSuo
-    data_path: ../data/suo/main.h5ad
+    data_path: ./data/suo/main.h5ad
     # note: these filters need to be in order!
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
-        train_pct: 0.8
+      - name: CopySplitFilter
 
   - name: GarciaAlonsoDataset
     tag: defaultGarciaAlonso
-    data_path: ../data/garcia-alonso/human_germ.h5ad
+    data_path: ./data/garcia-alonso/human_germ.h5ad
     # these filters need to be in order!
     filters:
       - name: LineageDatasetFilter

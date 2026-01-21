@@ -10,13 +10,13 @@ TEST_DIR = Path(__file__).parent.parent
 
 
 @pytest.mark.parametrize("config_path", CONFIG_FILES, ids=lambda p: p.name)
-def test_inference_method(config_path, run_bench):
+def test_inference_method(config_path, workspace, run_bench):
     """
     Test that a given trajectory inference method config file can be executed end-to-end.
     Basically, just make sure that it can be run!
     """
     log_file = Path(config_path).name + ".log"
     # run it at the root of the project
-    result = run_bench(config_path, "auto_train_test", TEST_DIR.parent, log_file)
+    result = run_bench(config_path, "auto_train_test", workspace, log_file)
 
     assert result.returncode == 0

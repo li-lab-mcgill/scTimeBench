@@ -1,6 +1,6 @@
 datasets:
   - name: DummyDataset
-    data_path: ../data/garcia-alonso/human_germ.h5ad
+    data_path: ./data/garcia-alonso/human_germ.h5ad
 
 model:
   name: scNODE
