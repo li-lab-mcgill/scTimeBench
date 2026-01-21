@@ -62,7 +62,6 @@ class Classifier(BaseTrajectoryInferMethod):
         timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
         cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
         unique_timepoints = sorted(np.unique(timepoints))
-        logging.debug(cell_types.unique())
 
         # first we simply build a classifier based on all the timepoints,
         # then we build the lineage mapping later

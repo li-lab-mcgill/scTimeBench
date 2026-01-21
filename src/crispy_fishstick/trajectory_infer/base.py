@@ -57,6 +57,9 @@ class BaseTrajectoryInferMethod:
                     f"Predicted graph data must have '{col}' in observation embeddings."
                 )
 
+        logging.debug(
+            f"Inferring trajectory with method: {self.__class__.__name__} and config: {self.traj_config}"
+        )
         return self._method_infer_trajectory(ann_data)
 
 

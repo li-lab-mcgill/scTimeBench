@@ -1,0 +1,34 @@
+datasets:
+  - name: GarciaAlonsoDataset
+    data_path: ../data/garcia-alonso/human_germ.h5ad
+    # these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/simple_cell_line.txt
+      - name: CopySplitFilter
+
+model:
+  name: scNODE
+  train_and_test_script: ./models/scNODE/train_and_test.sh
+  metadata:
+    epochs: 1
+
+metrics:
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: kNN
+      method: cosine
+      n_neighbors: 1
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: kNN
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: kNN
+      strategy: weighted_average
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: kNN
+      strategy: weighted_average
+      method: cosine
+      n_neighbors: 1

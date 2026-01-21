@@ -26,10 +26,6 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         embedding space.
         3. Finally, we consolidate the cell types per time point based on the kNN results.
         """
-        logging.debug(
-            f"Inferring trajectory using Optimal Transport, {self.traj_config}"
-        )
-
         # get the embeddings and timepoints
         embeddings = ann_data.obsm[RequiredOutputColumns.EMBEDDING.value]
         next_timepoint_embeddings = ann_data.obsm[
@@ -38,7 +34,6 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
         cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
         unique_timepoints = sorted(np.unique(timepoints))
-        logging.debug(cell_types.unique())
 
         one_hot_encoding, index_to_type = self.cell_types_to_one_hot(cell_types)
         logging.debug(f"One-hot encoding index to type: {index_to_type}")

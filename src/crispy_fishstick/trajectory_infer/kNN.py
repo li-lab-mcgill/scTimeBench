@@ -42,7 +42,6 @@ class kNN(BaseTrajectoryInferMethod):
         timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
         cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
         unique_timepoints = sorted(np.unique(timepoints))
-        logging.debug(cell_types.unique())
 
         cell_lineage = {}
         for i in range(len(unique_timepoints) - 1):
@@ -64,7 +63,10 @@ class kNN(BaseTrajectoryInferMethod):
                 n_neighbors = self.n_neighbors
 
             # now we fit a kNN on the true next timepoint embeddings
-            knn_model = NearestNeighbors(n_neighbors=n_neighbors)
+            knn_model = NearestNeighbors(
+                n_neighbors=n_neighbors,
+                metric=self.traj_config.get("method", "minkowski"),
+            )
             knn_model.fit(embed_next)
 
             # find kNN for each cell in current timepoint's predicted next embeddings
