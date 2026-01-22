@@ -8,8 +8,4 @@ model:
     epochs: 1
 
 metrics:
- - name: L1Norm
-   trajectory_infer_model:
-    name: kNN
-    n_neighbors: 5
- - name: GraphEditDistance
+ - name: BaseMetric

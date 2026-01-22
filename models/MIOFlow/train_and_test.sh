@@ -25,8 +25,9 @@ fi
 echo "Success: Found $FILE_PATH"
 echo "Processing content..."
 
-# 5.TODO setup venv environment (using conda locally at the moment)
-#echo "Virtual environment activated."
+# 5. Pip install mioflow dependencies
+echo "Activating MIOFlow virtual environment..."
+pip install MIOFlow
 
 # 6. Now let's run train and test on model.py with the provided YAML file
 python ./models/MIOFlow/run.py --yaml_config "$FILE_PATH"
