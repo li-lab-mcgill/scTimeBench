@@ -203,6 +203,9 @@ class scNODE(BaseModel):
             first_data_embed_from_vae_reconstruct,
         )
         print("First cell embeddings from predict:", first_data_embed_from_predict)
+        # this was none at one point, not too sure why...
+        # for now, we'll just assert it's not none and assess later!
+        assert first_data_embed_from_predict is not None
 
         # finally write out to the expected output path
         final_ann_data.write_h5ad(expected_output_path)
