@@ -14,7 +14,7 @@ class EmbeddingMetrics(BaseMetric):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs
-        self.output_path_name = OutputPathName.GRAPH_SIM
+        self.output_path_name = OutputPathName.EMBEDDING
         self.required_outputs = [
             RequiredOutputColumns.EMBEDDING,
         ]

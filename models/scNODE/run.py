@@ -158,6 +158,12 @@ class scNODE(BaseModel):
 
                 first_data_embed_from_vae_reconstruct = embeds[0]
 
+                # print the first few embeddings for debugging, they should not be exact
+                # because they are both sampled, but they should be close
+                print(
+                    "First cell embeddings from VAE reconstruct:",
+                    first_data_embed_from_vae_reconstruct,
+                )
             elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
                 # for the next timepoint embeddings
                 # let's do this one by one, as we want to preserve ordering
@@ -196,16 +202,47 @@ class scNODE(BaseModel):
                     RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
                 ] = next_timepoint_embeds
 
-        # print the first few embeddings for debugging, they should not be exact
-        # because they are both sampled, but they should be close
-        print(
-            "First cell embeddings from VAE reconstruct:",
-            first_data_embed_from_vae_reconstruct,
-        )
-        print("First cell embeddings from predict:", first_data_embed_from_predict)
-        # this was none at one point, not too sure why...
-        # for now, we'll just assert it's not none and assess later!
-        assert first_data_embed_from_predict is not None
+                print(
+                    "First cell embeddings from predict:", first_data_embed_from_predict
+                )
+                # this was none at one point, not too sure why...
+                # for now, we'll just assert it's not none and assess later!
+                assert first_data_embed_from_predict is not None
+
+            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
+                # for the next timepoint gene expression
+                # let's do this one by one, as we want to preserve ordering
+                # and the fact that cells will have different next timepoints
+                next_timepoint_gene_expr = []
+                for cell, tp in zip(data, cell_tps):
+                    # given the unique_tps that we have, find the next timepoint
+                    next_tps = [t for t in unique_tps if t > tp]
+                    if not next_tps:
+                        # if there is no next timepoint, we just return a NaN object (we won't be looking here anyways)
+                        next_timepoint_gene_expr.append(
+                            np.full((data.shape[1],), np.nan)
+                        )
+                        continue
+
+                    cell = cell.reshape(1, -1)
+
+                    _, _, recon_obs = self.latent_ode_model.predict(
+                        torch.FloatTensor(cell),
+                        torch.FloatTensor(
+                            [tp, next_tps[0]]
+                        ),  # need to include the starting timepoint and the next timepoint
+                        n_cells=1,
+                    )
+                    recon_obs = recon_obs[0]  # get the first (and only) batch
+
+                    # attach the next timepoint to the list
+                    next_timepoint_gene_expr.append(recon_obs[1].detach().numpy())
+
+                next_timepoint_gene_expr = np.vstack(next_timepoint_gene_expr)
+                # now we need to create the ann_data object
+                final_ann_data.obsm[
+                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
+                ] = next_timepoint_gene_expr
 
         # finally write out to the expected output path
         final_ann_data.write_h5ad(expected_output_path)

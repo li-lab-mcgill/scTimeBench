@@ -4,3 +4,6 @@ model:
 
 metrics:
  - name: BaseMetric
+   trajectory_infer_model:
+    name: OptimalTransport
+    use_gene_expr: false

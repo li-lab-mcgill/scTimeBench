@@ -5,7 +5,6 @@ from crispy_fishstick.trajectory_infer.base import BaseTrajectoryInferMethod
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
 from enum import Enum
 import numpy as np
-import json
 import logging
 
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -109,10 +108,3 @@ class Classifier(BaseTrajectoryInferMethod):
                 cell_lineage[source_cell_type][target_cell_type] /= total_counts
 
         return cell_lineage
-
-    def __str__(self):
-        return json.dumps(
-            {
-                "method": self.method_name.value,
-            }
-        )

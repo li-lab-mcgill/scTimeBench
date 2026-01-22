@@ -13,3 +13,4 @@ class ObservationColumns(Enum):
 class RequiredOutputColumns(Enum):
     EMBEDDING = "crispy_fishstick_embedding"
     NEXT_TIMEPOINT_EMBEDDING = "crispy_fishstick_next_timepoint_embedding"
+    NEXT_TIMEPOINT_GENE_EXPRESSION = "crispy_fishstick_next_timepoint_gene_expression"

@@ -4,7 +4,6 @@ kNN implementation for trajectory inference.
 from crispy_fishstick.trajectory_infer.base import BaseTrajectoryInferMethod
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
 import numpy as np
-import json
 import logging
 import torch
 
@@ -17,20 +16,46 @@ class OptimalTransport(BaseTrajectoryInferMethod):
     def __init__(self, traj_config):
         super().__init__(traj_config)
 
+    def uses_gene_expr(self):
+        """
+        OT method is the only one that we allow to
+        """
+        return self.traj_config.get("use_gene_expr", False)
+
+    def _get_tensors_for_traj(self, ann_data):
+        """
+        Based on the _use_gene_expr function, get the proper tensors for trajectory inference.
+
+        We want to return:
+        - Original gene expr/embedding at time t (for all t)
+        - Predicted gene expr/embedding at time t (for (1, last t))
+        """
+        if self.uses_gene_expr():
+            return (
+                torch.from_numpy(ann_data.X.toarray()),
+                ann_data.obsm[
+                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
+                ],
+            )
+        else:
+            return (
+                ann_data.obsm[RequiredOutputColumns.EMBEDDING.value],
+                ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value],
+            )
+
     def _method_infer_trajectory(self, ann_data):
         """
-        Infer the trajectory using kNN graph-based method.
+        Infer the trajectory using an OT method. There are two types, one where we
+        use the gene expression:
+        1. This follows the STORIES paper, where we do the OT between gene expression
+        2. Based on the transport plan we then transfer the cell type labels through kNN
+        Note: They do it slightly differently, where they take the mass and then only take the top k,
+        whereas we simply calculate the direct label transfer through OT.
 
-        1. We can accomplish this by first separating each embedding based on time.
-        2. Then, for each time point, we find the k nearest neighbors in the next time point's
-        embedding space.
-        3. Finally, we consolidate the cell types per time point based on the kNN results.
+        Otherwise, we just simply use the OT on the embeddings and transfer the labels
+        based on the transport plan.
         """
-        # get the embeddings and timepoints
-        embeddings = ann_data.obsm[RequiredOutputColumns.EMBEDDING.value]
-        next_timepoint_embeddings = ann_data.obsm[
-            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
-        ]
+        cur_tensor, next_tensor = self._get_tensors_for_traj(ann_data)
         timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
         cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
         unique_timepoints = sorted(np.unique(timepoints))
@@ -52,11 +77,11 @@ class OptimalTransport(BaseTrajectoryInferMethod):
             total_pred_cells += next_cell_types.shape[0]
 
             # now let's do the label transfer using optimal transport
-            pred_emb = torch.FloatTensor(next_timepoint_embeddings[idx_current])
-            true_next_emb = torch.FloatTensor(embeddings[idx_next])
+            pred_tensor = torch.FloatTensor(next_tensor[idx_current])
+            true_next_tensor = torch.FloatTensor(cur_tensor[idx_next])
 
             labels = (
-                self.get_ot_labels(true_next_emb, pred_emb, next_cell_types)
+                self.get_ot_labels(true_next_tensor, pred_tensor, next_cell_types)
                 .detach()
                 .numpy()
             )
@@ -172,10 +197,3 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         )
 
         return labels_i
-
-    def __str__(self):
-        return json.dumps(
-            {
-                "method": "kNN",
-            }
-        )

@@ -31,11 +31,17 @@ class GraphSimMetric(OntologyBasedMetrics):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs
-        self.output_path_name = OutputPathName.GRAPH_SIM
-        self.required_outputs = [
-            RequiredOutputColumns.EMBEDDING,
-            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
-        ]
+        if self.trajectory_infer_model.uses_gene_expr():
+            self.output_path_name = OutputPathName.GRAPH_SIM_WITH_GENE_EXPR
+            self.required_outputs = [
+                RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION,
+            ]
+        else:
+            self.output_path_name = OutputPathName.GRAPH_SIM
+            self.required_outputs = [
+                RequiredOutputColumns.EMBEDDING,
+                RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
+            ]
 
     def _build_ref_graph(self, dataset):
         """

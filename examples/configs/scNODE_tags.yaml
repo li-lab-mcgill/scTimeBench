@@ -1,5 +1,5 @@
 datasets:
-  - tag: defaultGarciaAlonso1
+  - tag: defaultGarciaAlonso
   - tag: defaultSuo
   - name: SuoDataset
     data_path: ./data/suo/main.h5ad
