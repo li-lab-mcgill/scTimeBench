@@ -55,7 +55,7 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY,
                 model_output_id INTEGER,
                 metric_id INTEGER,
-                result REAL
+                result TEXT
             )
         """
         )
