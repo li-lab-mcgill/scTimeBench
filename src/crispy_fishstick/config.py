@@ -64,6 +64,12 @@ class Config:
         )
 
         parser.add_argument(
+            "--clear_tables",
+            action="store_true",
+            help="Clear all entries in the database tables",
+        )
+
+        parser.add_argument(
             "--view_evals_by_model",
             action="store_true",
             help="View existing evaluations of all metrics in the database per model set in the configuration",

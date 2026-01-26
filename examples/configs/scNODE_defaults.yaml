@@ -3,7 +3,23 @@ model:
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
- - name: BaseMetric
-   trajectory_infer_model:
-    name: OptimalTransport
-    use_gene_expr: false
+  - name: BaseMetric
+
+# TODO: figure out why unbalanced OT does not work for Suo...
+# TODO: add this into some test later!
+# metrics:
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: Classifier
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: Classifier
+#     n_estimators: 50
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: kNN
+#     n_neighbors: 5
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: kNN
+#     n_neighbors: 5

@@ -144,6 +144,13 @@ def main():
         view_evals_by_metric(config)
         exit()
 
+    if config.clear_tables:
+        db_manager = database.DatabaseManager(config)
+        db_manager.clear_tables()
+        print("All database tables have been cleared.")
+        db_manager.close()
+        exit()
+
     run_metrics(config)
 
 

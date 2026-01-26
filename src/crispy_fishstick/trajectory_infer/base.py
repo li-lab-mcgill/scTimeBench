@@ -11,9 +11,15 @@ from typing import final
 import scanpy as sc
 import logging
 import json
+import hashlib
+from pathlib import Path
+import os
 
 DEFAULT_METHOD = "kNN"
 TRAJECTORY_INFER_METHOD_REGISTRY = {}
+INFERRED_TRAJ_DIR = "trajectory_infer"
+INFERRED_TRAJ_FILE = "inferred_trajectory.json"
+TRAJ_CONFIG_FILE = "traj_config.json"
 
 
 def register_trajectory_inference_method(cls):
@@ -45,6 +51,9 @@ class BaseTrajectoryInferMethod:
         return False
 
     def _method_infer_trajectory(self, ann_data):
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def _parameters(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
     @final
@@ -85,15 +94,52 @@ class BaseTrajectoryInferMethod:
         logging.debug(
             f"Inferring trajectory with method: {self.__class__.__name__} and config: {self.traj_config}"
         )
-        return self._method_infer_trajectory(ann_data)
+
+        # cache the inferred trajectory in a new folder under
+        # trajectory_infer/<hash-of-traj-model>/
+        # because the hash should be the same, and we write out the traj config
+        # there is no need to store in the database
+        # and also store under trajectory_infer/<hash-of-traj-model>/traj_config.yaml
+        # and trajectory_infer/<hash-of-traj-model>/inferred_trajectory.json
+        model_output_path = Path(model_output_file).parent
+        traj_infer_path = os.path.join(
+            model_output_path, INFERRED_TRAJ_DIR, self.encode()
+        )
+
+        os.makedirs(traj_infer_path, exist_ok=True)
+
+        if os.path.exists(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE)):
+            logging.info(
+                f"Inferred trajectory already exists at {traj_infer_path}, loading from file."
+            )
+            with open(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE), "r") as f:
+                inferred_traj = json.load(f)
+            return inferred_traj
+
+        # now we also write the traj_config to file for future reference
+        with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
+            json.dump(self.traj_config, f)
+
+        inferred_traj = self._method_infer_trajectory(ann_data)
+
+        with open(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE), "w") as f:
+            json.dump(inferred_traj, f)
+
+        return inferred_traj
 
     def __str__(self):
         return json.dumps(
             {
                 "method": self.__class__.__name__,
-                "config": self.traj_config,
+                "parameters": self._parameters(),
             }
         )
+
+    def encode(self):
+        """
+        Hash the trajectory inference method based on its class name and parameters.
+        """
+        return hashlib.md5(str(self).encode()).hexdigest()
 
 
 class TrajectoryInferenceMethodFactory:

@@ -128,6 +128,22 @@ class GraphSimMetric(OntologyBasedMetrics):
                 if source_id != target_id and prob >= self.edge_threshold:
                     adjacency_matrix[source_id, target_id] = 1.0
 
+        # let's print out what the predicted trajectory (with thresholding) looks like
+        # so we need to map the adjacency matrix back to cell types
+        pred_lineage = {}
+        ids_to_cell_types = {v: k for k, v in cell_type_to_id.items()}
+
+        for i in range(adjacency_matrix.shape[0]):
+            for j in range(adjacency_matrix.shape[1]):
+                if adjacency_matrix[i, j] == 1.0:
+                    source_cell_type = ids_to_cell_types[i]
+                    target_cell_type = ids_to_cell_types[j]
+                    if source_cell_type not in pred_lineage:
+                        pred_lineage[source_cell_type] = []
+                    pred_lineage[source_cell_type].append(target_cell_type)
+
+        logging.debug(f"Predicted cell lineage (after thresholding): {pred_lineage}")
+
         return {
             AdjacencyMatrixType.WEIGHTED: weighted_adjacency_matrix,
             AdjacencyMatrixType.UNWEIGHTED: adjacency_matrix,

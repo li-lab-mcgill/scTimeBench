@@ -23,7 +23,7 @@ class Classifier(BaseTrajectoryInferMethod):
         super().__init__(traj_config)
         # sets the default number of neighbors
         self.method_name = ClassifierTypes(
-            traj_config.get("classifier", ClassifierTypes.BOOSTING.value)
+            traj_config.get("classifier", ClassifierTypes.RANDOM_FOREST.value)
         )
         if self.method_name == ClassifierTypes.RANDOM_FOREST:
             self.classifier = RandomForestClassifier(
@@ -39,6 +39,15 @@ class Classifier(BaseTrajectoryInferMethod):
             )
         else:
             raise ValueError(f"Unsupported classifier type: {self.method_name}")
+
+    def _parameters(self):
+        return {
+            "classifier": self.method_name.value,
+            "n_estimators": self.classifier.n_estimators,
+            "max_depth": self.classifier.max_depth,
+            "test_size": self.traj_config.get("test_size", 0.2),
+            "random_state": self.classifier.random_state,
+        }
 
     def _method_infer_trajectory(self, ann_data):
         """

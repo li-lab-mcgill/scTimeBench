@@ -24,6 +24,13 @@ class kNN(BaseTrajectoryInferMethod):
             traj_config.get("strategy", kNNStrategy.MAJORITY_VOTE.value)
         )
 
+    def _parameters(self):
+        return {
+            "n_neighbors": self.n_neighbors,
+            "strategy": self.strategy.value,
+            "metric": self.traj_config.get("metric", "minkowski"),
+        }
+
     def _method_infer_trajectory(self, ann_data):
         """
         Infer the trajectory using kNN graph-based method.
@@ -64,7 +71,7 @@ class kNN(BaseTrajectoryInferMethod):
             # now we fit a kNN on the true next timepoint embeddings
             knn_model = NearestNeighbors(
                 n_neighbors=n_neighbors,
-                metric=self.traj_config.get("method", "minkowski"),
+                metric=self.traj_config.get("metric", "minkowski"),
             )
             knn_model.fit(embed_next)
 

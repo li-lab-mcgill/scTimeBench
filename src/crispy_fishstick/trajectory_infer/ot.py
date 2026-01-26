@@ -16,6 +16,14 @@ class OptimalTransport(BaseTrajectoryInferMethod):
     def __init__(self, traj_config):
         super().__init__(traj_config)
 
+    def _parameters(self):
+        return {
+            "use_gene_expr": self.traj_config.get("use_gene_expr", False),
+            "unbalanced_ot_blur": self.traj_config.get("unbalanced_ot_blur", 0.05),
+            "unbalanced_ot_scaling": self.traj_config.get("unbalanced_ot_scaling", 0.5),
+            "unbalanced_ot_reach": self.traj_config.get("unbalanced_ot_reach", None),
+        }
+
     def uses_gene_expr(self):
         """
         OT method is the only one that we allow to
