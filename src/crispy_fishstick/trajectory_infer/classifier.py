@@ -11,7 +11,6 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 import joblib
 import os
-import json
 
 
 CLASSIFIER_SAVE_FILE = "classifier_model.pkl"
@@ -69,7 +68,6 @@ class Classifier(BaseTrajectoryInferMethod):
         )
 
         # get the embeddings and timepoints
-        embeddings = ann_data.obsm[RequiredOutputColumns.EMBEDDING.value]
         next_timepoint_embeddings = ann_data.obsm[
             RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
         ]
@@ -80,30 +78,7 @@ class Classifier(BaseTrajectoryInferMethod):
         # first we simply build a classifier based on all the timepoints,
         # then we build the lineage mapping later
         # to do this, we first fit the classifier on a random 80% of the data, then test on the remaining 20%
-        X_train, X_test, y_train, y_test = train_test_split(
-            embeddings,
-            cell_types,
-            test_size=self.traj_config.get("test_size", 0.2),
-            random_state=self.traj_config.get("random_state", 42),
-        )
-
-        if os.path.exists(os.path.join(traj_infer_path, CLASSIFIER_SAVE_FILE)):
-            logging.debug("Loading existing classifier model from disk.")
-
-            self.classifier = joblib.load(
-                os.path.join(traj_infer_path, CLASSIFIER_SAVE_FILE)
-            )
-        else:
-            self.classifier.fit(X_train, y_train)
-            # save the classifier for future use
-            joblib.dump(
-                self.classifier,
-                os.path.join(traj_infer_path, CLASSIFIER_SAVE_FILE),
-            )
-
-        # now let's log out the classifier's accuracy and other metrics:
-        accuracy = self.classifier.score(X_test, y_test)
-        logging.debug(f"Classifier test accuracy: {accuracy}")
+        self._subclass_train_and_predict(ann_data, traj_infer_path)
 
         # now we build the lineage mapping
         cell_lineage = {}
@@ -137,7 +112,7 @@ class Classifier(BaseTrajectoryInferMethod):
 
         return cell_lineage
 
-    def _classification_entropy(self, ann_data, traj_infer_path):
+    def _subclass_train_and_predict(self, ann_data, traj_infer_path):
         """
         Classification entropy is simply the fitted model's entropy over the predicted
         trajectories.
@@ -174,19 +149,4 @@ class Classifier(BaseTrajectoryInferMethod):
 
         # then let's get the logits on the test dataset, and calculate the entropy
         probas = self.classifier.predict_proba(X_test)
-        entropy = -np.sum(probas * np.log(probas + 1e-10), axis=1)  # avoid log(0)
-        logging.debug(f"Average classification entropy: {np.mean(entropy)}")
-
-        num_classes = probas.shape[1]
-        normalized_entropy = entropy / np.log(num_classes)
-
-        return json.dumps(
-            {
-                "avg_entropy": np.mean(entropy).item(),
-                "std_entropy": np.std(entropy).item(),
-                "avg_normalized_entropy": np.mean(normalized_entropy).item(),
-                "std_normalized_entropy": np.std(normalized_entropy).item(),
-                "num_classes": num_classes,
-                "classifier_accuracy": accuracy,
-            }
-        )
+        return probas, accuracy

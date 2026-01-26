@@ -141,16 +141,13 @@ class BaseTrajectoryInferMethod:
         """
         return hashlib.md5(str(self).encode()).hexdigest()
 
-    def _classification_entropy(self, ann_data, traj_infer_path):
+    def _subclass_train_and_predict(self, ann_data, traj_infer_path):
         raise NotImplementedError("Subclasses should implement this method.")
 
     @final
-    def evaluate_classification_entropy(self, model_output_file):
+    def train_and_predict(self, model_output_file):
         """
-        Evaluate the classification entropy of the inferred trajectory.
-
-        This function computes the classification entropy based on the predicted
-        trajectories and the cell type distributions at each time point.
+        Trains and predicts using the trajectory inference model, returning the probabilities
         """
         ann_data = sc.read_h5ad(model_output_file)
 
@@ -187,7 +184,7 @@ class BaseTrajectoryInferMethod:
         )
         os.makedirs(traj_infer_path, exist_ok=True)
 
-        return self._classification_entropy(ann_data, traj_infer_path)
+        return self._subclass_train_and_predict(ann_data, traj_infer_path)
 
 
 class TrajectoryInferenceMethodFactory:

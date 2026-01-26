@@ -4,11 +4,16 @@ Embedding-based metrics.
 from crispy_fishstick.metrics.base import OutputPathName
 from crispy_fishstick.metrics.embeddings.base import EmbeddingMetrics
 from crispy_fishstick.shared.constants import RequiredOutputColumns
-from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
+from crispy_fishstick.trajectory_infer.base import (
+    TrajectoryInferenceMethodFactory,
+    BaseTrajectoryInferMethod,
+)
 from crispy_fishstick.trajectory_infer.classifier import Classifier
 
 import logging
 import os
+import json
+import numpy as np
 
 
 class TrajectoryEmbeddingMetrics(EmbeddingMetrics):
@@ -31,7 +36,7 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
             "Setting up trajectory inference model for classification entropy."
         )
 
-        self.trajectory_infer_model = (
+        self.trajectory_infer_model: BaseTrajectoryInferMethod = (
             TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
                 self.metric_config.get(
                     "trajectory_infer_model", {"name": Classifier.__name__}
@@ -42,6 +47,23 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
 
     def _embedding_eval(self, output_path):
         model_output_file = os.path.join(output_path, self.output_path_name.value)
-        return self.trajectory_infer_model.evaluate_classification_entropy(
+        probas, accuracy = self.trajectory_infer_model.train_and_predict(
             model_output_file
+        )
+
+        entropy = -np.sum(probas * np.log(probas + 1e-10), axis=1)  # avoid log(0)
+        logging.debug(f"Average classification entropy: {np.mean(entropy)}")
+
+        num_classes = probas.shape[1]
+        normalized_entropy = entropy / np.log(num_classes)
+
+        return json.dumps(
+            {
+                "avg_entropy": np.mean(entropy).item(),
+                "std_entropy": np.std(entropy).item(),
+                "avg_normalized_entropy": np.mean(normalized_entropy).item(),
+                "std_normalized_entropy": np.std(normalized_entropy).item(),
+                "num_classes": num_classes,
+                "classifier_accuracy": accuracy,
+            }
         )

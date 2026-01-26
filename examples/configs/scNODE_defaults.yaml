@@ -3,9 +3,8 @@ model:
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
-  - name: GraphSimMetric
-    trajectory_infer_model:
-      name: Classifier
+  - name: GraphAccuracy
+  - name: EmbeddingMetrics
   # - name: ARI
 # TODO: figure out why unbalanced OT does not work for Suo...
 # TODO:
