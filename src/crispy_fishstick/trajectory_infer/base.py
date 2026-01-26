@@ -141,6 +141,47 @@ class BaseTrajectoryInferMethod:
         """
         return hashlib.md5(str(self).encode()).hexdigest()
 
+    def _classification_entropy(self, ann_data):
+        return 1  # placeholder implementation
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    @final
+    def evaluate_classification_entropy(self, model_output_file):
+        """
+        Evaluate the classification entropy of the inferred trajectory.
+
+        This function computes the classification entropy based on the predicted
+        trajectories and the cell type distributions at each time point.
+        """
+        ann_data = sc.read_h5ad(model_output_file)
+
+        required_obs_columns = [
+            ObservationColumns.CELL_TYPE.value,
+            ObservationColumns.TIMEPOINT.value,
+        ]
+
+        required_obsm_columns = [
+            RequiredOutputColumns.EMBEDDING.value,
+            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value,
+        ]
+
+        for col in required_obs_columns:
+            if col not in ann_data.obs.columns:
+                raise ValueError(
+                    f"Predicted graph data must have '{col}' in observation metadata."
+                )
+        for col in required_obsm_columns:
+            if col not in ann_data.obsm.keys():
+                raise ValueError(
+                    f"Predicted graph data must have '{col}' in observation embeddings."
+                )
+
+        logging.debug(
+            f"Evaluating classification entropy with method: {self.__class__.__name__} and config: {self.traj_config}"
+        )
+
+        return self._classification_entropy(ann_data)
+
 
 class TrajectoryInferenceMethodFactory:
     def get_trajectory_infer_method(self, traj_config):

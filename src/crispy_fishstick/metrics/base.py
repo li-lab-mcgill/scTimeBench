@@ -14,7 +14,6 @@ from crispy_fishstick.shared.dataset.base import (
 )
 from crispy_fishstick.shared.constants import RequiredOutputColumns
 from crispy_fishstick.database import DatabaseManager
-from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import os
 import pickle
@@ -52,15 +51,7 @@ class BaseMetric:
         self.metric_config = metric_config
         self.MODEL_CONFIG_FILENAME = "model_config.yaml"
         self.PICKLED_DATASET_FILENAME = "dataset.pkl"
-        self.trajectory_infer_model = (
-            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
-                self.metric_config.get("trajectory_infer_model", {})
-            )
-        )
-
-        self.params = {
-            "trajectory_infer_model": str(self.trajectory_infer_model),
-        }
+        self.params = {}
 
         # skip the preprocessing steps if it has submetrics, as they will handle it themselves
         if len(self.submetrics) > 0:
@@ -74,6 +65,7 @@ class BaseMetric:
             self.params[key] = getattr(self, key)
 
         # now we call the setups that need to be defined by subclasses
+        self._setup_trajectory_inference_model()
         self._setup_supported_datasets()
         self._setup_model_output_requirements()
 
@@ -97,6 +89,12 @@ class BaseMetric:
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
             logging.info(f"Output path for model: {output_path}")
+
+    def _setup_trajectory_inference_model(self):
+        """By default do nothing"""
+        logging.debug(
+            f"No trajectory inference model specified for this metric {self.__class__.__name__}."
+        )
 
     def _setup_supported_datasets(self):
         raise NotImplementedError("Subclasses should implement this method.")

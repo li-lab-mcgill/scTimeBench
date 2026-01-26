@@ -6,6 +6,7 @@ from crispy_fishstick.metrics.ontology_based.base import OntologyBasedMetrics
 from crispy_fishstick.shared.constants import RequiredOutputColumns
 from crispy_fishstick.shared.helpers import parse_cell_lineage
 from crispy_fishstick.shared.dataset.filters.lineage import LineageDatasetFilter
+from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import numpy as np
 
@@ -26,6 +27,14 @@ class GraphSimMetric(OntologyBasedMetrics):
         return {
             "edge_threshold": 0.1,
         }
+
+    def _setup_trajectory_inference_model(self):
+        self.trajectory_infer_model = (
+            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
+                self.metric_config.get("trajectory_infer_model", {})
+            )
+        )
+        self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
     def _setup_model_output_requirements(self):
         # ** NOTE: must define the following attributes **

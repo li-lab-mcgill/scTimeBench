@@ -1,7 +1,7 @@
 """
 Graph Similarity Metric Base Class
 """
-from crispy_fishstick.metrics.embeddings.base import EmbeddingMetrics
+from crispy_fishstick.metrics.embeddings.aggregate.base import AggregateEmbeddingMetrics
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
 
 import os
@@ -10,7 +10,7 @@ import scanpy as sc
 from sklearn.metrics import adjusted_rand_score
 
 
-class ARI(EmbeddingMetrics):
+class ARI(AggregateEmbeddingMetrics):
     def _defaults(self):
         return {
             "n_neighbors": 15,

@@ -3,7 +3,7 @@ model:
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
-  - name: BaseMetric
+  - name: EmbeddingMetrics
 
 # TODO: figure out why unbalanced OT does not work for Suo...
 # TODO: add this into some test later!
