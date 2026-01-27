@@ -119,6 +119,12 @@ class Config:
             help="Optional path to a log file; if omitted logs only go to stdout",
         )
 
+        parser.add_argument(
+            "--data_dir",
+            type=str,
+            help="Optional base directory for dataset files, otherwise uses root paths specified in the config. If used, treats paths in config as either absolute or relative to this directory.",
+        )
+
         # Parse known arguments
         args = parser.parse_args()
 
@@ -195,10 +201,10 @@ class Config:
 
         # validate the fields within each larger section
         # N.B.: we don't need them to specify filters because it might already be preprocessed
+        # ** DATASETS **
         dataset_required_fields = ["data_path", "name"]
         dataset_optional_fields = ["filters"]
         dataset_alternate_field = "tag"
-        model_required_fields = ["name"]
 
         for dataset in self.datasets:
             # we want to make sure either all of the required fields are specified,
@@ -225,6 +231,9 @@ class Config:
                     raise ValueError(
                         f"Unknown field '{field}' found in dataset config. Allowed fields are {dataset_required_fields} or '{dataset_alternate_field}'."
                     )
+
+        # ** MODEL **
+        model_required_fields = ["name"]
 
         for field in model_required_fields:
             assert (

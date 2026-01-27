@@ -72,7 +72,7 @@ class ModelManager:
             {
                 "name": self._get_name(),
                 "metadata": self._encode_metadata(),
-                "dataset_dict": self.dataset.dataset_dict,
+                "dataset_dict": self.dataset.encode_dataset_dict(),
                 "filters": filters,
             },
             sort_keys=True,

@@ -251,6 +251,8 @@ class BaseMetric:
             "dataset_pkl_path": pickled_dataset_path,
             "model": self.config.model_yaml_data,
             "required_outputs": [output.value for output in self.required_outputs],
+            "datasets": dataset.encode_dataset_dict(),
+            "filters": dataset.encode_filters(),
         }
 
         # write out the yaml config file for the model
@@ -333,6 +335,16 @@ class BaseMetric:
                 new_datasets.append(matching_datasets[0])
             else:
                 new_datasets.append(dataset)
+
+        # now we modify the data paths if a data_dir is specified
+        if self.config.data_dir is not None:
+            for dataset in new_datasets:
+                # if the data_path is not absolute, we join it with data_dir
+                if os.path.isabs(dataset["data_path"]):
+                    continue
+                dataset["data_path"] = os.path.join(
+                    self.config.data_dir, dataset["data_path"]
+                )
 
         # finally, we want to remove the tag associated with each dataset
         # to ensure that the model caches are consistent
