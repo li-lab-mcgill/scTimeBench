@@ -189,7 +189,7 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
 
 class ClassifierMetrics(TrajectoryEmbeddingMetrics):
     def _defaults(self):
-        return {"f1_average": "weighted"}
+        return {"f1_average": "weighted", "k_folds": 5}
 
     def _setup_trajectory_inference_model(self):
         # by default we use the classifier trajectory inference model
@@ -208,19 +208,58 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
 
     def _embedding_eval(self, output_path):
         model_output_file = os.path.join(output_path, self.output_path_name.value)
-        (
-            pred_probs_and_mapping,
-            true_labels,
-        ) = self.trajectory_infer_model.train_and_predict(model_output_file)
-        probs, idx_to_cell_map = pred_probs_and_mapping
+        if self.k_folds == 1:
+            (
+                pred_probs_and_mapping,
+                true_labels,
+            ) = self.trajectory_infer_model.train_and_predict(model_output_file)
+            probs, idx_to_cell_map = pred_probs_and_mapping
 
-        # now let's get the predicted labels
-        pred_labels = np.array([idx_to_cell_map[np.argmax(proba)] for proba in probs])
+            # now let's get the predicted labels
+            pred_labels = np.array(
+                [idx_to_cell_map[np.argmax(proba)] for proba in probs]
+            )
 
-        # TODO: future, add more metrics such as precision, recall, f1-score, etc.
-        return json.dumps(
-            {
-                "accuracy": np.mean(true_labels == pred_labels).item(),
-                "f1_score": f1_score(true_labels, pred_labels, average=self.f1_average),
-            }
-        )
+            # TODO: future, add more metrics such as precision, recall, f1-score, etc.
+            return json.dumps(
+                {
+                    "accuracy": np.mean(true_labels == pred_labels).item(),
+                    "f1_score": f1_score(
+                        true_labels, pred_labels, average=self.f1_average
+                    ),
+                }
+            )
+        else:
+            results = self.trajectory_infer_model.train_and_predict_k_fold_cv(
+                model_output_file, self.k_folds
+            )
+
+            k_fold_accuracy = 0.0
+            k_fold_f1 = 0.0
+
+            for fold_idx, (pred_probs_and_mapping, true_labels) in enumerate(results):
+                probs, idx_to_cell_map = pred_probs_and_mapping
+
+                # now let's get the predicted labels
+                pred_labels = np.array(
+                    [idx_to_cell_map[np.argmax(proba)] for proba in probs]
+                )
+
+                fold_accuracy = np.mean(true_labels == pred_labels).item()
+                k_fold_accuracy += fold_accuracy
+                fold_f1 = f1_score(true_labels, pred_labels, average=self.f1_average)
+                k_fold_f1 += fold_f1
+
+                logging.debug(
+                    f"Fold {fold_idx + 1}/{self.k_folds} - Accuracy: {fold_accuracy}, F1 Score: {fold_f1}"
+                )
+
+            k_fold_accuracy /= self.k_folds
+            k_fold_f1 /= self.k_folds
+
+            return json.dumps(
+                {
+                    "k_fold_accuracy": fold_accuracy,
+                    "k_fold_f1_score": fold_f1,
+                }
+            )

@@ -8,6 +8,7 @@ Examples are the kNN graph-based methods, or the optimal transport based methods
 """
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from typing import final
 import scanpy as sc
 import numpy as np
@@ -189,8 +190,6 @@ class BaseTrajectoryInferMethod:
             with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
                 f.write(str(self))
 
-        # TODO: allow for both gene expression and embeddings in the future
-        # TODO: because right now we will only support one
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
@@ -216,6 +215,50 @@ class BaseTrajectoryInferMethod:
         return (
             (self._subclass_predict_probs(X_test), y_test) if not train_only else None
         )
+
+    def train_and_predict_k_fold_cv(self, model_output_file, k):
+        """
+        Does the train and predict with k-fold cross validation.
+
+        We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
+        """
+        ann_data, traj_infer_path = self._prep_ann_data(model_output_file)
+        k_fold_path = os.path.join(traj_infer_path, f"k_fold_{k}")
+        os.makedirs(k_fold_path, exist_ok=True)
+
+        # we use the same cached trajectory path so that way we can save classifiers
+        # in the future if needed, as it takes time to fit
+        # get the embeddings and timepoints
+        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
+
+        # filter next timepoint embeddings to only include the valid timepoints
+        embeddings = self._get_cur_tp_tensors(ann_data)
+
+        kf = KFold(
+            n_splits=k, shuffle=True, random_state=self._parameters()["random_state"]
+        )
+
+        predictions = []
+        for train_index, test_index in kf.split(embeddings):
+            X_train, X_test = embeddings[train_index], embeddings[test_index]
+            y_train, y_test = cell_types.iloc[train_index], cell_types.iloc[test_index]
+
+            fold_path = os.path.join(
+                k_fold_path, f"fold_{len(os.listdir(k_fold_path))}"
+            )
+            os.makedirs(fold_path, exist_ok=True)
+
+            # load the classifier model or train a new one if not exists
+            logging.debug(
+                f"Training trajectory inference model {self.__class__.__name__} k-fold {len(os.listdir(k_fold_path))}."
+            )
+            self._subclass_train(X_train, y_train, fold_path)
+            logging.debug(
+                f"Predicting trajectory inference model {self.__class__.__name__} k-fold {len(os.listdir(k_fold_path))}."
+            )
+            predictions.append((self._subclass_predict_probs(X_test), y_test))
+
+        return predictions
 
     def predict_next_tp(self, model_output_file, ann_data=None, traj_infer_path=None):
         """
