@@ -18,7 +18,7 @@ import hashlib
 from pathlib import Path
 import os
 
-DEFAULT_METHOD = "kNN"
+DEFAULT_METHOD = "Classifier"
 TRAJECTORY_INFER_METHOD_REGISTRY = {}
 INFERRED_TRAJ_DIR = "trajectory_infer"
 INFERRED_TRAJ_FILE = "inferred_trajectory.json"

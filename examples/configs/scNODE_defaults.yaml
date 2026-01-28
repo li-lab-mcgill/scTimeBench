@@ -1,20 +1,21 @@
-# datasets:
-#   - tag: defaultGarciaAlonso
+datasets:
+  - tag: defaultGarciaAlonso
 
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
-  - name: ClassifierMetrics
-    trajectory_infer_model:
-      name: Classifier
+  # - name: ClassifierMetrics
+  #   trajectory_infer_model:
+  #     name: Classifier
+
+  # - name: ClassifierMetrics
+  #   trajectory_infer_model:
+  #     name: kNN
 
   - name: ClassifierMetrics
-    trajectory_infer_model:
-      name: kNN
-
-  - name: ClassifierMetrics
+    k_folds: 1
     trajectory_infer_model:
       name: OptimalTransport
       # n_neighbors: 5

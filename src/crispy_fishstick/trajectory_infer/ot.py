@@ -57,7 +57,7 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         # these test labels then need to be normalized to represent probabilities
         # sum(axis = 1) means sum across the columns, then keepdims to maintain the 2D shape
         logging.debug(f"Raw OT test labels: {test_labels}")
-        test_labels = test_labels / test_labels.sum(axis=1, keepdims=True)
+        test_labels = test_labels / (test_labels.sum(axis=1, keepdims=True) + 1e-8)
         logging.debug(f"Normalized OT test labels: {test_labels}")
         return test_labels, self.index_to_type
 
