@@ -134,35 +134,40 @@ class BaseTrajectoryInferMethod:
         Prepares the AnnData object for trajectory inference.
         """
         ann_data = sc.read_h5ad(model_output_file)
-        if self.uses_gene_expr():
-            required_obs_columns = [
-                ObservationColumns.CELL_TYPE.value,
-                ObservationColumns.TIMEPOINT.value,
-            ]
 
+        required_obs_columns = [
+            ObservationColumns.CELL_TYPE.value,
+            ObservationColumns.TIMEPOINT.value,
+        ]
+
+        if self.uses_gene_expr():
             required_obsm_columns = [
                 RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value,
             ]
         else:
-            required_obs_columns = [
-                ObservationColumns.CELL_TYPE.value,
-                ObservationColumns.TIMEPOINT.value,
-            ]
-
             required_obsm_columns = [
                 RequiredOutputColumns.EMBEDDING.value,
                 RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value,
             ]
 
+        alternative_obsm_columns = [
+            RequiredOutputColumns.NEXT_CELLTYPE.value,
+        ]
+
+        if not (
+            all(col in ann_data.obsm.keys() for col in alternative_obsm_columns)
+            or all(col in ann_data.obsm.keys() for col in required_obsm_columns)
+        ):
+            raise ValueError(
+                f"Predicted graph data must have either "
+                f"'{', '.join(required_obsm_columns)}' or "
+                f"'{', '.join(alternative_obsm_columns)}' in observation embeddings."
+            )
+
         for col in required_obs_columns:
             if col not in ann_data.obs.columns:
                 raise ValueError(
                     f"Predicted graph data must have '{col}' in observation metadata."
-                )
-        for col in required_obsm_columns:
-            if col not in ann_data.obsm.keys():
-                raise ValueError(
-                    f"Predicted graph data must have '{col}' in observation embeddings."
                 )
 
         model_output_path = Path(model_output_file).parent
@@ -335,38 +340,58 @@ class BaseTrajectoryInferMethod:
             f.write(str(self))
 
         # ** Note: if the NEXT_CELLTYPE is already added in, then use that instead (OT methods) **
-        if RequiredOutputColumns.NEXT_CELLTYPE in ann_data.obsm.keys():
-            pass
+        if RequiredOutputColumns.NEXT_CELLTYPE.value in ann_data.obsm.keys():
+            # now let's build the inferred trajectory based on the NEXT_CELLTYPE predictions
+            inferred_traj = {}
 
-        # always start by training to ensure that the model is fitted
-        # we need to do the train_only option here instead of calling _train directly
-        # because it does some preprocessing we don't want to repeat
-        # this trains a classifier on all the data points
-        self.train_and_predict(
-            model_output_file, ann_data, traj_infer_path, train_only=True
-        )
+            # subset for only cells that are not at the last timepoint
+            timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
+            valid_timepoints = np.where(timepoints < timepoints.max())[0]
 
-        logging.debug(
-            f"Inferring trajectory using trajectory inference model: {self.__class__.__name__}"
-        )
+            cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][
+                valid_timepoints
+            ]
+            next_cell_types = ann_data.obsm[RequiredOutputColumns.NEXT_CELLTYPE.value][
+                valid_timepoints
+            ]
 
-        # then we run the predict next timepoint to get the embeddings
-        next_tp_embed_probs, indices, idx_to_cell_types = self.predict_next_tp(
-            model_output_file, ann_data, traj_infer_path
-        )
+            # only look at the indices where next_cell_types is not null
+            for cur_cell, next_cell in zip(cell_types, next_cell_types):
+                if cur_cell not in inferred_traj:
+                    inferred_traj[cur_cell] = {}
+                if next_cell not in inferred_traj[cur_cell]:
+                    inferred_traj[cur_cell][next_cell] = 0
+                inferred_traj[cur_cell][next_cell] += 1
+        else:
+            # always start by training to ensure that the model is fitted
+            # we need to do the train_only option here instead of calling _train directly
+            # because it does some preprocessing we don't want to repeat
+            # this trains a classifier on all the data points
+            self.train_and_predict(
+                model_output_file, ann_data, traj_infer_path, train_only=True
+            )
 
-        # only choose the timepoints that are listed by the timepoint embeddings
-        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][indices]
+            logging.debug(
+                f"Inferring trajectory using trajectory inference model: {self.__class__.__name__}"
+            )
 
-        inferred_traj = {}
-        # TODO: uncomment the portion below to do it per timepoint -- right now for simplicity we won't include it
-        for cur_cell, next_tp_proba in zip(cell_types, next_tp_embed_probs):
-            predicted_next = idx_to_cell_types[np.argmax(next_tp_proba)]
-            if cur_cell not in inferred_traj:
-                inferred_traj[cur_cell] = {}
-            if predicted_next not in inferred_traj[cur_cell]:
-                inferred_traj[cur_cell][predicted_next] = 0
-            inferred_traj[cur_cell][predicted_next] += 1
+            # then we run the predict next timepoint to get the embeddings
+            next_tp_embed_probs, indices, idx_to_cell_types = self.predict_next_tp(
+                model_output_file, ann_data, traj_infer_path
+            )
+
+            # only choose the timepoints that are listed by the timepoint embeddings
+            cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][indices]
+
+            inferred_traj = {}
+            # TODO: uncomment the portion below to do it per timepoint -- right now for simplicity we won't include it
+            for cur_cell, next_tp_proba in zip(cell_types, next_tp_embed_probs):
+                predicted_next = idx_to_cell_types[np.argmax(next_tp_proba)]
+                if cur_cell not in inferred_traj:
+                    inferred_traj[cur_cell] = {}
+                if predicted_next not in inferred_traj[cur_cell]:
+                    inferred_traj[cur_cell][predicted_next] = 0
+                inferred_traj[cur_cell][predicted_next] += 1
 
         logging.debug(f"Constructed cell lineage (raw counts): {inferred_traj}")
 
