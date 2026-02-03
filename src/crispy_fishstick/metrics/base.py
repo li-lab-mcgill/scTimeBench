@@ -26,6 +26,7 @@ class OutputPathName(Enum):
     EMBEDDING = "embedding.h5ad"
     GRAPH_SIM = "graph_sim.h5ad"
     GRAPH_SIM_WITH_GENE_EXPR = "graph_sim_with_gene_expr.h5ad"
+    NEXT_TP_EMBEDDING = "next_timepoint_embedding.h5ad"
 
 
 METRIC_REGISTRY = {}
