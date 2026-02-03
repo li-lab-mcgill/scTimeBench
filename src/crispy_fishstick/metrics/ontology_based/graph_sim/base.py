@@ -42,15 +42,21 @@ class GraphSimMetric(OntologyBasedMetrics):
         # as well as the required features and outputs
         if self.trajectory_infer_model.uses_gene_expr():
             self.output_path_name = OutputPathName.GRAPH_SIM_WITH_GENE_EXPR
-            self.required_outputs = [
+            primary_outputs = [
                 RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION,
             ]
         else:
             self.output_path_name = OutputPathName.GRAPH_SIM
-            self.required_outputs = [
+            primary_outputs = [
                 RequiredOutputColumns.EMBEDDING,
                 RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
             ]
+
+        # allow alternate outputs for OT-based methods
+        self.required_outputs = [
+            primary_outputs,
+            [RequiredOutputColumns.NEXT_CELLTYPE],
+        ]
 
     def _build_ref_graph(self, dataset):
         """

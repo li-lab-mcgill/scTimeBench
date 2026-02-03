@@ -51,13 +51,35 @@ class BaseModel:
     def __init__(self, yaml_config):
         self.config = yaml_config
 
-        # let's set the required columns properly
-        self.required_outputs = [
-            RequiredOutputColumns(output) for output in self.config["required_outputs"]
-        ]
+        # normalize required outputs: list or list of lists
+        raw_required_outputs = self.config["required_outputs"]
+        if not raw_required_outputs:
+            raise ValueError("required_outputs must not be empty.")
 
+        if all(isinstance(item, list) for item in raw_required_outputs):
+            required_output_options = [
+                [RequiredOutputColumns(output) for output in option]
+                for option in raw_required_outputs
+            ]
+        else:
+            required_output_options = [
+                [RequiredOutputColumns(output) for output in raw_required_outputs]
+            ]
+
+        self.required_outputs_options = required_output_options
+
+        # select the option that has NEXT_CELLTYPE if it's an OT method
         if self.is_ot_method():
-            self.required_outputs.append(RequiredOutputColumns.NEXT_CELLTYPE)
+            for option in required_output_options:
+                if RequiredOutputColumns.NEXT_CELLTYPE in option:
+                    self.required_outputs = option
+                    break
+
+            if not hasattr(self, "required_outputs"):
+                print(
+                    f"Warning: OT method but no NEXT_CELLTYPE in required outputs. Using first option."
+                )
+                self.required_outputs = required_output_options[0]
 
     def train(self, ann_data, all_tps=None):
         raise NotImplementedError("Subclasses should implement this method.")
@@ -120,6 +142,7 @@ def main(model_class: BaseModel):
         raise RuntimeError(f"Model output file was not created at {model_output_path}")
     print(f"Verifying generated output at {model_output_path}")
 
+    # TODO: add generate and train under a try catch which will clean the model output path if anything fails
     # load the ann data and check for required columns
     generated_ann_data = sc.read_h5ad(model_output_path)
     for required_output in model.required_outputs:

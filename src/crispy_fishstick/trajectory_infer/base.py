@@ -334,7 +334,7 @@ class BaseTrajectoryInferMethod:
         with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
             f.write(str(self))
 
-        # TODO: if the NEXT_CELLTYPE is already added in, then use that instead (OT methods)
+        # ** Note: if the NEXT_CELLTYPE is already added in, then use that instead (OT methods) **
         if RequiredOutputColumns.NEXT_CELLTYPE in ann_data.obsm.keys():
             pass
 

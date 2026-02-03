@@ -59,21 +59,27 @@ class Moscot(BaseModel):
 
         print(f"Processing required outputs: {self.required_outputs}")
 
+        if RequiredOutputColumns.NEXT_CELLTYPE in self.required_outputs:
+            # Compute next timepoint expression using sequential OT problems
+            _, next_cell_types = self._compute_next_timepoint_expression(
+                test_ann_data, test_tps, unique_tps
+            )
+            final_ann_data.obsm[
+                RequiredOutputColumns.NEXT_CELLTYPE.value
+            ] = next_cell_types
+
         if (
             RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION
             in self.required_outputs
             or RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING in self.required_outputs
         ):
             # Compute next timepoint expression using sequential OT problems
-            next_expression, next_cell_types = self._compute_next_timepoint_expression(
+            next_expression, _ = self._compute_next_timepoint_expression(
                 test_ann_data, test_tps, unique_tps
             )
             final_ann_data.obsm[
                 RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
             ] = next_expression
-            final_ann_data.obsm[
-                RequiredOutputColumns.NEXT_CELLTYPE.value
-            ] = next_cell_types
 
             if RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING in self.required_outputs:
                 next_embeddings = self._compute_next_timepoint_embeddings_from_data(

@@ -240,17 +240,38 @@ class BaseMetric:
         assert hasattr(
             self, "required_outputs"
         ), "Subclasses must define required_outputs attribute."
-        assert all(
+        if all(
             isinstance(output, RequiredOutputColumns)
             for output in self.required_outputs
-        ), "All required_outputs must be of type RequiredOutputColumns"
+        ):
+            required_outputs_serialized = [
+                output.value for output in self.required_outputs
+            ]
+        elif all(isinstance(output, list) for output in self.required_outputs):
+            if not all(
+                all(isinstance(item, RequiredOutputColumns) for item in output_set)
+                for output_set in self.required_outputs
+            ):
+                raise AssertionError(
+                    "All required_outputs entries must be RequiredOutputColumns"
+                )
+            required_outputs_serialized = [
+                [output.value for output in output_set]
+                for output_set in self.required_outputs
+            ]
+        else:
+            raise AssertionError(
+                "required_outputs must be a list or list of lists of RequiredOutputColumns"
+            )
+
+        logging.debug(f"Required outputs serialized: {required_outputs_serialized}")
 
         yaml_config = {
             "output_path": output_path,
             "output_file_name": self.output_path_name.value,
             "dataset_pkl_path": pickled_dataset_path,
             "model": self.config.model_yaml_data,
-            "required_outputs": [output.value for output in self.required_outputs],
+            "required_outputs": required_outputs_serialized,
             "datasets": dataset.encode_dataset_dict(),
             "filters": dataset.encode_filters(),
         }
