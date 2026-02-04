@@ -1,9 +1,8 @@
 """
 Embedding-based metrics.
 """
-from crispy_fishstick.metrics.base import OutputPathName
 from crispy_fishstick.metrics.embeddings.base import EmbeddingMetrics
-from crispy_fishstick.shared.constants import RequiredOutputColumns, ObservationColumns
+from crispy_fishstick.shared.constants import RequiredOutputFiles, ObservationColumns
 from crispy_fishstick.trajectory_infer.base import (
     TrajectoryInferenceMethodFactory,
     BaseTrajectoryInferMethod,
@@ -25,10 +24,9 @@ class TrajectoryEmbeddingMetrics(EmbeddingMetrics):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs
-        self.output_path_name = OutputPathName.NEXT_TP_EMBEDDING
         self.required_outputs = [
-            RequiredOutputColumns.EMBEDDING,
-            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
+            RequiredOutputFiles.EMBEDDING,
+            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
         ]
 
 
@@ -128,8 +126,8 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
         ]
 
         required_obsm_columns = [
-            RequiredOutputColumns.EMBEDDING.value,
-            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value,
+            RequiredOutputFiles.EMBEDDING.value,
+            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value,
         ]
 
         for col in required_obs_columns:
@@ -143,9 +141,9 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
                     f"Predicted graph data must have '{col}' in observation embeddings."
                 )
 
-        embeddings = ann_data.obsm[RequiredOutputColumns.EMBEDDING.value]
+        embeddings = ann_data.obsm[RequiredOutputFiles.EMBEDDING.value]
         next_timepoint_embeddings = ann_data.obsm[
-            RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
+            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value
         ]
 
         timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]

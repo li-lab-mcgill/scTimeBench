@@ -23,6 +23,7 @@ class RunType(Enum):
     AUTO_TRAIN_TEST = "auto_train_test"
     PREPROCESS = "preprocess"
     EVAL_ONLY = "eval_only"
+    TRAIN_ONLY = "train_only"
 
 
 class Config:

@@ -6,7 +6,7 @@ and its timepoints, we want to infer the trajectory structure.
 
 Examples are the kNN graph-based methods, or the optimal transport based methods.
 """
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputFiles
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from typing import final
@@ -104,14 +104,14 @@ class BaseTrajectoryInferMethod:
 
         if self._parameters()["use_gene_expr"]:
             return (
-                ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-                ][valid_timepoints],
+                ann_data.obsm[RequiredOutputFilesEXT_TIMEPOINT_GENE_EXPRESSION.value][
+                    valid_timepoints
+                ],
                 valid_timepoints,
             )
         else:
             return (
-                ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value][
+                ann_data.obsm[RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value][
                     valid_timepoints
                 ],
                 valid_timepoints,
@@ -127,7 +127,7 @@ class BaseTrajectoryInferMethod:
         if self._parameters()["use_gene_expr"]:
             return ann_data.X.toarray()
         else:
-            return ann_data.obsm[RequiredOutputColumns.EMBEDDING.value]
+            return ann_data.obsm[RequiredOutputFiles.EMBEDDING.value]
 
     def _prep_ann_data(self, model_output_file):
         """
@@ -142,16 +142,16 @@ class BaseTrajectoryInferMethod:
 
         if self.uses_gene_expr():
             required_obsm_columns = [
-                RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value,
+                RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION.value,
             ]
         else:
             required_obsm_columns = [
-                RequiredOutputColumns.EMBEDDING.value,
-                RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value,
+                RequiredOutputFiles.EMBEDDING.value,
+                RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value,
             ]
 
         alternative_obsm_columns = [
-            RequiredOutputColumns.NEXT_CELLTYPE.value,
+            RequiredOutputFiles.NEXT_CELLTYPE.value,
         ]
 
         if not (
@@ -341,7 +341,7 @@ class BaseTrajectoryInferMethod:
             f.write(str(self))
 
         # ** Note: if the NEXT_CELLTYPE is already added in, then use that instead (OT methods) **
-        if RequiredOutputColumns.NEXT_CELLTYPE.value in ann_data.obsm.keys():
+        if RequiredOutputFiles.NEXT_CELLTYPE.value in ann_data.obsm.keys():
             # now let's build the inferred trajectory based on the NEXT_CELLTYPE predictions
             inferred_traj = {}
 
@@ -352,7 +352,7 @@ class BaseTrajectoryInferMethod:
             cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][
                 valid_timepoints
             ]
-            next_cell_types = ann_data.obsm[RequiredOutputColumns.NEXT_CELLTYPE.value][
+            next_cell_types = ann_data.obsm[RequiredOutputFiles.NEXT_CELLTYPE.value][
                 valid_timepoints
             ]
 

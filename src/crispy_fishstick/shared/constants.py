@@ -10,10 +10,10 @@ class ObservationColumns(Enum):
     TIMEPOINT = "crispy_fishstick_timepoint"
 
 
-class RequiredOutputColumns(Enum):
-    EMBEDDING = "crispy_fishstick_embedding"
-    NEXT_TIMEPOINT_EMBEDDING = "crispy_fishstick_next_timepoint_embedding"
-    NEXT_TIMEPOINT_GENE_EXPRESSION = "crispy_fishstick_next_timepoint_gene_expression"
+class RequiredOutputFiles(Enum):
+    EMBEDDING = "embedding.npy"
+    NEXT_TIMEPOINT_EMBEDDING = "next_timepoint_embedding.npy"
+    NEXT_TIMEPOINT_GENE_EXPRESSION = "next_timepoint_gene_expression.npy"
     # This is to be used only for the OT methods which can directly correlate
     # cells to cells, and thus build their lineage this way
-    NEXT_CELLTYPE = "crispy_fishstick_next_cell_type"
+    NEXT_CELLTYPE = "next_cell_type.parquet"

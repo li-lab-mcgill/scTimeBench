@@ -4,7 +4,6 @@ depend on the dataset that they belong to.
 """
 
 from typing import final
-from enum import Enum
 
 from crispy_fishstick.config import Config, RunType
 from crispy_fishstick.metrics.model_manager import ModelManager
@@ -12,7 +11,7 @@ from crispy_fishstick.shared.dataset.base import (
     DATASET_REGISTRY,
     DATASET_FILTER_REGISTRY,
 )
-from crispy_fishstick.shared.constants import RequiredOutputColumns
+from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.database import DatabaseManager
 
 import os
@@ -20,13 +19,6 @@ import pickle
 import yaml
 import logging
 import json
-
-
-class OutputPathName(Enum):
-    EMBEDDING = "embedding.h5ad"
-    GRAPH_SIM = "graph_sim.h5ad"
-    GRAPH_SIM_WITH_GENE_EXPR = "graph_sim_with_gene_expr.h5ad"
-    NEXT_TP_EMBEDDING = "next_timepoint_embedding.h5ad"
 
 
 METRIC_REGISTRY = {}
@@ -163,17 +155,38 @@ class BaseMetric:
                 logging.debug(
                     "Run type is PREPROCESS. Skipping model training and metric evaluation."
                 )
-            elif self.config.run_type == RunType.AUTO_TRAIN_TEST:
-                # only run this if the model output doesn't already exist
-                if not os.path.exists(
-                    os.path.join(output_path, self.output_path_name.value)
+            elif (
+                self.config.run_type == RunType.AUTO_TRAIN_TEST
+                or self.config.run_type == RunType.TRAIN_ONLY
+            ):
+                # only run this if one of the model outputs doesn't already exist
+                # here we will go through the required outputs and check if they exist
+                if all(
+                    isinstance(outputs_list, list)
+                    for outputs_list in self.required_outputs
                 ):
+                    # list of list case
+                    required_outputs_exist = any(
+                        all(
+                            os.path.exists(os.path.join(output_path, output.value))
+                            for output in output_set
+                        )
+                        for output_set in self.required_outputs
+                    )
+                else:
+                    # list case
+                    required_outputs_exist = all(
+                        os.path.exists(os.path.join(output_path, output.value))
+                        for output in self.required_outputs
+                    )
+
+                if not required_outputs_exist:
                     model.train_and_test(
                         os.path.join(output_path, self.MODEL_CONFIG_FILENAME)
                     )
                 else:
                     logging.info(
-                        f"Model output already exists at {os.path.join(output_path, self.output_path_name.value)}. Skipping training and generation."
+                        f"Model output already exists at {output_path}. Skipping training and generation."
                     )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
@@ -208,11 +221,6 @@ class BaseMetric:
         Preprocessing steps required before evaluating the metric.
         """
         # 1) we check that the subclasses have defined the required feature specs
-        assert (
-            hasattr(self, "output_path_name")
-            and type(self.output_path_name) is OutputPathName
-        ), "Subclasses must define output_path_name of type OutputPathName"
-
         model = ModelManager(self.config, dataset)
         self.models.append(model)
 
@@ -242,19 +250,18 @@ class BaseMetric:
             self, "required_outputs"
         ), "Subclasses must define required_outputs attribute."
         if all(
-            isinstance(output, RequiredOutputColumns)
-            for output in self.required_outputs
+            isinstance(output, RequiredOutputFiles) for output in self.required_outputs
         ):
             required_outputs_serialized = [
                 output.value for output in self.required_outputs
             ]
         elif all(isinstance(output, list) for output in self.required_outputs):
             if not all(
-                all(isinstance(item, RequiredOutputColumns) for item in output_set)
+                all(isinstance(item, RequiredOutputFiles) for item in output_set)
                 for output_set in self.required_outputs
             ):
                 raise AssertionError(
-                    "All required_outputs entries must be RequiredOutputColumns"
+                    "All required_outputs entries must be RequiredOutputFiles"
                 )
             required_outputs_serialized = [
                 [output.value for output in output_set]
@@ -262,14 +269,13 @@ class BaseMetric:
             ]
         else:
             raise AssertionError(
-                "required_outputs must be a list or list of lists of RequiredOutputColumns"
+                "required_outputs must be a list or list of lists of RequiredOutputFiles"
             )
 
         logging.debug(f"Required outputs serialized: {required_outputs_serialized}")
 
         yaml_config = {
             "output_path": output_path,
-            "output_file_name": self.output_path_name.value,
             "dataset_pkl_path": pickled_dataset_path,
             "model": self.config.model_yaml_data,
             "required_outputs": required_outputs_serialized,

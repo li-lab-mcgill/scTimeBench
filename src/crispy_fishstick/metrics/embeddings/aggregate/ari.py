@@ -2,11 +2,12 @@
 Graph Similarity Metric Base Class
 """
 from crispy_fishstick.metrics.embeddings.aggregate.base import AggregateEmbeddingMetrics
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputFiles
 
 import os
 import logging
 import scanpy as sc
+import numpy as np
 from sklearn.metrics import adjusted_rand_score
 
 
@@ -21,8 +22,10 @@ class ARI(AggregateEmbeddingMetrics):
         """
         The embedding-based metric evaluation function.
         """
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        adata = sc.read_h5ad(model_output_file)
+        embedding_file = os.path.join(output_path, RequiredOutputFiles.EMBEDDING.value)
+        embeddings = np.load(embedding_file)
+
+        # need to load the original data as well!
 
         true_labels = adata.obs[ObservationColumns.CELL_TYPE.value].values
 
@@ -31,7 +34,7 @@ class ARI(AggregateEmbeddingMetrics):
 
         sc.pp.neighbors(
             adata,
-            use_rep=RequiredOutputColumns.EMBEDDING.value,
+            use_rep=RequiredOutputFiles.EMBEDDING.value,
             n_neighbors=self.n_neighbors,
         )
         sc.tl.leiden(adata, key_added="leiden_clusters", resolution=self.resolution)

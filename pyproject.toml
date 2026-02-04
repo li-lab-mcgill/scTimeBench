@@ -9,6 +9,8 @@ dependencies = [
     "PyYAML",
     "scanpy[leiden]",
     "scikit_learn",
+    "fastparquet",
+    "pyarrow",
 ]
 
 [tool.setuptools.packages.find]

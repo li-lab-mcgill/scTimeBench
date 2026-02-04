@@ -8,9 +8,10 @@ import argparse
 import os
 import pickle
 import yaml
-import scanpy as sc
+import numpy as np
+import pandas as pd
 
-from crispy_fishstick.shared.constants import RequiredOutputColumns
+from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.shared.constants import ObservationColumns
 
 
@@ -27,7 +28,7 @@ def process_yaml(yaml_path):
     with open(yaml_path, "r") as f:
         yaml_config = yaml.safe_load(f)
 
-    paths = ["dataset_pkl_path", "output_path", "output_file_name"]
+    paths = ["dataset_pkl_path", "output_path"]
     for path in paths:
         if path not in yaml_config:
             raise ValueError(f"YAML configuration missing required path: {path}")
@@ -50,6 +51,7 @@ def process_yaml(yaml_path):
 class BaseModel:
     def __init__(self, yaml_config):
         self.config = yaml_config
+        self.output_path = yaml_config["output_path"]
 
         # normalize required outputs: list or list of lists
         raw_required_outputs = self.config["required_outputs"]
@@ -58,19 +60,19 @@ class BaseModel:
 
         if all(isinstance(item, list) for item in raw_required_outputs):
             required_output_options = [
-                [RequiredOutputColumns(output) for output in option]
+                [RequiredOutputFiles(output) for output in option]
                 for option in raw_required_outputs
             ]
         else:
             required_output_options = [
-                [RequiredOutputColumns(output) for output in raw_required_outputs]
+                [RequiredOutputFiles(output) for output in raw_required_outputs]
             ]
 
         self.required_outputs_options = required_output_options
 
         # by default since we are not an OT method, we just select the option without NEXT_CELLTYPE
         for option in required_output_options:
-            if RequiredOutputColumns.NEXT_CELLTYPE not in option:
+            if RequiredOutputFiles.NEXT_CELLTYPE not in option:
                 self.required_outputs = option
                 break
 
@@ -79,7 +81,62 @@ class BaseModel:
     def train(self, ann_data, all_tps=None):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def generate(self, test_ann_data, expected_output_path):
+    def generate(self, test_ann_data):
+        """
+        Main generation method that dispatches to individual output generators.
+        Each output is saved to its own file under self.output_path.
+        """
+        for required_output in self.required_outputs:
+            output_file = os.path.join(self.output_path, required_output.value)
+            if os.path.exists(output_file):
+                print(f"Output file {output_file} already exists, skipping generation.")
+                continue
+
+            print(f"Generating {required_output.value}...")
+            if required_output == RequiredOutputFiles.EMBEDDING:
+                result = self.generate_embedding(test_ann_data)
+                np.save(output_file, result)
+            elif required_output == RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING:
+                result = self.generate_next_tp_embedding(test_ann_data)
+                np.save(output_file, result)
+            elif required_output == RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION:
+                result = self.generate_next_tp_gex(test_ann_data)
+                np.save(output_file, result)
+            elif required_output == RequiredOutputFiles.NEXT_CELLTYPE:
+                result = self.generate_next_cell_type(test_ann_data)
+                # result should be a pandas DataFrame or Series
+                result.to_parquet(output_file)
+            else:
+                raise ValueError(f"Unknown required output: {required_output}")
+
+            print(f"Saved {required_output.value} to {output_file}")
+
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        Returns: np.ndarray of shape (n_cells, embedding_dim)
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        Returns: np.ndarray of shape (n_cells, embedding_dim)
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        Returns: np.ndarray of shape (n_cells, n_genes)
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def generate_next_cell_type(self, test_ann_data) -> pd.DataFrame:
+        """
+        Generate next cell type predictions.
+        Returns: pd.DataFrame with cell type predictions
+        """
         raise NotImplementedError("Subclasses should implement this method.")
 
 
@@ -89,15 +146,7 @@ def main(model_class: BaseModel):
     args = parser.parse_args()
     yaml_config = process_yaml(args.yaml_config)
 
-    # if the model outputs already exist, then we skip generation
-    model_output_path = os.path.join(
-        yaml_config["output_path"], yaml_config["output_file_name"]
-    )
-    if os.path.exists(model_output_path):
-        print(
-            f'Generated samples found at {os.path.join(yaml_config["output_path"], yaml_config["output_file_name"])}. Skipping generation.'
-        )
-        return
+    output_path = yaml_config["output_path"]
 
     # Otherwise we have to load the data and train/test the model
     print("Loading dataset...")
@@ -120,23 +169,15 @@ def main(model_class: BaseModel):
     model.train(train_ann_data, all_tps=all_tps)
     print("Training/loading complete.")
 
-    # Generate samples -- we'll move the saving of generated samples outside of this script
-    print(f"Starting generation to {model_output_path}")
-    model.generate(test_ann_data, expected_output_path=model_output_path)
+    # Generate outputs - each required output saved to its own file
+    print(f"Starting generation to {output_path}")
+    model.generate(test_ann_data)
     print("Generation complete.")
 
-    # verify that the output file was created, and that it contains the required columns
-    if not os.path.exists(model_output_path):
-        raise RuntimeError(f"Model output file was not created at {model_output_path}")
-    print(f"Verifying generated output at {model_output_path}")
-
-    # TODO: add generate and train under a try catch which will clean the model output path if anything fails
-    # load the ann data and check for required columns
-    generated_ann_data = sc.read_h5ad(model_output_path)
+    # Verify that all required output files were created
+    print(f"Verifying generated outputs at {output_path}")
     for required_output in model.required_outputs:
-        if required_output.value not in generated_ann_data.obsm.keys():
-            # delete the generated file to avoid confusion
-            os.remove(model_output_path)
-            raise RuntimeError(
-                f"Generated output missing required column: {required_output.value}"
-            )
+        output_file = os.path.join(output_path, required_output.value)
+        if not os.path.exists(output_file):
+            raise RuntimeError(f"Required output file was not created: {output_file}")
+        print(f"    Found {required_output.value}")
