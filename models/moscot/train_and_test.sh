@@ -33,20 +33,9 @@ if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
 else
-    echo "Virtualenv not found at $VENV_DIR. Creating..."
-    python3 -m venv "$VENV_DIR"
-    if [ -f "$VENV_DIR/bin/activate" ]; then
-        # shellcheck disable=SC1091
-        source "$VENV_DIR/bin/activate"
-    else
-        echo "Error: failed to create virtualenv at $VENV_DIR"
-        exit 1
-    fi
-
-    echo "Upgrading pip and installing Moscot into the virtualenv..."
-    pip install --upgrade pip
-    pip install moscot
-    pip install -e . #makes crispy-fishstick accessible in the venv
+    echo "Virtualenv not found at $VENV_DIR. Due to potential package conflicts, and specific GPU requirements for JAX, we will not automate the installation of Moscot and its dependencies."
+    echo "Follow the instructions in the ReadMe.md"
+    exit 1
 fi
 
 # Unset LD_LIBRARY_PATH to avoid potential conflicts with JAX

@@ -2,7 +2,9 @@
 ## Installation
 Run
 ```
+pip install --upgrade pip
 pip install moscot
+pip install -e . #makes crispy-fishstick accessible in the venv
 ```
 and also:
 ```
