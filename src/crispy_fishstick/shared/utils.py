@@ -11,6 +11,16 @@ from crispy_fishstick.shared.constants import (
     PICKLED_DATASET_FILENAME,
 )
 
+DATASET_CACHE_LIMIT = 3  # max number of datasets to cache in memory
+DATASET_IN_MEM_CACHE = {}
+
+
+def clear_dataset_cache():
+    """
+    Clear the in-memory dataset cache.
+    """
+    DATASET_IN_MEM_CACHE.clear()
+
 
 def load_test_dataset(output_path):
     """
@@ -29,7 +39,16 @@ def load_test_dataset(output_path):
     with open(dataset_pkl_path, "rb") as f:
         dataset = pickle.load(f)
 
-    _, test_ann_data = dataset.load_data()
+    test_ann_data = DATASET_IN_MEM_CACHE.get(dataset_pkl_path, None)
+    if test_ann_data is None:
+        _, test_ann_data = dataset.load_data()
+        DATASET_IN_MEM_CACHE[dataset_pkl_path] = test_ann_data
+        if len(DATASET_IN_MEM_CACHE) > DATASET_CACHE_LIMIT:
+            # Remove an arbitrary item (not the most efficient, but simple)
+            DATASET_IN_MEM_CACHE.pop(next(iter(DATASET_IN_MEM_CACHE)))
+    else:
+        print("Loaded test dataset from in-memory cache.")
+
     return test_ann_data
 
 
