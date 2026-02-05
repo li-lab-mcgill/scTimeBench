@@ -9,7 +9,6 @@ from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFact
 
 import numpy as np
 
-import os
 import logging
 
 
@@ -112,11 +111,8 @@ class GraphSimMetric(OntologyBasedMetrics):
         """
         # first let's ensure that it's in the right format
         # we expect it to have the true embeddings and predicted embeddings
-        # for timepoints (1, ..., n) in h5ad format, where we save new embeddings
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        pred_trajectory = self.trajectory_infer_model.infer_trajectory(
-            model_output_file
-        )
+        # for timepoints (1, ..., n) in separate output files
+        pred_trajectory = self.trajectory_infer_model.infer_trajectory(output_path)
 
         logging.debug(f"Predicted trajectory: {pred_trajectory}")
 

@@ -7,15 +7,15 @@ and its timepoints, we want to infer the trajectory structure.
 Examples are the kNN graph-based methods, or the optimal transport based methods.
 """
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputFiles
+from crispy_fishstick.shared.utils import load_test_dataset, load_output_file
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from typing import final
-import scanpy as sc
 import numpy as np
+import pandas as pd
 import logging
 import json
 import hashlib
-from pathlib import Path
 import os
 
 DEFAULT_METHOD = "Classifier"
@@ -92,32 +92,28 @@ class BaseTrajectoryInferMethod:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def _get_next_tp_tensors(self, ann_data):
+    def _get_next_tp_tensors(self, output_path, test_ann_data):
         """
         Based on the use_gene_expr property, get the proper tensors for trajectory inference.
 
         We want to return:
         - Predicted gene expr/embedding at time t (for (1, last t))
         """
-        timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
+        timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
         valid_timepoints = np.where(timepoints < timepoints.max())[0]
 
         if self._parameters()["use_gene_expr"]:
-            return (
-                ann_data.obsm[RequiredOutputFilesEXT_TIMEPOINT_GENE_EXPRESSION.value][
-                    valid_timepoints
-                ],
-                valid_timepoints,
+            next_tp_gex = load_output_file(
+                output_path, RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION
             )
+            return (next_tp_gex[valid_timepoints], valid_timepoints)
         else:
-            return (
-                ann_data.obsm[RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value][
-                    valid_timepoints
-                ],
-                valid_timepoints,
+            next_tp_embed = load_output_file(
+                output_path, RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING
             )
+            return (next_tp_embed[valid_timepoints], valid_timepoints)
 
-    def _get_cur_tp_tensors(self, ann_data):
+    def _get_cur_tp_tensors(self, output_path, test_ann_data):
         """
         Based on the use_gene_expr property, get the proper tensors for trajectory inference.
 
@@ -125,71 +121,73 @@ class BaseTrajectoryInferMethod:
         - Original gene expr/embedding at time t (for all t)
         """
         if self._parameters()["use_gene_expr"]:
-            return ann_data.X.toarray()
+            return test_ann_data.X.toarray()
         else:
-            return ann_data.obsm[RequiredOutputFiles.EMBEDDING.value]
+            return load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
 
-    def _prep_ann_data(self, model_output_file):
+    def _get_traj_infer_path(self, output_path):
         """
-        Prepares the AnnData object for trajectory inference.
+        Get the trajectory inference path based on the hashed config.
         """
-        ann_data = sc.read_h5ad(model_output_file)
+        traj_infer_path = os.path.join(output_path, INFERRED_TRAJ_DIR, self.encode())
+        os.makedirs(traj_infer_path, exist_ok=True)
+        return traj_infer_path
+
+    def _prep_data(self, output_path):
+        """
+        Prepares the data for trajectory inference by loading from output files.
+        Returns the test AnnData and the trajectory inference path.
+        """
+        test_ann_data = load_test_dataset(output_path)
 
         required_obs_columns = [
             ObservationColumns.CELL_TYPE.value,
             ObservationColumns.TIMEPOINT.value,
         ]
 
-        if self.uses_gene_expr():
-            required_obsm_columns = [
-                RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION.value,
-            ]
-        else:
-            required_obsm_columns = [
-                RequiredOutputFiles.EMBEDDING.value,
-                RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value,
-            ]
-
-        alternative_obsm_columns = [
-            RequiredOutputFiles.NEXT_CELLTYPE.value,
-        ]
-
-        if not (
-            all(col in ann_data.obsm.keys() for col in alternative_obsm_columns)
-            or all(col in ann_data.obsm.keys() for col in required_obsm_columns)
-        ):
-            raise ValueError(
-                f"Predicted graph data must have either "
-                f"'{', '.join(required_obsm_columns)}' or "
-                f"'{', '.join(alternative_obsm_columns)}' in observation embeddings."
-            )
-
         for col in required_obs_columns:
-            if col not in ann_data.obs.columns:
+            if col not in test_ann_data.obs.columns:
                 raise ValueError(
-                    f"Predicted graph data must have '{col}' in observation metadata."
+                    f"Test data must have '{col}' in observation metadata."
                 )
 
-        model_output_path = Path(model_output_file).parent
-        traj_infer_path = os.path.join(
-            model_output_path, INFERRED_TRAJ_DIR, self.encode()
-        )
-        os.makedirs(traj_infer_path, exist_ok=True)
+        # Verify required output files exist
+        if self.uses_gene_expr():
+            required_files = [RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION]
+        else:
+            required_files = [
+                RequiredOutputFiles.EMBEDDING,
+                RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
+            ]
 
-        return ann_data, traj_infer_path
+        # Also check for alternative (OT-based) output
+        next_celltype_path = os.path.join(
+            output_path, RequiredOutputFiles.NEXT_CELLTYPE.value
+        )
+
+        if not os.path.exists(next_celltype_path):
+            for required_file in required_files:
+                file_path = os.path.join(output_path, required_file.value)
+                if not os.path.exists(file_path):
+                    raise FileNotFoundError(
+                        f"Required output file not found: {file_path}"
+                    )
+
+        return test_ann_data
 
     @final
     def train_and_predict(
-        self, model_output_file, ann_data=None, traj_infer_path=None, train_only=False
+        self, output_path, test_ann_data=None, traj_infer_path=None, train_only=False
     ):
         """
         Trains and predicts using the trajectory inference model.
 
-        Note that we can specify ann_data and traj_infer_path directly to avoid
+        Note that we can specify test_ann_data and traj_infer_path directly to avoid
         re-loading and re-prepping the data if already done, as well as train_only.
         """
-        if ann_data is None or traj_infer_path is None:
-            ann_data, traj_infer_path = self._prep_ann_data(model_output_file)
+        if test_ann_data is None or traj_infer_path is None:
+            test_ann_data = self._prep_data(output_path)
+            traj_infer_path = self._get_traj_infer_path(output_path)
 
             # now we also write the traj_config to file for future reference
             with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
@@ -198,10 +196,10 @@ class BaseTrajectoryInferMethod:
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
 
         X_train, X_test, y_train, y_test = train_test_split(
             embeddings,
@@ -221,23 +219,24 @@ class BaseTrajectoryInferMethod:
             (self._subclass_predict_probs(X_test), y_test) if not train_only else None
         )
 
-    def train_and_predict_k_fold_cv(self, model_output_file, k):
+    def train_and_predict_k_fold_cv(self, output_path, k):
         """
         Does the train and predict with k-fold cross validation.
 
         We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
         """
-        ann_data, traj_infer_path = self._prep_ann_data(model_output_file)
+        test_ann_data = self._prep_data(output_path)
+        traj_infer_path = self._get_traj_infer_path(output_path)
         k_fold_path = os.path.join(traj_infer_path, f"k_fold_{k}")
         os.makedirs(k_fold_path, exist_ok=True)
 
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
 
         kf = KFold(
             n_splits=k, shuffle=True, random_state=self._parameters()["random_state"]
@@ -265,19 +264,22 @@ class BaseTrajectoryInferMethod:
 
         return predictions
 
-    def predict_next_tp(self, model_output_file, ann_data=None, traj_infer_path=None):
+    def predict_next_tp(self, output_path, test_ann_data=None, traj_infer_path=None):
         """
         Predict the next timepoint cell types using the trajectory inference model.
         """
-        if ann_data is None or traj_infer_path is None:
-            ann_data, traj_infer_path = self._prep_ann_data(model_output_file)
+        if test_ann_data is None or traj_infer_path is None:
+            test_ann_data = self._prep_data(output_path)
+            traj_infer_path = self._get_traj_infer_path(output_path)
 
         logging.debug(
             f"Predicting next timepoint with method: {self.__class__.__name__} and config: {self.traj_config}"
         )
 
         # get the embeddings and timepoints
-        next_timepoint_embeddings, indices = self._get_next_tp_tensors(ann_data)
+        next_timepoint_embeddings, indices = self._get_next_tp_tensors(
+            output_path, test_ann_data
+        )
 
         next_tp_probs_path = os.path.join(traj_infer_path, NEXT_TP_PROBS_FILE)
         next_tp_idxs_path = os.path.join(traj_infer_path, NEXT_TP_INDICES_FILE)
@@ -307,7 +309,7 @@ class BaseTrajectoryInferMethod:
         return next_tp_embed_probs, indices, idx_to_cell_types
 
     @final
-    def infer_trajectory(self, model_output_file):
+    def infer_trajectory(self, output_path):
         """
         Infer the trajectory using kNN graph-based method.
 
@@ -316,10 +318,9 @@ class BaseTrajectoryInferMethod:
         embedding space.
         3. Finally, we consolidate the cell types per time point based on the kNN results.
         """
-        ann_data, traj_infer_path = self._prep_ann_data(model_output_file)
+        traj_infer_path = self._get_traj_infer_path(output_path)
         logging.debug(
             f"Inferring trajectory with method: {self.__class__.__name__} and config: {self.traj_config}"
-            f"AnnData has obsm: {ann_data.obsm.keys()}."
         )
 
         # cache the inferred trajectory in a new folder under
@@ -336,28 +337,37 @@ class BaseTrajectoryInferMethod:
                 inferred_traj = json.load(f)
             return inferred_traj
 
+        test_ann_data = self._prep_data(output_path)
+
         # now we also write the traj_config to file for future reference
         with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
             f.write(str(self))
 
-        # ** Note: if the NEXT_CELLTYPE is already added in, then use that instead (OT methods) **
-        if RequiredOutputFiles.NEXT_CELLTYPE.value in ann_data.obsm.keys():
+        # ** Note: if the NEXT_CELLTYPE file already exists, then use that instead (OT methods) **
+        next_celltype_path = os.path.join(
+            output_path, RequiredOutputFiles.NEXT_CELLTYPE.value
+        )
+        if os.path.exists(next_celltype_path):
             # now let's build the inferred trajectory based on the NEXT_CELLTYPE predictions
             inferred_traj = {}
 
+            # load the next cell types from the parquet file
+            next_celltype_df = pd.read_parquet(next_celltype_path)
+            next_cell_types = next_celltype_df[
+                ObservationColumns.CELL_TYPE.value
+            ].values
+
             # subset for only cells that are not at the last timepoint
-            timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
+            timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
             valid_timepoints = np.where(timepoints < timepoints.max())[0]
 
-            cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][
+            cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
                 valid_timepoints
             ]
-            next_cell_types = ann_data.obsm[RequiredOutputFiles.NEXT_CELLTYPE.value][
-                valid_timepoints
-            ]
+            next_cell_types_valid = next_cell_types[valid_timepoints]
 
             # only look at the indices where next_cell_types is not null
-            for cur_cell, next_cell in zip(cell_types, next_cell_types):
+            for cur_cell, next_cell in zip(cell_types, next_cell_types_valid):
                 if cur_cell not in inferred_traj:
                     inferred_traj[cur_cell] = {}
                 if next_cell not in inferred_traj[cur_cell]:
@@ -369,7 +379,7 @@ class BaseTrajectoryInferMethod:
             # because it does some preprocessing we don't want to repeat
             # this trains a classifier on all the data points
             self.train_and_predict(
-                model_output_file, ann_data, traj_infer_path, train_only=True
+                output_path, test_ann_data, traj_infer_path, train_only=True
             )
 
             logging.debug(
@@ -378,11 +388,13 @@ class BaseTrajectoryInferMethod:
 
             # then we run the predict next timepoint to get the embeddings
             next_tp_embed_probs, indices, idx_to_cell_types = self.predict_next_tp(
-                model_output_file, ann_data, traj_infer_path
+                output_path, test_ann_data, traj_infer_path
             )
 
             # only choose the timepoints that are listed by the timepoint embeddings
-            cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value][indices]
+            cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
+                indices
+            ]
 
             inferred_traj = {}
             # TODO: uncomment the portion below to do it per timepoint -- right now for simplicity we won't include it

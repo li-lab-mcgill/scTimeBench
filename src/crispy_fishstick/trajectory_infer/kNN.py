@@ -115,13 +115,13 @@ class kNN(BaseTrajectoryInferMethod):
 
         return test_probas_array, list(label_to_index.keys())
 
-    def get_kNN_graph(self, model_output_file):
+    def get_kNN_graph(self, output_path):
         """
         Function to get the kNN graph used in the trajectory inference.
 
         This can be useful for visualization or further analysis.
         """
-        self.train_and_predict(model_output_file, train_only=True)
+        self.train_and_predict(output_path, train_only=True)
         assert hasattr(
             self, "knn_model"
         ), "kNN model not found, be sure to save it during training."

@@ -184,8 +184,7 @@ class BaseOTModel(BaseModel):
             for j, cell_idx in enumerate(source_indices):
                 next_cell_types[cell_idx] = inferred_types[j]
 
-        # TODO: change this to return a DataFrame with proper column name
-        return pd.DataFrame({"next_cell_type": next_cell_types})
+        return pd.DataFrame({ObservationColumns.CELL_TYPE.value: next_cell_types})
 
     def _get_next_cell_type_from_transport_plan(
         self, transport_plan, ann_data, dest_mask

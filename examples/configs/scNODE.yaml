@@ -1,9 +1,6 @@
-datasets:
-  - tag: defaultGarciaAlonso
-
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
- - name: GraphSimMetric
+ - name: BaseMetric

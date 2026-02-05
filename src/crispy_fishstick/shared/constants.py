@@ -17,3 +17,6 @@ class RequiredOutputFiles(Enum):
     # This is to be used only for the OT methods which can directly correlate
     # cells to cells, and thus build their lineage this way
     NEXT_CELLTYPE = "next_cell_type.parquet"
+
+
+PICKLED_DATASET_FILENAME = "dataset.pkl"

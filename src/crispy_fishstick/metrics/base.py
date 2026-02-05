@@ -11,7 +11,10 @@ from crispy_fishstick.shared.dataset.base import (
     DATASET_REGISTRY,
     DATASET_FILTER_REGISTRY,
 )
-from crispy_fishstick.shared.constants import RequiredOutputFiles
+from crispy_fishstick.shared.constants import (
+    RequiredOutputFiles,
+    PICKLED_DATASET_FILENAME,
+)
 from crispy_fishstick.database import DatabaseManager
 
 import os
@@ -30,6 +33,15 @@ def register_metric(cls):
     return cls
 
 
+SKIP_METRIC_REGISTRY = {}
+
+
+def skip_metric(cls):
+    """Decorator to register a skip metric class in the SKIP_METRIC_REGISTRY."""
+    SKIP_METRIC_REGISTRY[cls.__name__] = cls
+    return cls
+
+
 # also store a registry of metrics of name to class
 @register_metric
 class BaseMetric:
@@ -43,7 +55,6 @@ class BaseMetric:
         self.config = config
         self.metric_config = metric_config
         self.MODEL_CONFIG_FILENAME = "model_config.yaml"
-        self.PICKLED_DATASET_FILENAME = "dataset.pkl"
         self.params = {}
 
         # skip the preprocessing steps if it has submetrics, as they will handle it themselves
@@ -190,10 +201,29 @@ class BaseMetric:
                     )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
-                # verify that there is the model output where expected
-                assert os.path.exists(
-                    os.path.join(output_path, self.output_path_name.value)
-                ), f"Model output file not found: {os.path.join(output_path, self.output_path_name.value)}"
+                # verify that required output files exist
+                if all(
+                    isinstance(outputs_list, list)
+                    for outputs_list in self.required_outputs
+                ):
+                    # list of list case - check that at least one set exists
+                    outputs_valid = any(
+                        all(
+                            os.path.exists(os.path.join(output_path, output.value))
+                            for output in output_set
+                        )
+                        for output_set in self.required_outputs
+                    )
+                else:
+                    # list case - check all required outputs exist
+                    outputs_valid = all(
+                        os.path.exists(os.path.join(output_path, output.value))
+                        for output in self.required_outputs
+                    )
+
+                assert (
+                    outputs_valid
+                ), f"Required model output files not found in: {output_path}"
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the model
@@ -242,7 +272,7 @@ class BaseMetric:
         # to make our lives easier, we will also pickle our current dataset object
         # and store this in the output directory as well
         # so that the model can load this dataset object directly for training and testing
-        pickled_dataset_path = os.path.join(output_path, self.PICKLED_DATASET_FILENAME)
+        pickled_dataset_path = os.path.join(output_path, PICKLED_DATASET_FILENAME)
         with open(pickled_dataset_path, "wb") as f:
             pickle.dump(dataset, f)
 
@@ -309,6 +339,12 @@ class BaseMetric:
         if self.submetrics:
             for submetric in self.submetrics:
                 # pass in the trajectory inference model as part of the config
+                if submetric.__name__ in SKIP_METRIC_REGISTRY:
+                    logging.info(
+                        f"Skipping metric {submetric.__name__} as it is marked to be skipped."
+                    )
+                    continue
+
                 submetric_instance: BaseMetric = submetric(
                     self.config,
                     self.db_manager,

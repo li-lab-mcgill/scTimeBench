@@ -1,8 +1,10 @@
 """
 Embedding-based metrics.
 """
+from crispy_fishstick.metrics.base import skip_metric
 from crispy_fishstick.metrics.embeddings.base import EmbeddingMetrics
 from crispy_fishstick.shared.constants import RequiredOutputFiles, ObservationColumns
+from crispy_fishstick.shared.utils import load_test_dataset, load_output_file
 from crispy_fishstick.trajectory_infer.base import (
     TrajectoryInferenceMethodFactory,
     BaseTrajectoryInferMethod,
@@ -13,10 +15,8 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import f1_score
 
 import logging
-import os
 import json
 import numpy as np
-import scanpy as sc
 
 
 class TrajectoryEmbeddingMetrics(EmbeddingMetrics):
@@ -48,18 +48,16 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
     def _embedding_eval(self, output_path):
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        ann_data, traj_infer_path = self.trajectory_infer_model._prep_ann_data(
-            model_output_file
-        )
+        test_ann_data = self.trajectory_infer_model._prep_data(output_path)
+        traj_infer_path = self.trajectory_infer_model._get_traj_infer_path(output_path)
 
         # grab the probabilities needed
         probas_and_labels, _ = self.trajectory_infer_model.train_and_predict(
-            model_output_file, ann_data, traj_infer_path
+            output_path, test_ann_data, traj_infer_path
         )
         test_probas, _ = probas_and_labels
         next_tp_probas, _, _ = self.trajectory_infer_model.predict_next_tp(
-            model_output_file, ann_data, traj_infer_path
+            output_path, test_ann_data, traj_infer_path
         )
 
         logging.debug(f"Test probabilities: {test_probas}")
@@ -117,46 +115,25 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
                 "Skipping Gini Index evaluation since trajectory inference model is not kNN."
             )
             return
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        ann_data = sc.read_h5ad(model_output_file)
 
-        required_obs_columns = [
-            ObservationColumns.CELL_TYPE.value,
-            ObservationColumns.TIMEPOINT.value,
-        ]
+        # Load embeddings from output files
+        embeddings = load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
+        next_timepoint_embeddings = load_output_file(
+            output_path, RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING
+        )
 
-        required_obsm_columns = [
-            RequiredOutputFiles.EMBEDDING.value,
-            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value,
-        ]
-
-        for col in required_obs_columns:
-            if col not in ann_data.obs.columns:
-                raise ValueError(
-                    f"Predicted graph data must have '{col}' in observation metadata."
-                )
-        for col in required_obsm_columns:
-            if col not in ann_data.obsm.keys():
-                raise ValueError(
-                    f"Predicted graph data must have '{col}' in observation embeddings."
-                )
-
-        embeddings = ann_data.obsm[RequiredOutputFiles.EMBEDDING.value]
-        next_timepoint_embeddings = ann_data.obsm[
-            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING.value
-        ]
-
-        timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
+        # Load test dataset
+        test_ann_data = load_test_dataset(output_path)
+        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].to_numpy()
+        timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
         valid_timepoints = np.where(timepoints < timepoints.max())[0]
         next_timepoint_embeddings = next_timepoint_embeddings[valid_timepoints]
 
         knn_graph: NearestNeighbors = self.trajectory_infer_model.get_kNN_graph(
-            model_output_file
+            output_path
         )
-
-        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value].to_numpy()
 
         # now let's compute the gini index based on the knn graph
         def calc_gini(indices):
@@ -185,6 +162,7 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
         )
 
 
+@skip_metric
 class ClassifierMetrics(TrajectoryEmbeddingMetrics):
     def _defaults(self):
         return {"f1_average": "weighted", "k_folds": 5}
@@ -205,12 +183,11 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
     def _embedding_eval(self, output_path):
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
         if self.k_folds == 1:
             (
                 pred_probs_and_mapping,
                 true_labels,
-            ) = self.trajectory_infer_model.train_and_predict(model_output_file)
+            ) = self.trajectory_infer_model.train_and_predict(output_path)
             probs, idx_to_cell_map = pred_probs_and_mapping
 
             # now let's get the predicted labels
@@ -229,7 +206,7 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
             )
         else:
             results = self.trajectory_infer_model.train_and_predict_k_fold_cv(
-                model_output_file, self.k_folds
+                output_path, self.k_folds
             )
 
             k_fold_accuracy = 0.0
