@@ -6,7 +6,7 @@ model:
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
- - name: GraphVisualization
-   trajectory_infer_model:
-    model_classifier: true
- - name: StackedDensityPlot
+#  - name: ClassifierMetrics
+#    trajectory_infer_model:
+#     model_classifier: true
+ - name: ClassifierMetrics

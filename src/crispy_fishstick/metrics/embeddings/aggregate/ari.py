@@ -18,7 +18,7 @@ class ARI(AggregateEmbeddingMetrics):
             "resolution": 0.5,
         }
 
-    def _embedding_eval(self, output_path):
+    def _embedding_eval(self, output_path, dataset):
         """
         The embedding-based metric evaluation function.
         """

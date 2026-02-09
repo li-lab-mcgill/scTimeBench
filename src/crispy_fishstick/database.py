@@ -21,7 +21,13 @@ class DatabaseManager:
     def __init__(self, config: Config):
         self.conn = sqlite3.connect(config.database_path)
         self._create_tables()
-        self.table_names = ["model_outputs", "datasets", "metrics", "evals"]
+        self.table_names = [
+            "model_outputs",
+            "datasets",
+            "metrics",
+            "evals",
+            "dataset_metrics",
+        ]
 
     def _create_tables(self):
         cursor = self.conn.cursor()
@@ -67,6 +73,18 @@ class DatabaseManager:
             CREATE TABLE IF NOT EXISTS evals (
                 id INTEGER PRIMARY KEY,
                 model_output_id INTEGER,
+                metric_id INTEGER,
+                result TEXT
+            )
+        """
+        )
+
+        # finally, let's have a table for the dataset metrics, such as different classifiers on dataset 1
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS dataset_metrics (
+                id INTEGER PRIMARY KEY,
+                dataset_id INTEGER,
                 metric_id INTEGER,
                 result TEXT
             )
@@ -251,7 +269,7 @@ class DatabaseManager:
         return eval_row is not None
 
     def insert_eval(
-        self, model: ModelManager, metric_name: str, metric_params: str, result: float
+        self, model: ModelManager, metric_name: str, metric_params: str, result
     ):
         cursor = self.conn.cursor()
 
@@ -400,6 +418,52 @@ class DatabaseManager:
             )
 
         return outputs
+
+    # ** DATASET METRICS **
+    def insert_dataset_metric(
+        self, dataset: BaseDataset, metric_name, metric_params, result
+    ):
+        cursor = self.conn.cursor()
+
+        # first we get the metric id
+        cursor.execute(
+            """
+            SELECT id FROM metrics
+            WHERE name = ? AND parameters = ?
+        """,
+            (metric_name, metric_params),
+        )
+        metric_row = cursor.fetchone()
+        if metric_row is None:
+            raise ValueError("Metric not found in database.")
+        metric_id = metric_row[0]
+
+        # then we get the dataset id
+        cursor.execute(
+            """
+            SELECT id FROM datasets
+            WHERE name = ? AND dataset_dict = ? AND dataset_filters = ?
+        """,
+            (
+                dataset.get_name(),
+                dataset.encode_dataset_dict(),
+                dataset.encode_filters(),
+            ),
+        )
+        dataset_row = cursor.fetchone()
+        if dataset_row is None:
+            raise ValueError("Dataset not found in database.")
+        dataset_id = dataset_row[0]
+
+        # finally we insert the dataset metric
+        cursor.execute(
+            """
+            INSERT INTO dataset_metrics (dataset_id, metric_id, result)
+            VALUES (?, ?, ?)
+        """,
+            (dataset_id, metric_id, result),
+        )
+        self.conn.commit()
 
     # ** CLEAR TABLES **
     def clear_tables(self):

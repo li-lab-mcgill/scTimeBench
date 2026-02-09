@@ -47,7 +47,7 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
         )
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
-    def _embedding_eval(self, output_path):
+    def _embedding_eval(self, output_path, dataset):
         test_ann_data = self.trajectory_infer_model._prep_data(output_path)
         traj_infer_path = self.trajectory_infer_model._get_traj_infer_path(output_path)
 
@@ -109,7 +109,7 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
             logging.warning("Gini Index only supports kNN trajectory inference model.")
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
-    def _embedding_eval(self, output_path):
+    def _embedding_eval(self, output_path, dataset):
         if not isinstance(self.trajectory_infer_model, kNN):
             logging.warning(
                 "Skipping Gini Index evaluation since trajectory inference model is not kNN."
@@ -165,7 +165,7 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
 @skip_metric
 class ClassifierMetrics(TrajectoryEmbeddingMetrics):
     def _defaults(self):
-        return {"f1_average": "weighted", "k_folds": 5}
+        return {"f1_average": "weighted", "k_folds": 3}
 
     def _setup_trajectory_inference_model(self):
         # by default we use the classifier trajectory inference model
@@ -182,7 +182,16 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
         )
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
-    def _embedding_eval(self, output_path):
+    def _embedding_eval(self, output_path, dataset):
+        output = self._classifier_metrics_eval(output_path)
+        if self.trajectory_infer_model.uses_gene_expr():
+            self.db_manager.insert_dataset_metric(
+                dataset, self.__class__.__name__, self._get_param_encoding(), output
+            )
+            return
+        return output
+
+    def _classifier_metrics_eval(self, output_path):
         if self.k_folds == 1:
             (
                 pred_probs_and_mapping,
@@ -234,7 +243,8 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
 
             return json.dumps(
                 {
-                    "k_fold_accuracy": fold_accuracy,
-                    "k_fold_f1_score": fold_f1,
+                    "k_fold_accuracy": k_fold_accuracy,
+                    "k_fold_f1_score": k_fold_f1,
+                    "k": self.k_folds,
                 }
             )
