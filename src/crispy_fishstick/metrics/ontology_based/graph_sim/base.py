@@ -1,16 +1,14 @@
 """
 Graph Similarity Metric Base Class
 """
-from crispy_fishstick.metrics.base import OutputPathName
 from crispy_fishstick.metrics.ontology_based.base import OntologyBasedMetrics
-from crispy_fishstick.shared.constants import RequiredOutputColumns
+from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.shared.helpers import parse_cell_lineage
 from crispy_fishstick.shared.dataset.filters.lineage import LineageDatasetFilter
 from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import numpy as np
 
-import os
 import logging
 
 
@@ -41,21 +39,19 @@ class GraphSimMetric(OntologyBasedMetrics):
         # where we define the output embedding name
         # as well as the required features and outputs
         if self.trajectory_infer_model.uses_gene_expr():
-            self.output_path_name = OutputPathName.GRAPH_SIM_WITH_GENE_EXPR
             primary_outputs = [
-                RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION,
+                RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
             ]
         else:
-            self.output_path_name = OutputPathName.GRAPH_SIM
             primary_outputs = [
-                RequiredOutputColumns.EMBEDDING,
-                RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
+                RequiredOutputFiles.EMBEDDING,
+                RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
             ]
 
         # allow alternate outputs for OT-based methods
         self.required_outputs = [
             primary_outputs,
-            [RequiredOutputColumns.NEXT_CELLTYPE],
+            [RequiredOutputFiles.NEXT_CELLTYPE],
         ]
 
     def _build_ref_graph(self, dataset):
@@ -115,11 +111,8 @@ class GraphSimMetric(OntologyBasedMetrics):
         """
         # first let's ensure that it's in the right format
         # we expect it to have the true embeddings and predicted embeddings
-        # for timepoints (1, ..., n) in h5ad format, where we save new embeddings
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        pred_trajectory = self.trajectory_infer_model.infer_trajectory(
-            model_output_file
-        )
+        # for timepoints (1, ..., n) in separate output files
+        pred_trajectory = self.trajectory_infer_model.infer_trajectory(output_path)
 
         logging.debug(f"Predicted trajectory: {pred_trajectory}")
 

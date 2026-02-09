@@ -17,7 +17,7 @@ import torch
 from sklearn.decomposition import PCA
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 from MIOFlow.utils import set_seeds, config_criterion
 from MIOFlow.models import make_model, Autoencoder
@@ -38,8 +38,10 @@ def prepare_data(ann_data, all_tps: List, pca_dims: int, seed: int):
     # get the time points
     cell_tps = ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
     if not all_tps:
-        raise ValueError("all_tps must be provided for MIOFlow to build a stable timepoint mapping across splits.")
-    #Use train+test timepoints to create mapping
+        raise ValueError(
+            "all_tps must be provided for MIOFlow to build a stable timepoint mapping across splits."
+        )
+    # Use train+test timepoints to create mapping
     unique_tps = sorted(np.unique(all_tps))
 
     # Fit PCA on all available training data in this runner
@@ -56,7 +58,9 @@ def prepare_data(ann_data, all_tps: List, pca_dims: int, seed: int):
     return df, unique_tps, tp_to_idx, pca
 
 
-def model_setup(model_features: int, layers: List[int], n_timepoints: int, use_cuda: bool):
+def model_setup(
+    model_features: int, layers: List[int], n_timepoints: int, use_cuda: bool
+):
     # Model setup
     sde_scales = [0.2] * n_timepoints
     return make_model(
@@ -77,11 +81,15 @@ def model_training(
     use_cuda: bool,
 ):
     # Model training
-    n_local_epochs = metadata.get("n_local_epochs", 1) # TODO updated back to 20
-    n_epochs = metadata.get("n_epochs", 1) # TODO  updated back to 80
+    n_local_epochs = metadata.get("n_local_epochs", 1)  # TODO updated back to 20
+    n_epochs = metadata.get("n_epochs", 1)  # TODO  updated back to 80
     n_post_local_epochs = metadata.get("n_post_local_epochs", 0)
-    batch_size = metadata.get("batch_size", 64) #TODO re-evaluate appropriate batch size
-    layers = [int(x) for x in metadata.get("layers", "16,32,16").split(",") if x.strip() != ""]
+    batch_size = metadata.get(
+        "batch_size", 64
+    )  # TODO re-evaluate appropriate batch size
+    layers = [
+        int(x) for x in metadata.get("layers", "16,32,16").split(",") if x.strip() != ""
+    ]
     lambda_density = metadata.get("lambda_density", 5.0)
     use_density_loss = metadata.get("use_density_loss", False)
 
@@ -93,7 +101,7 @@ def model_training(
     ot_lambda_global = {i: 1.0 for i in range(len(groups))}
 
     training_regimen(
-        sample_with_replacement=True, ## TODO assess if this should be used or addressed elsewhere
+        sample_with_replacement=True,  ## TODO assess if this should be used or addressed elsewhere
         n_local_epochs=n_local_epochs,
         n_epochs=n_epochs,
         n_post_local_epochs=n_post_local_epochs,
@@ -128,7 +136,7 @@ def model_training(
 
 
 class MIOFlow(BaseModel):
-    def train(self, ann_data,all_tps = None):
+    def train(self, ann_data, all_tps=None):
         """
         Training logic for MIOFlow.
         """
@@ -158,7 +166,11 @@ class MIOFlow(BaseModel):
             print("Trained MIOFlow model found, loading from file.")
             cache = torch.load(cache_path, map_location="cpu")
             cached_tps = cache.get("all_tps")
-            if expected_tps is not None and cached_tps is not None and list(cached_tps) != list(expected_tps):
+            if (
+                expected_tps is not None
+                and cached_tps is not None
+                and list(cached_tps) != list(expected_tps)
+            ):
                 print("Cached MIOFlow model timepoints mismatch; retraining.")
             elif expected_tps is not None and cached_tps is None:
                 print("Cached MIOFlow model missing timepoint mapping; retraining.")
@@ -189,7 +201,7 @@ class MIOFlow(BaseModel):
 
         df_train, unique_tps, tp_to_idx, pca = prepare_data(
             ann_data,
-            all_tps = all_tps,
+            all_tps=all_tps,
             pca_dims=pca_dims,
             seed=seed,
         )
@@ -209,7 +221,9 @@ class MIOFlow(BaseModel):
                 if encoder_layers[0] != pca_dims:
                     raise ValueError("First GAE encoder layer must match pca_dims.")
                 if encoder_layers[-1] != gae_embedded_dim:
-                    raise ValueError("Last GAE encoder layer must match gae_embedded_dim.")
+                    raise ValueError(
+                        "Last GAE encoder layer must match gae_embedded_dim."
+                    )
 
             dist = setup_distance(
                 distance_type,
@@ -246,7 +260,11 @@ class MIOFlow(BaseModel):
             gae_encoder_layers_cache = None
 
         model_features = gae_embedded_dim if use_gae else pca_dims
-        layers = [int(x) for x in metadata.get("layers", "16,32,16").split(",") if x.strip() != ""]
+        layers = [
+            int(x)
+            for x in metadata.get("layers", "16,32,16").split(",")
+            if x.strip() != ""
+        ]
 
         metadata["output_path"] = self.config["output_path"]
         metadata["autoencoder"] = autoencoder
@@ -278,20 +296,23 @@ class MIOFlow(BaseModel):
 
         torch.save(cache_payload, cache_path)
 
-    def generate(self, test_ann_data, expected_output_path):
+    def _generate_all_embeddings(self, test_ann_data):
         """
-        Generation logic with interpolation for MIOFlow.
-        Returns an AnnData object containing the generated samples.
+        Generate embeddings for all timepoints using trained model.
+        Returns tuple of (current_embeds, next_embeds, cell_tps, unique_tps).
+        Caches results for reuse.
         """
+        if hasattr(self, "_cached_embeddings"):
+            return self._cached_embeddings
+
         self.model.eval()
 
-        final_ann_data = test_ann_data.copy()
-
-        # Generate embeddings for all timepoints using trained model
         all_tp_indices = [self.tp_to_idx[tp] for tp in sorted(self.tp_to_idx.keys())]
         cell_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
         unique_tps = sorted(np.unique(cell_tps))
-        n_sim_cells = test_ann_data[test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == unique_tps[0]].shape[0]
+        n_sim_cells = test_ann_data[
+            test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == unique_tps[0]
+        ].shape[0]
 
         if self.df_train is None:
             # Rebuild a minimal df for generation when model loaded from cache
@@ -349,6 +370,7 @@ class MIOFlow(BaseModel):
         else:
             raise ValueError(f"Unexpected generated shape: {generated.shape}")
 
+        # Current timepoint embeddings
         embeds = np.empty((test_ann_data.n_obs, n_features), dtype=generated.dtype)
         for tp in unique_tps:
             mask = cell_tps == tp
@@ -358,27 +380,37 @@ class MIOFlow(BaseModel):
             gen_pos = tp_to_gen_pos[tp_idx]
             embeds[mask] = _select_generated(generated, gen_pos, int(mask.sum()))
 
-        if RequiredOutputColumns.EMBEDDING in self.required_outputs:
-            final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
+        # Next timepoint embeddings
+        next_embeds = np.full(
+            (test_ann_data.n_obs, n_features), np.nan, dtype=generated.dtype
+        )
+        for i, tp in enumerate(unique_tps):
+            mask = cell_tps == tp
+            if i + 1 >= len(unique_tps):
+                continue
+            next_tp = unique_tps[i + 1]
+            next_idx = self.tp_to_idx.get(next_tp)
+            if next_idx is None or next_idx not in tp_to_gen_pos:
+                continue
+            gen_pos = tp_to_gen_pos[next_idx]
+            next_embeds[mask] = _select_generated(generated, gen_pos, int(mask.sum()))
 
-        if RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING in self.required_outputs:
-            next_embeds = np.full((test_ann_data.n_obs, n_features), np.nan, dtype=generated.dtype)
-            for i, tp in enumerate(unique_tps):
-                mask = cell_tps == tp
-                if i + 1 >= len(unique_tps):
-                    continue
-                next_tp = unique_tps[i + 1]
-                next_idx = self.tp_to_idx.get(next_tp)
-                if next_idx is None or next_idx not in tp_to_gen_pos:
-                    continue
-                gen_pos = tp_to_gen_pos[next_idx]
-                next_embeds[mask] = _select_generated(generated, gen_pos, int(mask.sum()))
+        self._cached_embeddings = (embeds, next_embeds, cell_tps, unique_tps)
+        return self._cached_embeddings
 
-            final_ann_data.obsm[
-                RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
-            ] = next_embeds
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        """
+        embeds, _, _, _ = self._generate_all_embeddings(test_ann_data)
+        return embeds
 
-        final_ann_data.write_h5ad(expected_output_path)
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
+        _, next_embeds, _, _ = self._generate_all_embeddings(test_ann_data)
+        return next_embeds
 
 
 if __name__ == "__main__":

@@ -2,11 +2,12 @@
 Graph Similarity Metric Base Class
 """
 from crispy_fishstick.metrics.embeddings.aggregate.base import AggregateEmbeddingMetrics
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputFiles
+from crispy_fishstick.shared.utils import load_test_dataset, load_output_file
 
-import os
 import logging
 import scanpy as sc
+import anndata
 from sklearn.metrics import adjusted_rand_score
 
 
@@ -21,17 +22,24 @@ class ARI(AggregateEmbeddingMetrics):
         """
         The embedding-based metric evaluation function.
         """
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        adata = sc.read_h5ad(model_output_file)
+        # Load embeddings from the output file
+        embeddings = load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
 
-        true_labels = adata.obs[ObservationColumns.CELL_TYPE.value].values
+        # Load test dataset to get true cell type labels
+        test_ann_data = load_test_dataset(output_path)
+        true_labels = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].values
+
+        # Create an AnnData object with embeddings for scanpy operations
+        adata = anndata.AnnData(X=embeddings)
+        adata.obs[ObservationColumns.CELL_TYPE.value] = true_labels
+        adata.obsm["X_embedding"] = embeddings
 
         # silence the numba warnings
         logging.getLogger("numba").setLevel(logging.WARNING)
 
         sc.pp.neighbors(
             adata,
-            use_rep=RequiredOutputColumns.EMBEDDING.value,
+            use_rep="X_embedding",
             n_neighbors=self.n_neighbors,
         )
         sc.tl.leiden(adata, key_added="leiden_clusters", resolution=self.resolution)
