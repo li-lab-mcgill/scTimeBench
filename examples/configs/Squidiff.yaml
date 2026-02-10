@@ -4,14 +4,44 @@ datasets:
     # these filters need to be in order!
     filters:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/simple_cell_line.txt
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
       - name: CopySplitFilter
-
+  - name: SuoDataset
+    data_path: ./data/suo/main.h5ad
+    # note: these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: NaiveSplitDatasetFilter
+        train_pct: 0.8
 model:
   name: Squidiff
   train_and_test_script: ./models/Squidiff/train_and_test.sh
   metadata:
-    epochs: 1
+    lr: 1.0e-4
+    weight_decay: 0.0
+    lr_anneal_steps: 100000
+    batch_size: 64
+    microbatch: -1
+    ema_rate: "0.9999"
+    log_interval: 10000
+    save_interval: 10000
+    schedule_sampler: uniform
+    diffusion_steps: 1000
+    num_layers: 3
+    class_cond: false
+    use_encoder: true
+    use_fp16: false
+    fp16_scale_growth: 1.0e-3
+    use_ddim: true
+    use_drug_structure: false
+    comb_num: 1
+    drug_dimension: 1024
+    control_data_path: ""
+
 
 metrics:
  - name: GraphEditDistance
+ - name: AverageShortestPathDiff
+ - name: JaccardSimilarity

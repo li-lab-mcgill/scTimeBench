@@ -4,14 +4,47 @@ datasets:
     # these filters need to be in order!
     filters:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/simple_cell_line.txt
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
       - name: CopySplitFilter
-
+  - name: SuoDataset
+    data_path: ./data/suo/main.h5ad
+    # note: these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: NaiveSplitDatasetFilter
+        train_pct: 0.8
 model:
   name: PRESCIENT
   train_and_test_script: ./models/PRESCIENT/train_and_test.sh
   metadata:
-    epochs: 1
+    pretrain_epochs: 100
+    train_epochs: 100
+    train_lr: 0.01
+    train_dt: 0.1
+    train_sd: 0.5
+    train_tau: 1.0e-6
+    train_batch: 0.1
+    train_clip: 0.25
+    save: 100
+    pretrain: true
+    train: true
+    seed: 2
+    gpu: 0
+    weight: weight
+    weight_name: null
+    loss: euclidean
+    k_dim: 500
+    activation: softplus
+    layers: 1
+    num_neighbors_umap: 10
+    n_sim_cells: 2000
+    epoch: best
 
 metrics:
  - name: GraphEditDistance
+ - name: AverageShortestPathDiff
+ - name: JaccardSimilarity
+ - name: ARI
+ - name: ClassificationEntropy

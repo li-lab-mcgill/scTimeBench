@@ -156,7 +156,8 @@ class MIOFlow(BaseModel):
 
         if os.path.exists(cache_path):
             print("Trained MIOFlow model found, loading from file.")
-            cache = torch.load(cache_path, map_location="cpu")
+            # Cache contains a fitted sklearn PCA object; allow full unpickling for trusted cache files.
+            cache = torch.load(cache_path, map_location="cpu", weights_only=False)
             cached_tps = cache.get("all_tps")
             if expected_tps is not None and cached_tps is not None and list(cached_tps) != list(expected_tps):
                 print("Cached MIOFlow model timepoints mismatch; retraining.")

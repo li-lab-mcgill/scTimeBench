@@ -1,11 +1,46 @@
 datasets:
-  - tag: defaultGarciaAlonso
-
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    # these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: CopySplitFilter
+  - name: SuoDataset
+    data_path: ./data/suo/main.h5ad
+    # note: these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: NaiveSplitDatasetFilter
+        train_pct: 0.8
 model:
   name: MIOFlow
   train_and_test_script: ./models/MIOFlow/train_and_test.sh
   metadata:
-    epochs: 1
+    n_local_epochs: 20
+    n_epochs: 80
+    n_post_local_epochs: 0
+    batch_size: 64
+    layers: "16,32,16"
+    lambda_density: 5.0
+    use_density_loss: false
+    pca_dims: 50
+    seed: 0
+    use_gae: false
+    gae_embedded_dim: 32
+    gae_encoder_layers: ""
+    n_epochs_gae: 10
+    gae_sample_size: 30
+    distance_type: gaussian
+    rbf_length_scale: 0.5
+    knn: 5
+    t_max: 5
 
 metrics:
- - name: BaseMetric
+ - name: GraphEditDistance
+ - name: AverageShortestPathDiff
+ - name: JaccardSimilarity
+ - name: ARI
+ - name: ClassificationEntropy

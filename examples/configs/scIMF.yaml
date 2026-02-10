@@ -1,0 +1,53 @@
+##TODO 
+# 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: auto_device
+# 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: cache_n_cells
+# 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: cuda_device
+# 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: leaveouts
+# 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: use_cuda
+
+datasets:
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    # these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: CopySplitFilter
+  - name: SuoDataset
+    data_path: ./data/suo/main.h5ad
+    # note: these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: NaiveSplitDatasetFilter
+        train_pct: 0.8
+model:
+  name: scIMF
+  train_and_test_script: ./models/scIMF/train_and_test.sh
+  metadata:
+    train_epochs: 200
+    train_lr: 0.001
+    train_batch: 64
+    train_clip: 1.0
+    save: 100
+    seed: 0
+    latent_dim: 50
+    sinkhorn_blur: 0.05
+    sinkhorn_scaling: 0.9
+    lambda_marginal: 1.0
+    use_intLoss: false
+    use_cuda: true
+    cuda_device: 0
+    auto_device: true
+    leaveouts: null
+    dataset: AnnData
+    cache_n_cells: 2000
+
+
+metrics:
+ - name: GraphEditDistance
+ - name: AverageShortestPathDiff
+ - name: JaccardSimilarity
+ - name: ARI
+ - name: ClassificationEntropy

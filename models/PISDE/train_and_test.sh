@@ -48,6 +48,7 @@ else
     if [ -f "./models/PISDE/PISDE_module/requirements.txt" ]; then
         pip install -r ./models/PISDE/PISDE_module/requirements.txt
         pip install trampoline
+        pip install boltons
     else
         echo "Warning: PI-SDE requirements.txt not found at ./models/PISDE/PISDE_module/requirements.txt"
     fi

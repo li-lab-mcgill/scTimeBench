@@ -169,7 +169,7 @@ class PISDE(BaseModel):
 
         if os.path.exists(cache_path):
             print("Trained PI-SDE model cache found, loading from file.")
-            cache = torch.load(cache_path, map_location="cpu")
+            cache = torch.load(cache_path, map_location="cpu",weights_only=False)
             self.data_path = cache["data_path"]
             self.config_dir = cache["config_dir"]
             self.unique_tps = cache["unique_tps"]
@@ -291,14 +291,14 @@ class PISDE(BaseModel):
         n_sim_cells = int(metadata.get("n_sim_cells", 2000))
 
         config_pt = os.path.join(self.config_dir, "config.pt")
-        config_dict = torch.load(config_pt)
+        config_dict = torch.load(config_pt,weights_only=False)
         config = SimpleNamespace(**config_dict)
 
         device = torch.device(f"cuda:{config.device}" if config.use_cuda and torch.cuda.is_available() else "cpu")
 
         model = ForwardSDE(config)
         ckpt_path = _select_checkpoint(config)
-        checkpoint = torch.load(ckpt_path, map_location="cpu")
+        checkpoint = torch.load(ckpt_path, map_location="cpu",weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
         model.to(device)
         model.eval()

@@ -283,7 +283,7 @@ class PRESCIENT(BaseModel):
         self.tp_to_idx = tp_to_idx
 
         data_path = os.path.join(self.config["output_path"], "prescient_data.pt")
-        torch.save(data_pt, data_path)
+        torch.save(data_pt, data_path, pickle_protocol=4)
 
         min_cells = min(len(x) for x in data_pt["xp"])
         if min_cells == 0:
@@ -342,6 +342,7 @@ class PRESCIENT(BaseModel):
                 "model_dir": self.model_dir,
             },
             cache_path,
+            pickle_protocol=4,
         )
 
     def generate(self, test_ann_data, expected_output_path):

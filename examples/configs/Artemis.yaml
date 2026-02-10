@@ -1,0 +1,97 @@
+datasets:
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    # these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: CopySplitFilter
+  - name: SuoDataset
+    data_path: ./data/suo/main.h5ad
+    # note: these filters need to be in order!
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: NaiveSplitDatasetFilter
+        train_pct: 0.8
+
+
+model:
+  name: Artemis 
+  train_and_test_script: ./models/Artemis/train_and_test.sh
+  metadata:
+    # dataset + training control
+    dataset: AnnData
+    seed: 0
+    project_name: benchmark
+    epochs: 1
+    vae_epochs: 100
+    steps_num: 100
+    batch_size: 512
+    objective: divergence
+    val_split: false
+    f_val: null
+    std_threshold: 2.0
+    cutoff: 0.2
+    hvg_n_top: 3000
+
+    # birth/death options
+    disable_birth_death: true
+    diagnostics: true
+    fallback_to_train_latent_on_nan: true
+    allow_resample_candidates: true
+    splitting_births_frac: 0.2
+    death_importance_rate: 100
+    mb_prior: 5.0
+
+    # model architecture
+    hidden_dim: [64, 64]
+    dec_hidden_dim: [64, 64, 1]
+    ferryman_hidden_dim: [64]
+    ferryman_activate_final: true
+    ipf_mask_dead: false
+    reality_coefficient: 0.1
+    paths_reuse: 5
+    num_sde: 10
+    resnet: false
+    feature_spatial_loss: false
+    t_dim: 16
+
+    # VAE options
+    vae_input_dim: null
+    vae_enc_hidden_dim: [512, 512]
+    vae_dec_hidden_dim: [512, 512]
+    vae_t_dim: 8
+    vae_latent_dim: 64
+    vae_batch_size: 64
+    calc_latent_loss: true
+    calc_recon_loss: true
+    use_sinkhorn_recon_loss: false
+    use_sinkhorn_latent_loss: true
+
+    # optimizer
+    lr: 0.001
+    ferryman_lr: 0.001
+    vae_lr: 0.001
+    beta1: 0.9
+    beta2: 0.999
+    ferryman_coeff: 1.0
+
+    # schedule
+    td_coeff: null
+    td_schedule: null
+
+    # data/annotation hints
+    meta_celltype_column: null
+    eps: 1.0e-7
+    max_sim_cells: 2000
+
+
+
+metrics:
+ - name: GraphEditDistance
+ - name: AverageShortestPathDiff
+ - name: JaccardSimilarity
+ - name: ARI
+ - name: ClassificationEntropy

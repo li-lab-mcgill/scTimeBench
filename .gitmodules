@@ -12,3 +12,6 @@
 [submodule "models/Artemis/Artemis_module"]
 	path = models/Artemis/Artemis_module
 	url = https://github.com/daifengwanglab/ARTEMIS
+[submodule "models/MNN/MNN_module"]
+	path = models/MNN/MNN_module
+	url = https://github.com/alpz/mech-nn

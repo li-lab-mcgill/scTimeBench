@@ -180,7 +180,7 @@ class scIMF(BaseModel):
 
         if os.path.exists(cache_path):
             print("Trained scIMF model found, loading from file.")
-            cache = torch.load(cache_path, map_location="cpu")
+            cache = torch.load(cache_path, map_location="cpu",weights_only=False)
             self.tp_to_idx = cache["tp_to_idx"]
             self.idx_to_tp = {i: tp for tp, i in self.tp_to_idx.items()}
             self.pca_model = cache["pca_model"]
