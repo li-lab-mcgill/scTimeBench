@@ -7,8 +7,8 @@ name = "crispy_fishstick"  # This is the name you use for 'pip install'
 version = "0.1"
 dependencies = [
     "PyYAML",
-    "scanpy[leiden]",
-    "scikit_learn",
+    "scanpy",
+    "scikit_learn>=1.7",
     "fastparquet",
     "pyarrow",
 ]
@@ -27,7 +27,8 @@ benchmark = [
     "networkx",
     "numpy",
     "geomloss",
-    "pykeops"
+    "pykeops",
+    "scanpy[leiden]"
 ]
 graphviz = [
     "graphviz"
@@ -35,6 +36,19 @@ graphviz = [
 celltypist = [
     "celltypist"
 ]
+pypsupertime = [
+    "pypsupertime",
+]
 
 [project.scripts]
 crispy_fishstick = "crispy_fishstick.main:main"
+
+# --- UV SPECIFIC CONFIGURATION ---
+
+[tool.uv]
+# This tells uv that psupertime is part of your development 'workspace'
+workspace = { members = ["extern/psupertime"] }
+
+[tool.uv.sources]
+# This ensures uv looks in your submodule folder and treats it as an editable install.
+pypsupertime = { editable = true, workspace = true }

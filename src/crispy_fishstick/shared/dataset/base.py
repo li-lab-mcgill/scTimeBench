@@ -3,6 +3,7 @@ Base filter for datasets. Every metric will likely require different splits of t
 data, so this base class will define the necessary interface for dataset preprocessing.
 """
 from crispy_fishstick.shared.constants import ObservationColumns, DATASET_DIR
+import scanpy as sc
 import json
 import hashlib
 import os
@@ -57,6 +58,8 @@ class BaseDataset:
         self.dataset_dict = dataset_dict
         self.dataset_filters = dataset_filters
         self.output_dir = output_dir
+        self.TRAIN_PROCESSED_DATA_FILE = "train_processed_data.h5ad"
+        self.TEST_PROCESSED_DATA_FILE = "test_processed_data.h5ad"
 
     def __init_subclass__(cls):
         register_dataset(cls)
@@ -114,7 +117,23 @@ class BaseDataset:
         3. Drop everything else not required, to speed up processing.
         4. Apply the dataset filters provided.
         5. Return the train and test splits.
+
+        Update:
+        > Because I'm getting annoyed about the dependency hell we need for psupertime...
+        > I've decided that the best way forward is to simply add pypsupertime as a possible
+        > thing to have, but not necessary. Instead, we would require them to run the preprocessing
+        > ahead of time, which is what this function does -- loads the data (running them through the filter)
+        > and saving them to their respective output directory.
         """
+        output_dir = self.get_dataset_dir()
+        train_data_path = os.path.join(output_dir, self.TRAIN_PROCESSED_DATA_FILE)
+        test_data_path = os.path.join(output_dir, self.TEST_PROCESSED_DATA_FILE)
+        if os.path.exists(train_data_path) and os.path.exists(test_data_path):
+            print(
+                f"Processed dataset already exists at {train_data_path}. Skipping creation."
+            )
+            return sc.read_h5ad(train_data_path), sc.read_h5ad(test_data_path)
+
         self._load_data()
 
         # now let's verify that the necessary columns exist
@@ -156,6 +175,14 @@ class BaseDataset:
         assert (
             encountered_split
         ), "At least one dataset filter must produce train-test splits."
+
+        # here we save it if we require caching
+        if self.dataset_dict["requires_caching"]:
+            os.makedirs(output_dir, exist_ok=True)
+            train_data, test_data = self.data
+            train_data.write_h5ad(train_data_path)
+            test_data.write_h5ad(test_data_path)
+
         return self.data
 
     def __str__(self):

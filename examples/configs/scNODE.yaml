@@ -1,15 +1,9 @@
 datasets:
-  - tag: defaultGarciaAlonso
+  - tag: defaultGarciaAlonsoPsupertime
 
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
-#  - name: ClassifierMetrics
-#    trajectory_infer_model:
-#     model_classifier: true
- - name: GraphVisualization
- - name: ClassifierMetrics
-   trajectory_infer_model:
-    name: Classifier
+ - name: GraphSimMetric

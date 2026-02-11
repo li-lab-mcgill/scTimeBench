@@ -1,6 +1,7 @@
 # Virtual environment directory
 venv/
 venv
+.old_venv/
 
 # Database files
 *.db
@@ -9,6 +10,10 @@ outputs/
 logs/
 data
 data/
+
+# UV stuff
+.python-version
+uv.lock
 
 # Symlinks
 symlinks/

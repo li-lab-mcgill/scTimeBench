@@ -4,7 +4,6 @@ Split anndata object into training and test sets based on timepoints.
 
 from crispy_fishstick.shared.dataset.base import BaseDatasetFilter
 from crispy_fishstick.shared.constants import ObservationColumns
-import random
 
 
 class TimeSplitDatasetFilter(BaseDatasetFilter):
@@ -37,6 +36,4 @@ class TimeSplitDatasetFilter(BaseDatasetFilter):
         train_data = ann_data[train_indices].copy()
         test_data = ann_data[test_indices].copy()
 
- 
         return train_data, test_data
-

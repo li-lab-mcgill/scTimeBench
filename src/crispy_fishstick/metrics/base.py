@@ -207,6 +207,17 @@ class BaseMetric:
                     )
 
                 if not required_outputs_exist:
+                    # before running to train and test, we check if the dataset
+                    # requires caching, and if so, then we run to cache ahead of time
+                    # We do this because some filters (e.g., psupertime)
+                    # require the dataset to be preprocessed with a certain module
+                    # which may not exist in other models.
+                    if dataset.dataset_dict["requires_caching"]:
+                        logging.info(
+                            f"Dataset {dataset} requires caching. Caching now before training and testing the model."
+                        )
+                        dataset.load_data()
+
                     model.train_and_test(
                         os.path.join(output_path, MODEL_CONFIG_FILENAME)
                     )

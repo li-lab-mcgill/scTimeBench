@@ -1,17 +1,37 @@
 # Crispy-Fishstick
 ## Setup
-To start, please install the crispy-fishstick package with:
+Due to external dependencies and a more complex setup, we have decided to package everything under `uv` (see: https://github.com/astral-sh/uv). To start with, install `uv` then run the following:
 ```
-pip install -e ".[benchmark]"
+uv sync
 ```
-
 This allows you to create model run files that use the necessary constants and model runners under the crispy fishstick packages.
 
 Note: for the other models, we don't need all the dependencies so for example, if you're setting up the moscot environment,
 ```
-pip install -e .
+uv sync --no-dev
 ```
 is enough.
+
+For other packages depending on the metrics used, it would be useful to install them with:
+```
+uv sync --extra <dependency-group>
+```
+e.g.:
+```
+uv sync --extra test --extra dev --extra benchmark --extra graphviz --extra celltypist
+```
+or simply
+```
+uv sync --all-extras
+```
+
+## Python Version
+We also set the Python version to be 3.10. This will likely cause issues in other python versions, so do try to use:
+```
+uv python install 3.10
+uv python pin 3.10
+```
+before running uv sync.
 
 ## Detailed Layout of File Structure
 - `examples/` defines the examples
