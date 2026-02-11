@@ -24,12 +24,12 @@ datasets:
   - name: SuoDataset
     tag: defaultSuoPsupertime
     data_path: ./data/suo/main.h5ad
-    requires_caching: true
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
       - name: RoundingFilter
+        round_to_k: 1
       - name: PsupertimeFilter
         preprocess_type: hvg
       - name: CopySplitFilter
@@ -37,12 +37,12 @@ datasets:
   - name: GarciaAlonsoDataset
     tag: defaultGarciaAlonsoPsupertime
     data_path: ./data/garcia-alonso/human_germ.h5ad
-    requires_caching: true
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/germ/equal_names.txt
       - name: RoundingFilter
+        round_to_k: 1
       - name: PsupertimeFilter
         preprocess_type: hvg
       - name: CopySplitFilter
