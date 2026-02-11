@@ -212,7 +212,7 @@ class BaseMetric:
                     # We do this because some filters (e.g., psupertime)
                     # require the dataset to be preprocessed with a certain module
                     # which may not exist in other models.
-                    if dataset.dataset_dict["requires_caching"]:
+                    if dataset.requires_caching():
                         logging.info(
                             f"Dataset {dataset} requires caching. Caching now before training and testing the model."
                         )

@@ -30,6 +30,8 @@ datasets:
       - name: RoundingFilter
       - name: PsupertimeFilter
         preprocess_type: hvg
+      - name: RoundingFilter
+        round_to_k: 1
       - name: CopySplitFilter
 
   - name: GarciaAlonsoDataset
@@ -42,4 +44,6 @@ datasets:
       - name: RoundingFilter
       - name: PsupertimeFilter
         preprocess_type: hvg
+      - name: RoundingFilter
+        round_to_k: 1
       - name: CopySplitFilter

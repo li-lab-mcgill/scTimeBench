@@ -25,6 +25,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         super().__init__(dataset_dict)
         self.PCA_FILE = "pca_model.pkl"
         self.preprocess_type = PreprocessType(preprocess_type)
+        self.PSEUDOTIME_FILE = "pseudotime.npy"
 
     def _parameters(self):
         """
@@ -32,18 +33,25 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         """
         params = {
             "preprocess_type": self.preprocess_type.value,
-            "n_cells_train": self.dataset_dict.get("n_cells_train", 2000),
+            "n_cells_train": self.dataset_dict.get("n_cells_train", 1000),
         }
 
         if self.preprocess_type == PreprocessType.PCA:
             params["pca_components"] = self.dataset_dict.get("pca_components", 50)
         elif self.preprocess_type == PreprocessType.HVG:
-            params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 3000)
+            params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
 
         return {
             **super()._parameters(),
             **params,
         }
+
+    def requires_caching(self):
+        """
+        Some of these packages might not be installed elsewhere and/or will take
+        a long time to load. Pseudotime is one such filter, and so we cache it ahead of time.
+        """
+        return True
 
     def filter(self, ann_data, dataset_dir):
         """
@@ -59,6 +67,16 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         2) Subset the data per timepoint so that we only use n_cells_train cells.
         """
 
+        # by default we will cache to dataset_dir/pseudotime.npy
+        cache_path = os.path.join(dataset_dir, self.PSEUDOTIME_FILE)
+        if os.path.exists(cache_path):
+            logging.debug(
+                f"Cached pseudotime file already exists at {cache_path}. Loading pseudotime from cache."
+            )
+            pseudotime = np.load(cache_path)
+            ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
+            return ann_data
+
         # 1) PCA and/or HVG
         # let's turn off numba
         logging.getLogger("numba").setLevel(logging.WARNING)
@@ -67,16 +85,17 @@ class BasePseudotimeFilter(BaseDatasetFilter):
                 ann_data, n_top_genes=self._parameters()["n_top_genes"], inplace=True
             )
             preprocessed_ann_data = ann_data[:, ann_data.var.highly_variable].copy()
-            print(
+            logging.debug(
                 f"Selected {preprocessed_ann_data.n_vars} highly variable genes for pseudotime estimation.",
-                flush=True,
             )
 
         elif self._parameters()["preprocess_type"] == PreprocessType.PCA.value:
             # we perform PCA and use the top n components as input to the pseudotime estimation.
             pca_path = os.path.join(dataset_dir, self.PCA_FILE)
             if os.path.exists(pca_path):
-                print(f"PCA model already exists at {pca_path}. Loading PCA model.")
+                logging.debug(
+                    f"PCA model already exists at {pca_path}. Loading PCA model."
+                )
                 pca_model = joblib.load(pca_path)
             else:
                 pca_model = PCA(n_components=self._parameters()["pca_components"]).fit(
@@ -89,6 +108,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
 
         pseudotime = self._filter_pseudotime(preprocessed_ann_data)
         ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
+        np.save(cache_path, pseudotime)
         return ann_data
 
     def _select_train_data(self, ann_data):
@@ -101,7 +121,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
             # from each timepoint, so we would sample n_cells_train / n_timepoints
             # cells from each timepoint to make sure that we have a balanced representation
             # of each timepoint in the training data for pseudotime estimation.
-            print(
+            logging.debug(
                 f"Filtering for {self._parameters()['n_cells_train']} random cells out of {ann_data.n_obs} to speed up pseudotime estimation for debugging..."
             )
 
@@ -169,10 +189,9 @@ class BasePseudotimeFilter(BaseDatasetFilter):
             ), "There are duplicated entries in the selected indices for pseudotime estimation training data."
             train_ann_data = ann_data[np.array(selected_indices, dtype=int)].copy()
 
-            # finally print the new counts
-            print(
+            # finally logging.debug the new counts
+            logging.debug(
                 f"Cell counts by timepoint: {train_ann_data.obs[ObservationColumns.TIMEPOINT.value].value_counts()}",
-                flush=True,
             )
 
         return train_ann_data
@@ -203,6 +222,7 @@ class PsupertimeFilter(BasePseudotimeFilter):
         Filter the dataset to replace its time column with a psupertime.
         """
         from pypsupertime import Psupertime
+        from scipy.stats import spearmanr
 
         # let's turn off numba
         logging.getLogger("numba").setLevel(logging.WARNING)
@@ -213,15 +233,29 @@ class PsupertimeFilter(BasePseudotimeFilter):
             n_folds=3,
         )
 
-        # let's first preprocess
+        # let's first preprocess on all the data
         preprocessed_ann_data = psup.preprocessing.fit_transform(preprocessed_ann_data)
         train_preprocessed_ann_data = self._select_train_data(preprocessed_ann_data)
+
+        # now let's avoid preprocessing during the run
+        psup.preprocessing = None
         train_preprocessed_ann_data = psup.run(
-            train_preprocessed_ann_data, ObservationColumns.TIMEPOINT.value
+            train_preprocessed_ann_data,
+            ObservationColumns.TIMEPOINT.value,
         )
 
         # now that we've done the training, let's apply it to the full data to get the pseudotime for all cells
         # then let's first preprocess the data as the train data
         psup.predict_psuper(preprocessed_ann_data, inplace=True)
-        print(f'Psupertime observation: {preprocessed_ann_data.obs["psupertime"]}')
+
+        # now to get a good idea on how well the pseudotime estimation is doing, let's check the spearman correlation
+        spearman_corr = spearmanr(
+            preprocessed_ann_data.obs[ObservationColumns.TIMEPOINT.value],
+            preprocessed_ann_data.obs["psupertime"],
+        )
+        logging.debug(f"Spearman correlation: {spearman_corr}")
+
+        logging.debug(
+            f'Psupertime observation: {preprocessed_ann_data.obs["psupertime"]}'
+        )
         return preprocessed_ann_data.obs["psupertime"]
