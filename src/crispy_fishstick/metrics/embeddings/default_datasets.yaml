@@ -27,7 +27,9 @@ datasets:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: RoundingFilter
       - name: PsupertimeFilter
+        preprocess_type: hvg
       - name: CopySplitFilter
 
   - name: GarciaAlonsoPsupertimeDataset
@@ -37,5 +39,7 @@ datasets:
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: RoundingFilter
       - name: PsupertimeFilter
+        preprocess_type: hvg
       - name: CopySplitFilter

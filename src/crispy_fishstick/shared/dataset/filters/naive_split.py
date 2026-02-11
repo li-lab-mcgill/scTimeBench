@@ -17,7 +17,7 @@ class NaiveSplitDatasetFilter(BaseDatasetFilter):
             "train_pct": self.train_pct,
         }
 
-    def filter(self, ann_data):
+    def filter(self, ann_data, **kwargs):
         """
         Filter the dataset to only include cells present in the lineage information.
         """

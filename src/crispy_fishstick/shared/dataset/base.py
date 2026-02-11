@@ -36,7 +36,7 @@ class BaseDatasetFilter:
         """
         return {}
 
-    def filter(self, ann_data):
+    def filter(self, ann_data, **kwargs):
         """
         Subclasses should implement this method to filter and split the dataset
         according to the metric's requirements.
@@ -159,18 +159,26 @@ class BaseDataset:
             # otherwise, if this is the first time we're seeing split, we handle it differently
             if dataset_filter.splits:
                 encountered_split = True
-                train_data, test_data = dataset_filter.filter(self.data)
+                train_data, test_data = dataset_filter.filter(
+                    self.data, dataset_dir=self.get_dataset_dir()
+                )
                 self.data = (train_data, test_data)
 
             # if we have already encountered a split, we need to apply the filter to both splits
             elif encountered_split:
-                train_data = dataset_filter.filter(self.data[0])
-                test_data = dataset_filter.filter(self.data[1])
+                train_data = dataset_filter.filter(
+                    self.data[0], dataset_dir=self.get_dataset_dir()
+                )
+                test_data = dataset_filter.filter(
+                    self.data[1], dataset_dir=self.get_dataset_dir()
+                )
                 self.data = (train_data, test_data)
 
             # otherwise, just apply the filter normally
             else:
-                self.data = dataset_filter.filter(self.data)
+                self.data = dataset_filter.filter(
+                    self.data, dataset_dir=self.get_dataset_dir()
+                )
 
         assert (
             encountered_split

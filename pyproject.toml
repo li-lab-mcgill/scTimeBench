@@ -36,9 +36,8 @@ graphviz = [
 celltypist = [
     "celltypist"
 ]
-pypsupertime = [
-    "pypsupertime",
-]
+pypsupertime = [ "pypsupertime" ]
+sceptic = [ "sceptic" ]
 
 [project.scripts]
 crispy_fishstick = "crispy_fishstick.main:main"
@@ -47,8 +46,9 @@ crispy_fishstick = "crispy_fishstick.main:main"
 
 [tool.uv]
 # This tells uv that psupertime is part of your development 'workspace'
-workspace = { members = ["extern/psupertime"] }
+workspace = { members = ["extern/psupertime", "extern/sceptic"] }
 
 [tool.uv.sources]
 # This ensures uv looks in your submodule folder and treats it as an editable install.
 pypsupertime = { editable = true, workspace = true }
+sceptic = { editable = true, workspace = true }
