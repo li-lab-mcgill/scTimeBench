@@ -5,6 +5,7 @@ from crispy_fishstick.metrics.base import BaseMetric, OutputPathName
 from crispy_fishstick.shared.constants import RequiredOutputColumns
 from crispy_fishstick.shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
 
+import json
 import os
 
 
@@ -32,7 +33,6 @@ class GexPredictionMetrics(BaseMetric):
             RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION,
         ]
 
-
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
         return {
             "output_path": output_path,
@@ -45,12 +45,40 @@ class GexPredictionMetrics(BaseMetric):
         Wrapper function to call the gene-expression metric evaluation, and handle database
         logging.
         """
+        result = self._gex_eval(output_path, dataset)
+        aggregate = result
+        if isinstance(result, dict):
+            aggregate = result.get("All")
+
         self.db_manager.insert_eval(
             model,
             self.__class__.__name__,
             self._get_param_encoding(),
-            self._gex_eval(output_path, dataset),
+            aggregate,
         )
+
+        if isinstance(result, dict):
+            for tp, score in result.items():
+                if tp == "All":
+                    continue
+                tp_params = dict(self.params)
+                tp_params["timepoint"] = str(tp)
+                tp_params_json = json.dumps(tp_params)
+                if not self.db_manager.has_metric(
+                    self.__class__.__name__, tp_params_json
+                ):
+                    self.db_manager.insert_metric(
+                        self.__class__.__name__, tp_params_json
+                    )
+                if not self.db_manager.has_eval(
+                    model, self.__class__.__name__, tp_params_json
+                ):
+                    self.db_manager.insert_eval(
+                        model,
+                        self.__class__.__name__,
+                        tp_params_json,
+                        float(score),
+                    )
 
     def _gex_eval(self, output_path, dataset):
         raise NotImplementedError("Subclasses should implement this method.")

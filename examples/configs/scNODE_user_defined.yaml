@@ -19,3 +19,7 @@ metrics:
    trajectory_infer_model:
     name: kNN
     strategy: weighted_average
+ - name: WassersteinOTLoss
+ - name: MMDLoss
+ - name: HausdorffLoss
+ - name: EnergyDistanceLoss

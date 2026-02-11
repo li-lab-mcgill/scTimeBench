@@ -2,7 +2,7 @@
 Ma et al. (2023) + Olaniru et al. (2023) merged dataset.
 """
 
-from shared.dataset.base import BaseDataset, ObservationColumns
+from crispy_fishstick.shared.dataset.base import BaseDataset
 import scanpy as sc
 
 
@@ -18,14 +18,14 @@ class OlaniruDataset(BaseDataset):
 
         print("Ma +  Olaniru et al. merged dataset loaded successfully.")
 
-                #commented out until annotations included (optional)
+        # commented out until annotations included (optional)
         # self.data.obs = self.data.obs.rename(
         #     columns={
         #         "celltype": ObservationColumns.CELL_TYPE.value,
         #         "PCW": ObservationColumns.TIMEPOINT.value,
         #     }
         # )
-        
+
         # print(
         #     f"Cell types: {self.data.obs[ObservationColumns.CELL_TYPE.value].unique()}"
         # )

@@ -1,2 +1,11 @@
-# this defines the default datasets to use for gene expression prediction metrics
-
+datasets:
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/simple_cell_line.txt
+      - name: CopySplitFilter
+  - name: SuoDataset
+    data_path: ./data/suo/suo.h5ad
+    filters:
+      - name: CopySplitFilter

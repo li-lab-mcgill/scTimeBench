@@ -29,7 +29,9 @@ class OTLossMetric(GexPredictionMetrics):
     def _gex_eval(self, output_path, dataset):
         adata_true, adata_pred = self._load_true_pred_adata(output_path, dataset)
         ot_by_tp = self._ot_by_timepoint(adata_true, adata_pred)
-        return self._aggregate_ot(ot_by_tp)
+        results = dict(ot_by_tp)
+        results["All"] = self._aggregate_ot(ot_by_tp)
+        return results
 
     def _load_true_pred_adata(self, output_path, dataset):
         """
@@ -144,7 +146,9 @@ class OTLossMetric(GexPredictionMetrics):
         shared_tps = np.intersect1d(true_tps, pred_tps)
 
         if len(shared_tps) == 0:
-            raise ValueError("No overlapping timepoints between true and predicted data.")
+            raise ValueError(
+                "No overlapping timepoints between true and predicted data."
+            )
 
         results = {}
         for tp in shared_tps:

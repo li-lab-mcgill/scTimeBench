@@ -2,7 +2,7 @@
 Ma et al. (2023) dataset.
 """
 
-from shared.dataset.base import BaseDataset, ObservationColumns
+from crispy_fishstick.shared.dataset.base import BaseDataset, ObservationColumns
 import scanpy as sc
 
 
@@ -18,7 +18,7 @@ class OlaniruDataset(BaseDataset):
 
         print("Ma et al. dataset loaded successfully.")
 
-        #commented out until annotations included (optional)
+        # commented out until annotations included (optional)
         # self.data.obs = self.data.obs.rename(
         #     columns={
         #         "celltype": ObservationColumns.CELL_TYPE.value,
