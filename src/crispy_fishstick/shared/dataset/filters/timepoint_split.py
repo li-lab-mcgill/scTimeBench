@@ -20,7 +20,7 @@ class TimeSplitDatasetFilter(BaseDatasetFilter):
             "test_tps": self.test_tps,
         }
 
-    def filter(self, ann_data):
+    def filter(self, ann_data, **kwargs):
         """
         Split the dataset based on the given test timepoints. Must add starting timepoint for proper behaviour.
         """

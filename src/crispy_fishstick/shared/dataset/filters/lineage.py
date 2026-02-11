@@ -22,7 +22,7 @@ class LineageDatasetFilter(BaseDatasetFilter):
             "cell_equivalence_file": self.cell_equivalence_file,
         }
 
-    def filter(self, ann_data):
+    def filter(self, ann_data, **kwargs):
         """
         Filter the dataset to only include cells present in the lineage information.
         """
