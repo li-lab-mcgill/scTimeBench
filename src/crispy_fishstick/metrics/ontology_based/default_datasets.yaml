@@ -47,3 +47,18 @@ datasets:
       - name: RoundingFilter
         round_to_k: 1
       - name: CopySplitFilter
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoSceptic
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: RoundingFilter
+        min_cells_per_timepoint: 10
+      - name: ScepticFilter
+        preprocess_type: hvg
+      - name: RoundingFilter
+        round_to_k: 1
+      - name: CopySplitFilter

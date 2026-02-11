@@ -66,6 +66,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
 
         2) Subset the data per timepoint so that we only use n_cells_train cells.
         """
+        from scipy.stats import spearmanr
 
         # by default we will cache to dataset_dir/pseudotime.npy
         cache_path = os.path.join(dataset_dir, self.PSEUDOTIME_FILE)
@@ -74,6 +75,14 @@ class BasePseudotimeFilter(BaseDatasetFilter):
                 f"Cached pseudotime file already exists at {cache_path}. Loading pseudotime from cache."
             )
             pseudotime = np.load(cache_path)
+
+            # now to get a good idea on how well the pseudotime estimation is doing, let's check the spearman correlation
+            spearman_corr = spearmanr(
+                ann_data.obs[ObservationColumns.TIMEPOINT.value],
+                pseudotime,
+            )
+            logging.debug(f"Spearman correlation: {spearman_corr}")
+
             ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
             return ann_data
 
@@ -107,6 +116,14 @@ class BasePseudotimeFilter(BaseDatasetFilter):
             preprocessed_ann_data = sc.AnnData(X=pca_data, obs=ann_data.obs.copy())
 
         pseudotime = self._filter_pseudotime(preprocessed_ann_data)
+
+        # now to get a good idea on how well the pseudotime estimation is doing, let's check the spearman correlation
+        spearman_corr = spearmanr(
+            ann_data.obs[ObservationColumns.TIMEPOINT.value],
+            pseudotime,
+        )
+        logging.debug(f"Spearman correlation: {spearman_corr}")
+
         ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
         np.save(cache_path, pseudotime)
         return ann_data
@@ -222,7 +239,6 @@ class PsupertimeFilter(BasePseudotimeFilter):
         Filter the dataset to replace its time column with a psupertime.
         """
         from pypsupertime import Psupertime
-        from scipy.stats import spearmanr
 
         # let's turn off numba
         logging.getLogger("numba").setLevel(logging.WARNING)
@@ -248,14 +264,62 @@ class PsupertimeFilter(BasePseudotimeFilter):
         # then let's first preprocess the data as the train data
         psup.predict_psuper(preprocessed_ann_data, inplace=True)
 
-        # now to get a good idea on how well the pseudotime estimation is doing, let's check the spearman correlation
-        spearman_corr = spearmanr(
-            preprocessed_ann_data.obs[ObservationColumns.TIMEPOINT.value],
-            preprocessed_ann_data.obs["psupertime"],
-        )
-        logging.debug(f"Spearman correlation: {spearman_corr}")
-
         logging.debug(
             f'Psupertime observation: {preprocessed_ann_data.obs["psupertime"]}'
         )
         return preprocessed_ann_data.obs["psupertime"]
+
+
+class ScepticFilter(BasePseudotimeFilter):
+    """
+    Implementation of sceptic psuedotime filter. See more: https://github.com/Noble-Lab/Sceptic
+    and the paper: https://link.springer.com/article/10.1186/s13059-025-03679-3
+    """
+
+    def _filter_pseudotime(self, preprocessed_ann_data):
+        """
+        Filter the dataset to replace its time column with a psupertime.
+        """
+        from sceptic import run_sceptic_and_evaluate
+
+        # Option 1: Pass actual time values directly (easiest!)
+        time_labels = preprocessed_ann_data.obs[
+            ObservationColumns.TIMEPOINT.value
+        ].values
+
+        # let's create the unique times and sort them too
+        unique_time_labels = np.sort(np.unique(time_labels))
+        logging.debug(f"Unique time labels: {unique_time_labels}")
+
+        # now we need to transform these time labels to categorical ones and pass in the
+        # ordinal list as well
+        # Convert labels to categorical values
+        time_to_categorical_dict = {
+            label: idx for idx, label in enumerate(unique_time_labels)
+        }
+        logging.debug(f"Time to categorical mapping: {time_to_categorical_dict}")
+
+        label = np.array([time_to_categorical_dict[t] for t in time_labels])
+        logging.debug(f"Encoded labels (first 10): {label[:10]}")
+        logging.debug(f"Non-encoded labels (first 10): {time_labels[:10]}")
+
+        data = (
+            preprocessed_ann_data.X
+            if isinstance(preprocessed_ann_data.X, np.ndarray)
+            else preprocessed_ann_data.X.toarray()
+        )
+
+        cm, pred, pseudotime, prob = run_sceptic_and_evaluate(
+            data,
+            labels=label,
+            label_list=unique_time_labels,
+            method="xgboost",
+        )
+
+        logging.debug(f"Sceptic confusion matrix:\n{cm}")
+        logging.debug(f"Sceptic predicted labels:\n{pred}")
+        logging.debug(f"\nAccuracy: {np.sum(np.diag(cm)) / np.sum(cm):.3f}")
+        logging.debug(f"Sceptic pseudotime values:\n{pseudotime}")
+        logging.debug(f"Sceptic class probabilities:\n{prob}")
+
+        return pseudotime
