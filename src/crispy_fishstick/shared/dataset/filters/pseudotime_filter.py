@@ -18,10 +18,11 @@ class PreprocessType(Enum):
     NONE = "none"
     PCA = "pca"
     HVG = "hvg"
+    ZHENG_HVG = "zheng_hvg"
 
 
 class BasePseudotimeFilter(BaseDatasetFilter):
-    def __init__(self, dataset_dict, preprocess_type):
+    def __init__(self, dataset_dict, preprocess_type, **kwargs):
         super().__init__(dataset_dict)
         self.PCA_FILE = "pca_model.pkl"
         self.preprocess_type = PreprocessType(preprocess_type)
@@ -40,6 +41,8 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         elif self.preprocess_type == PreprocessType.HVG:
             params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
             params["n_cells_train"] = self.dataset_dict.get("n_cells_train", 1000)
+        elif self.preprocess_type == PreprocessType.ZHENG_HVG:
+            params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
 
         return {
             **super()._parameters(),
@@ -114,6 +117,11 @@ class BasePseudotimeFilter(BaseDatasetFilter):
                 joblib.dump(pca_model, pca_path)
             pca_data = pca_model.transform(ann_data.X)
             preprocessed_ann_data = sc.AnnData(X=pca_data, obs=ann_data.obs.copy())
+
+        elif self._parameters()["preprocess_type"] == PreprocessType.ZHENG_HVG.value:
+            preprocessed_ann_data = sc.pp.recipe_zheng17(
+                ann_data, n_top_genes=self._parameters()["n_top_genes"], copy=True
+            )
 
         pseudotime = self._filter_pseudotime(preprocessed_ann_data)
 
@@ -327,3 +335,34 @@ class ScepticFilter(BasePseudotimeFilter):
         logging.debug(f"Sceptic class probabilities:\n{prob}")
 
         return pseudotime
+
+
+class PseudotimeFilter(BasePseudotimeFilter):
+    def _filter_pseudotime(self, preprocessed_ann_data):
+        """
+        Filter the dataset to replace its time column with a pseudotime.
+        We will use scanpy's DFT pseudotime: https://scanpy.readthedocs.io/en/latest/tutorials/trajectories/paga-paul15.html
+        See the above as an example tutorial.
+        """
+        # assume that we have pca embeddings
+        # 1. Compute neighbors using your denoised representation (scVI)
+        sc.pp.neighbors(preprocessed_ann_data, n_neighbors=15)
+        sc.tl.diffmap(preprocessed_ann_data)
+
+        # 3. Identify a 'root cell' (the start of your trajectory)
+        # You can do this by picking a cell from your earliest timepoint
+        earliest_tp = preprocessed_ann_data.obs[
+            ObservationColumns.TIMEPOINT.value
+        ].min()
+
+        root_idx = preprocessed_ann_data.obs[
+            preprocessed_ann_data.obs[ObservationColumns.TIMEPOINT.value] == earliest_tp
+        ].index[0]
+        preprocessed_ann_data.uns["iroot"] = preprocessed_ann_data.obs_names.get_loc(
+            root_idx
+        )
+
+        # 4. Calculate Diffusion Pseudotime
+        sc.tl.dpt(preprocessed_ann_data)
+        logging.debug(f'Pseudotime: {preprocessed_ann_data.obs["dpt_pseudotime"]}')
+        return preprocessed_ann_data.obs["dpt_pseudotime"]
