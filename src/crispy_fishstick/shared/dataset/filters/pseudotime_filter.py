@@ -33,13 +33,13 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         """
         params = {
             "preprocess_type": self.preprocess_type.value,
-            "n_cells_train": self.dataset_dict.get("n_cells_train", 1000),
         }
 
         if self.preprocess_type == PreprocessType.PCA:
             params["pca_components"] = self.dataset_dict.get("pca_components", 50)
         elif self.preprocess_type == PreprocessType.HVG:
             params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
+            params["n_cells_train"] = self.dataset_dict.get("n_cells_train", 1000)
 
         return {
             **super()._parameters(),
@@ -126,6 +126,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
 
         ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
         np.save(cache_path, pseudotime)
+        logging.debug(f"Caching to {cache_path}...")
         return ann_data
 
     def _select_train_data(self, ann_data):
@@ -274,6 +275,9 @@ class ScepticFilter(BasePseudotimeFilter):
     """
     Implementation of sceptic psuedotime filter. See more: https://github.com/Noble-Lab/Sceptic
     and the paper: https://link.springer.com/article/10.1186/s13059-025-03679-3
+
+    NOTE: this works pretty well with PCA = 50, doesn't take too long and
+    gives reasonable spearman correlations (0.8) on GarciaAlonso.
     """
 
     def _filter_pseudotime(self, preprocessed_ann_data):
