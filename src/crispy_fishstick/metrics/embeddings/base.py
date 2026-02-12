@@ -4,7 +4,7 @@ Embedding-based metrics.
 from crispy_fishstick.metrics.base import BaseMetric
 from crispy_fishstick.shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
 
-import os
+import pathlib
 
 
 class EmbeddingMetrics(BaseMetric):
@@ -17,9 +17,16 @@ class EmbeddingMetrics(BaseMetric):
             GarciaAlonsoDataset.__name__,
         ]
 
-        # get the path to the default datasets, under ./default_datasets.yaml
-        self.default_datasets_path = os.path.join(
-            os.path.dirname(__file__), "default_datasets.yaml"
+        # get the path to the default datasets, under ../ontology_based/default_datasets.yaml
+        self.default_datasets_path = (
+            pathlib.Path(__file__).parent.parent
+            / "ontology_based"
+            / "default_datasets.yaml"
+        )
+        self.optional_datasets_path = (
+            pathlib.Path(__file__).parent.parent
+            / "ontology_based"
+            / "optional_datasets.yaml"
         )
 
     def _defaults(self):

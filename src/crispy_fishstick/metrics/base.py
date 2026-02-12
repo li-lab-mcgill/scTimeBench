@@ -56,6 +56,7 @@ class BaseMetric:
         self.config = config
         self.metric_config = metric_config
         self.params = {}
+        self.optional_datasets_path = None
 
         # skip the preprocessing steps if it has submetrics, as they will handle it themselves
         if len(self.submetrics) > 0:
@@ -406,6 +407,11 @@ class BaseMetric:
         with open(self.default_datasets_path, "r") as f:
             default_datasets = yaml.safe_load(f)["datasets"]
 
+        optional_datasets = []
+        if self.optional_datasets_path is not None:
+            with open(self.optional_datasets_path, "r") as f:
+                optional_datasets = yaml.safe_load(f)["datasets"]
+
         # now we check if datasets are specified in the config
         if not hasattr(self.config, "datasets") or len(self.config.datasets) == 0:
             # datasets are not specified, we use the default datasets
@@ -415,13 +421,14 @@ class BaseMetric:
         new_datasets = []
         for dataset in self.config.datasets:
             if "tag" in dataset:
-                # we need to find the matching dataset from the default datasets
+                # we need to find the matching dataset from the default datasets or optional datasets
+                to_match = default_datasets + optional_datasets
                 matching_datasets = [
-                    d for d in default_datasets if d.get("tag", None) == dataset["tag"]
+                    d for d in to_match if d.get("tag", None) == dataset["tag"]
                 ]
                 assert (
                     len(matching_datasets) == 1
-                ), f"Dataset with tag {dataset['tag']} not found or multiple found in default datasets."
+                ), f"Dataset with tag {dataset['tag']} not found or multiple found in default or optional datasets."
                 new_datasets.append(matching_datasets[0])
             else:
                 new_datasets.append(dataset)

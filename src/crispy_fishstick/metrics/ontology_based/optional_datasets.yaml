@@ -1,0 +1,32 @@
+# this defines the optional datasets that can be used for ontology-based metrics
+datasets:
+  - name: SuoDataset
+    tag: defaultSuoSceptic
+    data_path: ./data/suo/main.h5ad
+    requires_caching: true
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: RoundingFilter
+        min_cells_per_timepoint: 10
+      - name: ScepticFilter
+        preprocess_type: pca
+      - name: RoundingFilter
+        round_to_k: 1
+      - name: CopySplitFilter
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoSceptic
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: RoundingFilter
+        min_cells_per_timepoint: 10
+      - name: ScepticFilter
+        preprocess_type: pca
+      - name: RoundingFilter
+        round_to_k: 1
+      - name: CopySplitFilter

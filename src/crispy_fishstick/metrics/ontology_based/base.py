@@ -22,6 +22,10 @@ class OntologyBasedMetrics(BaseMetric):
             os.path.dirname(__file__), "default_datasets.yaml"
         )
 
+        self.optional_datasets_path = os.path.join(
+            os.path.dirname(__file__), "optional_datasets.yaml"
+        )
+
     def _defaults(self):
         """The default parameters for ontology-based metrics."""
         return {}
