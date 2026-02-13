@@ -154,6 +154,13 @@ class BaseMetric:
             )
             return
 
+        # but if it's in the metric skip list, always skip
+        if self.__class__.__name__ in self.config.metrics_skiplist:
+            logging.info(
+                f"Skipping metric {self.__class__.__name__} as it is in the metric skip list."
+            )
+            return
+
         logging.info(f"Evaluating metric {self.__class__.__name__}")
 
         # assert that the preprocessing was done correctly

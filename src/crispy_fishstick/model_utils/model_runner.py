@@ -106,6 +106,9 @@ class BaseModel:
                 result = self.generate_next_cell_type(test_ann_data)
                 # result should be a pandas DataFrame or Series
                 result.to_parquet(output_file)
+            elif required_output == RequiredOutputFiles.PRED_GRAPH:
+                result = self.generate_pred_graph(test_ann_data)
+                np.save(output_file, result)
             else:
                 raise ValueError(f"Unknown required output: {required_output}")
 
@@ -136,6 +139,13 @@ class BaseModel:
         """
         Generate next cell type predictions.
         Returns: pd.DataFrame with cell type predictions
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def generate_pred_graph(self, test_ann_data) -> np.ndarray:
+        """
+        Generate predicted graph.
+        Returns: np.ndarray representing the predicted graph
         """
         raise NotImplementedError("Subclasses should implement this method.")
 

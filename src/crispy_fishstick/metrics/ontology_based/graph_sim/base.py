@@ -12,6 +12,7 @@ from crispy_fishstick.shared.dataset.filters.pseudotime_filter import (
 from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 import numpy as np
 import logging
+import os
 
 
 class AdjacencyMatrixType:
@@ -54,6 +55,8 @@ class GraphSimMetric(OntologyBasedMetrics):
         self.required_outputs = [
             primary_outputs,
             [RequiredOutputFiles.NEXT_CELLTYPE],
+            # option for correlation metric: give the pred graph directly
+            [RequiredOutputFiles.PRED_GRAPH],
         ]
 
     def _build_ref_graph(self, dataset: BaseDataset):
@@ -162,13 +165,7 @@ class GraphSimMetric(OntologyBasedMetrics):
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
         graph_ref = self._build_ref_graph(dataset)
         self.output_path = output_path
-
-        traj_dir, classifier_dir = self.trajectory_infer_model._get_traj_infer_path(
-            output_path
-        )
-        self.traj_dir = traj_dir
-        self.classifier_dir = classifier_dir
-
+        self.dataset_dir = dataset.get_dataset_dir()
         self.dataset_name = dataset.get_name()
         self.time_label = "Time"
         for dataset_filter in dataset.dataset_filters:
@@ -176,6 +173,40 @@ class GraphSimMetric(OntologyBasedMetrics):
                 self.time_label = dataset_filter.label()
                 break
 
+        # we need to check if they provided a predicted graph, then we ignore the trajectory
+        # inference step, and directly use the provided predicted graph for evaluation.
+        if RequiredOutputFiles.PRED_GRAPH.value in os.listdir(output_path):
+            logging.debug(
+                "Found predicted graph in output, skipping trajectory inference step."
+            )
+            pred_graph_path = os.path.join(
+                output_path, RequiredOutputFiles.PRED_GRAPH.value
+            )
+            weighted_adjacency_matrix = np.load(pred_graph_path)
+            unweighted_adjacency_matrix = (
+                weighted_adjacency_matrix > self.edge_threshold
+            ).astype(np.float32)
+
+            # also get rid of the diagonal entries (self-loops) for the unweighted adjacency matrix
+            for i in range(unweighted_adjacency_matrix.shape[0]):
+                unweighted_adjacency_matrix[i, i] = 0.0
+
+            graph_pred = {
+                AdjacencyMatrixType.WEIGHTED: weighted_adjacency_matrix,
+                AdjacencyMatrixType.UNWEIGHTED: unweighted_adjacency_matrix,
+            }
+
+            # no special trajectory dir needed here
+            self.traj_dir = output_path
+
+            return {
+                "graph_ref": graph_ref,
+                "graph_pred": graph_pred,
+                "model": model,
+            }
+
+        traj_dir, _ = self.trajectory_infer_model._get_traj_infer_path(output_path)
+        self.traj_dir = traj_dir
         return {
             # build the reference graph
             "graph_ref": graph_ref,

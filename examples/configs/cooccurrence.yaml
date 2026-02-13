@@ -1,0 +1,14 @@
+datasets:
+  - tag: defaultGarciaAlonsoPseudotimeMinCells
+  # - tag: defaultGarciaAlonsoPseudotimeEvenTps
+  # - tag: defaultGarciaAlonsoPseudotimeEvenCells
+
+model:
+  name: Cooccurrence
+  train_and_test_script: ./models/cooccurrence/train_and_test.sh
+
+metrics:
+  - name: GraphSimMetric
+
+metrics_skiplist:
+  - name: StackedDensityPlot

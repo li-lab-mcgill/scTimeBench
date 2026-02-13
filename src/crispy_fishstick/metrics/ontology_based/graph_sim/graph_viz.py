@@ -45,7 +45,7 @@ class GraphVisualization(GraphSimMetric):
         # take the reverse dictionary
         cell_id_to_type = {v: k for k, v in graph_ref[CELL_TYPE_TO_ID_KEY].items()}
 
-        ref_graph_output = os.path.join(self.classifier_dir, "reference_graph")
+        ref_graph_output = os.path.join(self.dataset_dir, "reference_graph")
 
         if not os.path.exists(ref_graph_output + ".png"):
             build_graph_image(
@@ -216,7 +216,7 @@ class StackedDensityPlot(GraphSimMetric):
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
         ref_plot_output = os.path.join(
-            self.classifier_dir, "reference_stacked_density_plot.png"
+            self.dataset_dir, "reference_stacked_density_plot.png"
         )
         if not os.path.exists(ref_plot_output):
             plot_stacked_density(

@@ -199,7 +199,7 @@ class Config:
             ), f"Required field '{field}' must be specified in config file or as --{field}"
 
         # make sure no other fields exist besides this + datasets in the yaml
-        allowed_fields = set(required_fields + ["datasets"])
+        allowed_fields = set(required_fields + ["datasets", "metrics_skiplist"])
         for field in data.keys():
             if field not in allowed_fields:
                 raise ValueError(
@@ -282,6 +282,13 @@ class Config:
         # finally, to be used later for saving the original config
         # into the model output yaml config:
         self.model_yaml_data = data["model"]
+
+        # then let's also add in the metric skip list
+        self.metrics_skiplist = data.get("metrics_skiplist", [])
+        self.metrics_skiplist = [
+            metric if isinstance(metric, str) else metric.get("name", "")
+            for metric in self.metrics_skiplist
+        ]
 
         logging.info("Configuration successfully loaded")
         logging.debug("Configuration details: %s", self.__dict__)
