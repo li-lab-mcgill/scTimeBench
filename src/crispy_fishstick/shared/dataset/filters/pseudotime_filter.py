@@ -28,6 +28,9 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         self.preprocess_type = PreprocessType(preprocess_type)
         self.PSEUDOTIME_FILE = "pseudotime.npy"
 
+    def label(self):
+        raise NotImplementedError("Subclasses should implement this method.")
+
     def _parameters(self):
         """
         Return filter-specific parameters.
@@ -234,6 +237,9 @@ class BasePseudotimeFilter(BaseDatasetFilter):
 
 
 class PsupertimeFilter(BasePseudotimeFilter):
+    def label(self):
+        return "Psupertime"
+
     def _parameters(self):
         """
         Return filter-specific parameters.
@@ -295,6 +301,9 @@ class ScepticFilter(BasePseudotimeFilter):
     gives reasonable spearman correlations (0.8) on GarciaAlonso.
     """
 
+    def label(self):
+        return "Sceptic"
+
     def _filter_pseudotime(self, preprocessed_ann_data):
         """
         Filter the dataset to replace its time column with a psupertime.
@@ -352,6 +361,9 @@ class ScepticFilter(BasePseudotimeFilter):
 
 
 class PseudotimeFilter(BasePseudotimeFilter):
+    def label(self):
+        return "Pseudotime"
+
     def _filter_pseudotime(self, preprocessed_ann_data):
         """
         Filter the dataset to replace its time column with a pseudotime.

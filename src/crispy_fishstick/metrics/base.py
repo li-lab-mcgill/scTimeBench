@@ -8,6 +8,7 @@ from typing import final
 from crispy_fishstick.config import Config, RunType
 from crispy_fishstick.metrics.model_manager import ModelManager
 from crispy_fishstick.shared.dataset.base import (
+    BaseDataset,
     DATASET_REGISTRY,
     DATASET_FILTER_REGISTRY,
 )
@@ -258,7 +259,7 @@ class BaseMetric:
                     **self._prep_kwargs_for_submetric_eval(output_path, dataset, model)
                 )
 
-    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
+    def _prep_kwargs_for_submetric_eval(self, output_path, dataset: BaseDataset, model):
         """
         Prepares the keyword arguments required for submetric evaluation.
 

@@ -6,6 +6,9 @@ from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.shared.helpers import parse_cell_lineage
 from crispy_fishstick.shared.dataset.filters.lineage import LineageDatasetFilter
 from crispy_fishstick.shared.dataset.base import BaseDataset
+from crispy_fishstick.shared.dataset.filters.pseudotime_filter import (
+    BasePseudotimeFilter,
+)
 from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 import numpy as np
 import logging
@@ -167,6 +170,12 @@ class GraphSimMetric(OntologyBasedMetrics):
         self.classifier_dir = classifier_dir
 
         self.dataset_name = dataset.get_name()
+        self.time_label = "Time"
+        for dataset_filter in dataset.dataset_filters:
+            if isinstance(dataset_filter, BasePseudotimeFilter):
+                self.time_label = dataset_filter.label()
+                break
+
         return {
             # build the reference graph
             "graph_ref": graph_ref,

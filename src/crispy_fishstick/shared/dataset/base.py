@@ -59,7 +59,9 @@ def register_dataset(cls):
 
 
 class BaseDataset:
-    def __init__(self, dataset_dict, dataset_filters, output_dir):
+    def __init__(
+        self, dataset_dict, dataset_filters: list[BaseDatasetFilter], output_dir
+    ):
         self.dataset_dict = dataset_dict
         self.dataset_filters = dataset_filters
         self.output_dir = output_dir

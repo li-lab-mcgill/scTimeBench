@@ -123,8 +123,8 @@ class StackedDensityPlot(GraphSimMetric):
             real_timepoints = df_ratios.index.tolist()
             ax.set_xticks(real_timepoints)
 
-            # Format: 1 decimal place only
-            labels = [f"{x:.1f}" for x in real_timepoints]
+            # Format: 2 decimal places
+            labels = [f"{x:.2f}" for x in real_timepoints]
 
             # Apply rotation
             ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
@@ -222,12 +222,12 @@ class StackedDensityPlot(GraphSimMetric):
             plot_stacked_density(
                 source_df,
                 ref_plot_output,
-                f"True Cell Type Proportions Over Time for {self.dataset_name}",
+                f"True Cell Type Proportions Over {self.time_label} for {self.dataset_name}",
             )
         plot_stacked_density(
             target_df,
             os.path.join(self.traj_dir, "target_stacked_density_plot.png"),
-            f'Predicted Target Cell Type Proportions Over Time for {self.config.model["name"]} on {self.dataset_name}',
+            f'Predicted Target Cell Type Proportions Over {self.time_label} for {self.config.model["name"]} on {self.dataset_name}',
         )
 
         return  # Visualization metric does not return a numeric score
