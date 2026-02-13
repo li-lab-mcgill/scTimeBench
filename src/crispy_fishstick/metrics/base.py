@@ -17,6 +17,7 @@ from crispy_fishstick.shared.constants import (
     PICKLED_DATASET_FILENAME,
     MODEL_CONFIG_FILENAME,
 )
+from crispy_fishstick.shared.utils import load_test_dataset
 from crispy_fishstick.database import DatabaseManager
 
 import os
@@ -153,6 +154,8 @@ class BaseMetric:
             )
             return
 
+        logging.info(f"Evaluating metric {self.__class__.__name__}")
+
         # assert that the preprocessing was done correctly
         # we assume that each model corresponds to a dataset
         assert len(self.models) == len(
@@ -218,7 +221,12 @@ class BaseMetric:
                         logging.info(
                             f"Dataset {dataset} requires caching. Caching now before training and testing the model."
                         )
-                        dataset.load_data()
+                        # we still load the test dataset for a couple of reasons:
+                        # 1. we want to store this into cache so the model can load it
+                        # 2. we still want the requires_caching however to avoid the extra load
+                        # before training, unless required. This also helps us avoid
+                        # creating an extra cache that is not necessary.
+                        _ = load_test_dataset(output_path)
 
                     model.train_and_test(
                         os.path.join(output_path, MODEL_CONFIG_FILENAME)
@@ -499,7 +507,7 @@ class BaseMetric:
         ), "Mismatch in number of datasets and dataset filter builders."
 
         # 3) finally, with the dataset filters built, we create all the filters that we need
-        self.datasets = []
+        self.datasets: list[BaseDataset] = []
         for dataset, builders in zip(
             dataset_for_metric, self.dataset_filters_builders_list
         ):
