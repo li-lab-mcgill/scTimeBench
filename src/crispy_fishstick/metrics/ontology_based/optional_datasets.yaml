@@ -32,7 +32,7 @@ datasets:
       - name: CopySplitFilter
 
   - name: GarciaAlonsoDataset
-    tag: defaultGarciaAlonsoPseudotime
+    tag: defaultGarciaAlonsoPseudotimeEvenCells
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
     filters:
@@ -43,5 +43,36 @@ datasets:
       - name: PseudotimeFilter
         preprocess_type: zheng_hvg
       - name: RoundingFilter
-        round_to_k: 1
+        num_tps: 15
+      - name: CopySplitFilter
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoPseudotimeEvenTps
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: RoundingFilter
+        min_cells_per_timepoint: 10
+      - name: PseudotimeFilter
+        preprocess_type: zheng_hvg
+      - name: RoundingFilter
+        num_tps: 15
+        even_cells_per_tp: false
+      - name: CopySplitFilter
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoPseudotimeMinCells
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    filters:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+      - name: RoundingFilter
+        min_cells_per_timepoint: 10
+      - name: PseudotimeFilter
+        preprocess_type: zheng_hvg
+      - name: RoundingFilter
+        min_cells_per_timepoint: 400
       - name: CopySplitFilter

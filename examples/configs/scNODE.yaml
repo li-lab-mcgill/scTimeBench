@@ -1,12 +1,9 @@
 datasets:
-  - tag: defaultGarciaAlonsoPseudotime
+  - tag: defaultGarciaAlonsoPseudotimeMinCells
 
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
-  metadata:
-    epochs: 0
-    pretrain_iters: 1
 
 metrics:
- - name: StackedDensityPlot
+ - name: GraphSimMetric

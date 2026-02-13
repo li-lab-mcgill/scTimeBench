@@ -249,6 +249,13 @@ class PsupertimeFilter(BasePseudotimeFilter):
         """
         from pypsupertime import Psupertime
 
+        logging.warning(
+            f"""
+            WARNING: Psupertime is very slow, and does not produce the necessary time labels that is useful for downstream tasks.
+            We recommend using Pseudotime instead.
+            """
+        )
+
         # let's turn off numba
         logging.getLogger("numba").setLevel(logging.WARNING)
 
@@ -293,6 +300,13 @@ class ScepticFilter(BasePseudotimeFilter):
         Filter the dataset to replace its time column with a psupertime.
         """
         from sceptic import run_sceptic_and_evaluate
+
+        logging.warning(
+            f"""
+            WARNING: Sceptic does not produce the necessary time labels that is useful for downstream tasks.
+            We recommend using Pseudotime instead.
+            """
+        )
 
         # Option 1: Pass actual time values directly (easiest!)
         time_labels = preprocessed_ann_data.obs[
