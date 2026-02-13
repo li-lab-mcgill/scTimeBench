@@ -150,6 +150,9 @@ class CellTypist(BaseTrajectoryInferMethod):
 
         import celltypist
 
+        # turn off numba
+        logging.getLogger("numba").setLevel(logging.WARNING)
+
         pred_adata = ad.AnnData(X=embeds)
         self._preprocess(pred_adata)
         predictions = celltypist.annotate(

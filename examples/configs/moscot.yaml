@@ -1,9 +1,9 @@
 datasets:
-  - tag: defaultSuo
+  - tag: defaultGarciaAlonsoPseudotimeMinCells
 
 model:
   name: Moscot
   train_and_test_script: ./models/moscot/train_and_test.sh
 
 metrics:
-  - name: BaseMetric
+  - name: GraphSimMetric
