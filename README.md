@@ -1,5 +1,16 @@
 # Crispy-Fishstick
 ## Setup
+If the external dependencies such as pypsupertime or sceptic are not used (which they are not used by default), you can install using pip as follows:
+```
+pip install -e ".[benchmark]"
+```
+to run the benchmark. For your own method, simply install without the extra benchmarking requirements with
+```
+pip install -e .
+```
+There are extra dependencies that can be found under `pyproject.toml`.
+
+## Setup: UV
 Due to external dependencies and a more complex setup, we have decided to package everything under `uv` (see: https://github.com/astral-sh/uv). To start with, install `uv` then run the following:
 ```
 uv sync
