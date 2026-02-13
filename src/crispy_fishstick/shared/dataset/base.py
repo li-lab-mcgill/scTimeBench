@@ -86,16 +86,21 @@ class BaseDataset:
         """
         return any([f.requires_caching() for f in self.dataset_filters])
 
-    def encode_filters(self):
+    def encode_filters(self, i=None):
         """
         Generate a string representation of the applied dataset filters
         and their parameters.
 
         This can be used to cache processed datasets.
         """
+
+        filters_to_encode = (
+            self.dataset_filters if i is None else self.dataset_filters[:i]
+        )
+
         filter_names = [
             {"name": type(f).__name__, "parameters": f._parameters()}
-            for f in self.dataset_filters
+            for f in filters_to_encode
         ]
         return json.dumps(filter_names, sort_keys=True)
 
@@ -105,12 +110,17 @@ class BaseDataset:
 
         This can be used to cache processed datasets.
         """
+        # we exclude data_path to avoid path differences across systems
+        # we also exclude requires_caching and filters since
+        # requires_caching should not affect the processing itself
+        # and the filters are encoded elsewhere
+        blocklist = ["data_path", "requires_caching", "filters"]
         return json.dumps(
             {
                 k: v
                 for k, v in self.dataset_dict.items()
                 if k
-                != "data_path"  # we exclude data_path to avoid path differences across systems
+                not in blocklist  # we exclude data_path to avoid path differences across systems
             },
             sort_keys=True,
         )
@@ -154,35 +164,37 @@ class BaseDataset:
 
         # then we put this through the dataset filtering process
         encountered_split = False
-        for dataset_filter in self.dataset_filters:
+        for i, dataset_filter in enumerate(self.dataset_filters):
             # error out if we have multiple split filters
             if dataset_filter.splits and encountered_split:
                 raise ValueError(
                     "Multiple dataset filters producing splits are not supported."
                 )
 
+            checkpoint_dir = self.get_checkpoint_dir(i)
+
             # otherwise, if this is the first time we're seeing split, we handle it differently
             if dataset_filter.splits:
                 encountered_split = True
                 train_data, test_data = dataset_filter.filter(
-                    self.data, dataset_dir=self.get_dataset_dir()
+                    self.data, checkpoint_dir=checkpoint_dir
                 )
                 self.data = (train_data, test_data)
 
             # if we have already encountered a split, we need to apply the filter to both splits
             elif encountered_split:
                 train_data = dataset_filter.filter(
-                    self.data[0], dataset_dir=self.get_dataset_dir()
+                    self.data[0], checkpoint_dir=checkpoint_dir
                 )
                 test_data = dataset_filter.filter(
-                    self.data[1], dataset_dir=self.get_dataset_dir()
+                    self.data[1], checkpoint_dir=checkpoint_dir
                 )
                 self.data = (train_data, test_data)
 
             # otherwise, just apply the filter normally
             else:
                 self.data = dataset_filter.filter(
-                    self.data, dataset_dir=self.get_dataset_dir()
+                    self.data, checkpoint_dir=checkpoint_dir
                 )
 
         assert (
@@ -218,6 +230,25 @@ class BaseDataset:
         return os.path.join(
             self.output_dir,
             DATASET_DIR,
+            hashlib.sha256(unique_string.encode()).hexdigest(),
+        )
+
+    def get_checkpoint_dir(self, i):
+        """
+        We define a checkpoint as the ith filter in the pipeline.
+        This is used to save intermediate results that take a while to get to (such as pseudotime estimation).
+        """
+        unique_string = json.dumps(
+            {
+                "dataset_dict": self.encode_dataset_dict(),
+                "filters": self.encode_filters(i),
+            },
+            sort_keys=True,
+        )
+        return os.path.join(
+            self.output_dir,
+            DATASET_DIR,
+            "checkpoints",
             hashlib.sha256(unique_string.encode()).hexdigest(),
         )
 

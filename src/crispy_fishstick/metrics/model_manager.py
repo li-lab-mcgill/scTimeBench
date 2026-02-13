@@ -67,13 +67,12 @@ class ModelManager:
         3) the output file name required by the metric
         and return the full output path as a hashed string.
         """
-        filters = self.dataset.encode_filters()
         unique_string = json.dumps(
             {
                 "name": self._get_name(),
                 "metadata": self._encode_metadata(),
                 "dataset_dict": self.dataset.encode_dataset_dict(),
-                "filters": filters,
+                "filters": self.dataset.encode_filters(),
             },
             sort_keys=True,
         )

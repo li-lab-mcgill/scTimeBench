@@ -59,7 +59,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         """
         return True
 
-    def filter(self, ann_data, dataset_dir):
+    def filter(self, ann_data, checkpoint_dir):
         """
         Use some pseudotime estimation method (to be implemented by subclasses) to replace the time column with a pseudotime.
 
@@ -75,7 +75,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         from scipy.stats import spearmanr
 
         # by default we will cache to dataset_dir/pseudotime.npy
-        cache_path = os.path.join(dataset_dir, self.PSEUDOTIME_FILE)
+        cache_path = os.path.join(checkpoint_dir, self.PSEUDOTIME_FILE)
         if os.path.exists(cache_path):
             logging.debug(
                 f"Cached pseudotime file already exists at {cache_path}. Loading pseudotime from cache."
@@ -106,7 +106,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
 
         elif self._parameters()["preprocess_type"] == PreprocessType.PCA.value:
             # we perform PCA and use the top n components as input to the pseudotime estimation.
-            pca_path = os.path.join(dataset_dir, self.PCA_FILE)
+            pca_path = os.path.join(checkpoint_dir, self.PCA_FILE)
             if os.path.exists(pca_path):
                 logging.debug(
                     f"PCA model already exists at {pca_path}. Loading PCA model."
@@ -136,6 +136,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         logging.debug(f"Spearman correlation: {spearman_corr}")
 
         ann_data.obs[ObservationColumns.TIMEPOINT.value] = pseudotime
+        os.makedirs(checkpoint_dir, exist_ok=True)
         np.save(cache_path, pseudotime)
         logging.debug(f"Caching to {cache_path}...")
         return ann_data

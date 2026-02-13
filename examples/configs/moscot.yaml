@@ -1,5 +1,7 @@
 datasets:
   - tag: defaultGarciaAlonsoPseudotimeMinCells
+  - tag: defaultGarciaAlonsoPseudotimeEvenTps
+  - tag: defaultGarciaAlonsoPseudotimeEvenCells
 
 model:
   name: Moscot
