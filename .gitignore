@@ -1,5 +1,7 @@
 # Virtual environment directory
 venv/
+venv
+
 # Database files
 *.db
 outputs
@@ -7,6 +9,9 @@ outputs/
 logs/
 data
 data/
+
+# Symlinks
+symlinks/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

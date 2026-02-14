@@ -1,0 +1,6 @@
+model:
+  name: WOT
+  train_and_test_script: ./models/WOT/train_and_test.sh
+
+metrics:
+ - name: BaseMetric

@@ -2,10 +2,16 @@
 ## Setup
 To start, please install the crispy-fishstick package with:
 ```
-pip install -e .
+pip install -e ".[benchmark]"
 ```
 
 This allows you to create model run files that use the necessary constants and model runners under the crispy fishstick packages.
+
+Note: for the other models, we don't need all the dependencies so for example, if you're setting up the moscot environment,
+```
+pip install -e .
+```
+is enough.
 
 ## Detailed Layout of File Structure
 - `examples/` defines the examples
@@ -28,7 +34,11 @@ python src/crispy_fishstick/main.py --config examples/configs/scNODE_user_define
 ## Contributing
 If you want to contribute, please install both the test and the dev environments with:
 ```
-pip install -e ".[test, dev]"
+pip install -e ".[test, dev, benchmark]"
+```
+Then for our autoformatting, please run:
+```
+pre-commit install
 ```
 
 ## Testing

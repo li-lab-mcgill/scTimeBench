@@ -3,22 +3,11 @@ Embedding-based metrics.
 """
 from crispy_fishstick.metrics.base import BaseMetric
 from crispy_fishstick.shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
-from crispy_fishstick.metrics.base import OutputPathName
-from crispy_fishstick.shared.constants import RequiredOutputColumns
 
 import os
 
 
 class EmbeddingMetrics(BaseMetric):
-    def _setup_model_output_requirements(self):
-        # ** NOTE: must define the following attributes **
-        # where we define the output embedding name
-        # as well as the required features and outputs
-        self.output_path_name = OutputPathName.EMBEDDING
-        self.required_outputs = [
-            RequiredOutputColumns.EMBEDDING,
-        ]
-
     def _setup_supported_datasets(self):
         # ** NOTE: must define the following two attributes, though each subclass **
         # ** Must also define required_feature_specs and output_path_name individually, as they likely require **

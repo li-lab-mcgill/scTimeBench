@@ -52,7 +52,15 @@ def test_config_execution(config_path, workspace, run_bench):
 
     output_required_files = set()
     for metric in get_leaf_metrics(top_metric_inst):
-        output_required_files.add(metric.output_path_name.value)
+        # Collect required outputs from each metric
+        if hasattr(metric, "required_outputs"):
+            for output in metric.required_outputs:
+                if isinstance(output, list):
+                    # list of list case - add all from the inner list
+                    for inner_output in output:
+                        output_required_files.add(inner_output.value)
+                else:
+                    output_required_files.add(output.value)
 
     output_required_files.update(
         [

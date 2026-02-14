@@ -3,7 +3,6 @@ Base filter for datasets. Every metric will likely require different splits of t
 data, so this base class will define the necessary interface for dataset preprocessing.
 """
 from crispy_fishstick.shared.constants import ObservationColumns
-import hashlib
 import json
 
 # ** DATASET FILTERING SECTION **
@@ -86,32 +85,21 @@ class BaseDataset:
 
         This can be used to cache processed datasets.
         """
-        return json.dumps(self.dataset_dict, sort_keys=True)
+        return json.dumps(
+            {
+                k: v
+                for k, v in self.dataset_dict.items()
+                if k
+                != "data_path"  # we exclude data_path to avoid path differences across systems
+            },
+            sort_keys=True,
+        )
 
     def get_name(self):
         """
         Get the name of the dataset from the configuration.
         """
         return self.dataset_dict["name"]
-
-    def encode_dataset_path(self):
-        """
-        Generate a hash for the processed dataset based on the applied filters
-        and the original dataset configuration.
-
-        This can be used to cache processed datasets.
-        """
-        # Create a unique string based on dataset config and filter names
-        filter_names = self.encode_filters()
-        unique_string = json.dumps(
-            {
-                "dataset_dict": self.dataset_dict,
-                "filters": filter_names,
-            },
-            sort_keys=True,
-        )
-        # Generate a base64 encoded string of the unique string
-        return hashlib.sha256(unique_string.encode()).hexdigest() + ".h5ad"
 
     def load_data(self):
         """

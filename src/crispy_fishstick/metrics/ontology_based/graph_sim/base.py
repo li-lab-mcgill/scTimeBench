@@ -1,15 +1,14 @@
 """
 Graph Similarity Metric Base Class
 """
-from crispy_fishstick.metrics.base import OutputPathName
 from crispy_fishstick.metrics.ontology_based.base import OntologyBasedMetrics
-from crispy_fishstick.shared.constants import RequiredOutputColumns
+from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.shared.helpers import parse_cell_lineage
 from crispy_fishstick.shared.dataset.filters.lineage import LineageDatasetFilter
+from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import numpy as np
 
-import os
 import logging
 
 
@@ -27,21 +26,33 @@ class GraphSimMetric(OntologyBasedMetrics):
             "edge_threshold": 0.1,
         }
 
+    def _setup_trajectory_inference_model(self):
+        self.trajectory_infer_model = (
+            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
+                self.metric_config.get("trajectory_infer_model", {})
+            )
+        )
+        self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
+
     def _setup_model_output_requirements(self):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs
         if self.trajectory_infer_model.uses_gene_expr():
-            self.output_path_name = OutputPathName.GRAPH_SIM_WITH_GENE_EXPR
-            self.required_outputs = [
-                RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION,
+            primary_outputs = [
+                RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
             ]
         else:
-            self.output_path_name = OutputPathName.GRAPH_SIM
-            self.required_outputs = [
-                RequiredOutputColumns.EMBEDDING,
-                RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING,
+            primary_outputs = [
+                RequiredOutputFiles.EMBEDDING,
+                RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
             ]
+
+        # allow alternate outputs for OT-based methods
+        self.required_outputs = [
+            primary_outputs,
+            [RequiredOutputFiles.NEXT_CELLTYPE],
+        ]
 
     def _build_ref_graph(self, dataset):
         """
@@ -100,11 +111,8 @@ class GraphSimMetric(OntologyBasedMetrics):
         """
         # first let's ensure that it's in the right format
         # we expect it to have the true embeddings and predicted embeddings
-        # for timepoints (1, ..., n) in h5ad format, where we save new embeddings
-        model_output_file = os.path.join(output_path, self.output_path_name.value)
-        pred_trajectory = self.trajectory_infer_model.infer_trajectory(
-            model_output_file
-        )
+        # for timepoints (1, ..., n) in separate output files
+        pred_trajectory = self.trajectory_infer_model.infer_trajectory(output_path)
 
         logging.debug(f"Predicted trajectory: {pred_trajectory}")
 
@@ -128,6 +136,22 @@ class GraphSimMetric(OntologyBasedMetrics):
                 if source_id != target_id and prob >= self.edge_threshold:
                     adjacency_matrix[source_id, target_id] = 1.0
 
+        # let's print out what the predicted trajectory (with thresholding) looks like
+        # so we need to map the adjacency matrix back to cell types
+        pred_lineage = {}
+        ids_to_cell_types = {v: k for k, v in cell_type_to_id.items()}
+
+        for i in range(adjacency_matrix.shape[0]):
+            for j in range(adjacency_matrix.shape[1]):
+                if adjacency_matrix[i, j] == 1.0:
+                    source_cell_type = ids_to_cell_types[i]
+                    target_cell_type = ids_to_cell_types[j]
+                    if source_cell_type not in pred_lineage:
+                        pred_lineage[source_cell_type] = []
+                    pred_lineage[source_cell_type].append(target_cell_type)
+
+        logging.debug(f"Predicted cell lineage (after thresholding): {pred_lineage}")
+
         return {
             AdjacencyMatrixType.WEIGHTED: weighted_adjacency_matrix,
             AdjacencyMatrixType.UNWEIGHTED: adjacency_matrix,
@@ -135,6 +159,7 @@ class GraphSimMetric(OntologyBasedMetrics):
 
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
         graph_ref = self._build_ref_graph(dataset)
+        self.output_path = output_path
         return {
             # build the reference graph
             "graph_ref": graph_ref,

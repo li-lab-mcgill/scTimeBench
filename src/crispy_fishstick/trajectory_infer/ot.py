@@ -2,13 +2,11 @@
 kNN implementation for trajectory inference.
 """
 from crispy_fishstick.trajectory_infer.base import BaseTrajectoryInferMethod
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
 import numpy as np
 import logging
 import torch
 
 from geomloss import SamplesLoss
-from pykeops.torch import generic_sum
 
 
 # TODO: build a unit test for this class, to ensure that we're doing this properly
@@ -16,34 +14,25 @@ class OptimalTransport(BaseTrajectoryInferMethod):
     def __init__(self, traj_config):
         super().__init__(traj_config)
 
-    def uses_gene_expr(self):
-        """
-        OT method is the only one that we allow to
-        """
-        return self.traj_config.get("use_gene_expr", False)
+    def _subclass_parameters(self):
+        return {
+            "use_gene_expr": self.traj_config.get("use_gene_expr", False),
+            "unbalanced_ot_blur": self.traj_config.get("unbalanced_ot_blur", 0.05),
+            "unbalanced_ot_scaling": self.traj_config.get("unbalanced_ot_scaling", 0.5),
+            "unbalanced_ot_reach": self.traj_config.get("unbalanced_ot_reach", None),
+        }
 
-    def _get_tensors_for_traj(self, ann_data):
-        """
-        Based on the _use_gene_expr function, get the proper tensors for trajectory inference.
+    def _subclass_train(self, X_train, y_train, traj_infer_path):
+        # here it's simple, we just save the training data for later use
+        self.train_tensor = torch.FloatTensor(X_train)
 
-        We want to return:
-        - Original gene expr/embedding at time t (for all t)
-        - Predicted gene expr/embedding at time t (for (1, last t))
-        """
-        if self.uses_gene_expr():
-            return (
-                torch.from_numpy(ann_data.X.toarray()),
-                ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-                ],
-            )
-        else:
-            return (
-                ann_data.obsm[RequiredOutputColumns.EMBEDDING.value],
-                ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value],
-            )
+        one_hot_encoding, index_to_type = self.cell_types_to_one_hot(y_train)
+        logging.debug(f"One-hot encoding index to type: {index_to_type}")
+        self.train_labels = one_hot_encoding
+        self.index_to_type = index_to_type
+        self.traj_infer_path = traj_infer_path
 
-    def _method_infer_trajectory(self, ann_data):
+    def _subclass_predict_probs(self, embeds):
         """
         Infer the trajectory using an OT method. There are two types, one where we
         use the gene expression:
@@ -53,74 +42,23 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         whereas we simply calculate the direct label transfer through OT.
 
         Otherwise, we just simply use the OT on the embeddings and transfer the labels
-        based on the transport plan.
+        based on the transport plan. We want to transfer from all embeddings to the unknown cells
         """
-        cur_tensor, next_tensor = self._get_tensors_for_traj(ann_data)
-        timepoints = ann_data.obs[ObservationColumns.TIMEPOINT.value]
-        cell_types = ann_data.obs[ObservationColumns.CELL_TYPE.value]
-        unique_timepoints = sorted(np.unique(timepoints))
-
-        one_hot_encoding, index_to_type = self.cell_types_to_one_hot(cell_types)
-        logging.debug(f"One-hot encoding index to type: {index_to_type}")
-
-        total_pred_cells = 0
-        cell_lineage = {}
-        for i in range(len(unique_timepoints) - 1):
-            # get indices for current timepoint
-            idx_current = np.where(timepoints == unique_timepoints[i])[0]
-            # get indices for next timepoint
-            idx_next = np.where(timepoints == unique_timepoints[i + 1])[0]
-            # get the cell types for the next timepoint, where idx_next[i] corresponds to next_cell_types[i]
-            next_cell_types = one_hot_encoding[idx_next]
-
-            # later for logging purposes
-            total_pred_cells += next_cell_types.shape[0]
-
-            # now let's do the label transfer using optimal transport
-            pred_tensor = torch.FloatTensor(next_tensor[idx_current])
-            true_next_tensor = torch.FloatTensor(cur_tensor[idx_next])
-
-            labels = (
-                self.get_ot_labels(true_next_tensor, pred_tensor, next_cell_types)
-                .detach()
-                .numpy()
+        # cache labels for faster access
+        test_labels = (
+            self.get_ot_labels(
+                self.train_tensor, torch.FloatTensor(embeds), self.train_labels
             )
-
-            # now let's map the soft labels to hard cell type labels
-            cell_type_labels = self.soft_labels_to_cell_types(labels, index_to_type)
-
-            # now based on these cell type labels, let's build the lineage
-            for cur_cell, next_cell in zip(
-                cell_types.iloc[idx_current], cell_type_labels
-            ):
-                if cur_cell not in cell_lineage:
-                    cell_lineage[cur_cell] = {}
-                if next_cell not in cell_lineage[cur_cell]:
-                    cell_lineage[cur_cell][next_cell] = 0
-                cell_lineage[cur_cell][next_cell] += 1
-
-            logging.debug(
-                f"Cell lineage after timepoint {unique_timepoints[i]}: {cell_lineage}"
-            )
-
-        # finally what we do is count the total number of "unknown" transitions and remove them
-        total_unknowns = 0
-        for source_cell_type in cell_lineage.keys():
-            if "unknown" in cell_lineage[source_cell_type]:
-                total_unknowns += cell_lineage[source_cell_type]["unknown"]
-                del cell_lineage[source_cell_type]["unknown"]
-        logging.debug(
-            f"Total unknown transitions removed: {total_unknowns} out of {total_pred_cells} cells"
+            .detach()
+            .numpy()
         )
 
-        logging.debug(f"Constructed cell lineage (raw counts): {cell_lineage}")
-        # finally, we normalize the counts
-        for source_cell_type in cell_lineage.keys():
-            total_counts = sum(cell_lineage[source_cell_type].values())
-            for target_cell_type in cell_lineage[source_cell_type]:
-                cell_lineage[source_cell_type][target_cell_type] /= total_counts
-
-        return cell_lineage
+        # these test labels then need to be normalized to represent probabilities
+        # sum(axis = 1) means sum across the columns, then keepdims to maintain the 2D shape
+        logging.debug(f"Raw OT test labels: {test_labels}")
+        test_labels = test_labels / (test_labels.sum(axis=1, keepdims=True) + 1e-8)
+        logging.debug(f"Normalized OT test labels: {test_labels}")
+        return test_labels, self.index_to_type
 
     def cell_types_to_one_hot(self, cell_types):
         """
@@ -153,6 +91,8 @@ class OptimalTransport(BaseTrajectoryInferMethod):
         Given the true embeddings, predicted embeddings and one-hot encoding of true cell types,
         get the transport plan using optimal transport
         """
+        from pykeops.torch import generic_sum
+
         ot_solver = SamplesLoss(
             "sinkhorn",
             p=2,

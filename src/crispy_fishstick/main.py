@@ -34,8 +34,10 @@ def print_available(config: Config):
     for metric_name in METRIC_REGISTRY.keys():
         metric_inst = METRIC_REGISTRY[metric_name](config, None, {})
         print(f" - {metric_name}")
-        print(f"   Required Outputs: {metric_inst.required_outputs}")
-        print(f"   Supported datasets: {metric_inst.supported_datasets}")
+        if hasattr(metric_inst, "required_outputs"):
+            print(f"   Required Outputs: {metric_inst.required_outputs}")
+        if hasattr(metric_inst, "supported_datasets"):
+            print(f"   Supported datasets: {metric_inst.supported_datasets}")
 
 
 def run_metrics(config: Config):
@@ -142,6 +144,13 @@ def main():
 
     if config.view_evals_by_metric:
         view_evals_by_metric(config)
+        exit()
+
+    if config.clear_tables:
+        db_manager = database.DatabaseManager(config)
+        db_manager.clear_tables()
+        print("All database tables have been cleared.")
+        db_manager.close()
         exit()
 
     run_metrics(config)

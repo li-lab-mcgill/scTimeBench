@@ -12,6 +12,7 @@ class GraphEditDistance(GraphSimMetric):
         return {
             **super()._defaults(),
             "weighted": False,
+            "norm": None,  # by default we use the Frobenius norm
         }
 
     def _graph_sim_eval(self, graph_pred, graph_ref):
@@ -26,7 +27,12 @@ class GraphEditDistance(GraphSimMetric):
         graph_ref_adj = graph_ref[AdjacencyMatrixType.UNWEIGHTED]
 
         # it's quite simply the difference between the predicted and reference adjacency matrices
-        edit_distance = np.sum(np.abs(graph_pred_adj - graph_ref_adj)).item()
+        if self.norm or self.norm == "frobenius":
+            edit_distance = np.linalg.norm(
+                graph_pred_adj - graph_ref_adj, ord=self.norm
+            ).item()
+        else:
+            edit_distance = np.linalg.norm(graph_pred_adj - graph_ref_adj).item()
 
         logging.debug(
             f"Predicted Graph: {graph_pred_adj}, Reference Graph: {graph_ref_adj}"

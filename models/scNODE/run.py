@@ -12,7 +12,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "./scNODE_module"))
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 import numpy as np
 import torch
 from optim.running import constructscNODEModel, scNODETrainWithPreTrain
@@ -98,7 +98,7 @@ def model_training(
 
 
 class scNODE(BaseModel):
-    def train(self, ann_data):
+    def train(self, ann_data, all_tps=None):
         """
         Training logic for scNODE.
         """
@@ -125,127 +125,82 @@ class scNODE(BaseModel):
         # store to .pth file
         torch.save(self.latent_ode_model.state_dict(), cache_path)
 
-    def generate(self, test_ann_data, expected_output_path):
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
         """
-        Generation logic with interpolation.
-        Returns an AnnData object containing the generated samples.
+        Generate embeddings for the current timepoint using VAE reconstruction.
         """
-        # now let's evaluate the data
+        self.latent_ode_model.eval()
+
+        data = test_ann_data.X.toarray()
+        embeds, _ = self.latent_ode_model.vaeReconstruct([data])
+        embeds = embeds[0]
+
+        print(f"Embeddings shape: {embeds.shape}")
+        return embeds.detach().numpy()
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
         self.latent_ode_model.eval()
 
         data = test_ann_data.X.toarray()
         cell_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
         unique_tps = sorted(np.unique(cell_tps))
 
-        final_ann_data = test_ann_data.copy()
-
-        first_data_embed_from_vae_reconstruct = None
-        first_data_embed_from_predict = None
-
-        # now let's go through the different scenarios and prepare the data for that
-        print(f"Now populating: {self.required_outputs}")
-        for output in self.required_outputs:
-            if output == RequiredOutputColumns.EMBEDDING:
-                embeds, _ = self.latent_ode_model.vaeReconstruct([data])
-                embeds = embeds[0]
-
-                print(f"Embeddings shape: {embeds.shape}")
-
-                # now we need to create the ann_data object
-                final_ann_data.obsm[
-                    RequiredOutputColumns.EMBEDDING.value
-                ] = embeds.detach().numpy()
-
-                first_data_embed_from_vae_reconstruct = embeds[0]
-
-                # print the first few embeddings for debugging, they should not be exact
-                # because they are both sampled, but they should be close
-                print(
-                    "First cell embeddings from VAE reconstruct:",
-                    first_data_embed_from_vae_reconstruct,
+        next_timepoint_embeds = []
+        for cell, tp in zip(data, cell_tps):
+            # given the unique_tps that we have, find the next timepoint
+            next_tps = [t for t in unique_tps if t > tp]
+            if not next_tps:
+                # if there is no next timepoint, we just return a NaN object
+                next_timepoint_embeds.append(
+                    np.full((self.latent_ode_model.latent_dim,), np.nan)
                 )
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
-                # for the next timepoint embeddings
-                # let's do this one by one, as we want to preserve ordering
-                # and the fact that cells will have different next timepoints
-                next_timepoint_embeds = []
-                for cell, tp in zip(data, cell_tps):
-                    # given the unique_tps that we have, find the next timepoint
-                    next_tps = [t for t in unique_tps if t > tp]
-                    if not next_tps:
-                        # if there is no next timepoint, we just return a NaN object (we won't be looking here anyways)
-                        next_timepoint_embeds.append(
-                            np.full((self.latent_ode_model.latent_dim,), np.nan)
-                        )
-                        continue
+                continue
 
-                    cell = cell.reshape(1, -1)
+            cell = cell.reshape(1, -1)
 
-                    _, pred_embed, _ = self.latent_ode_model.predict(
-                        torch.FloatTensor(cell),
-                        torch.FloatTensor(
-                            [tp, next_tps[0]]
-                        ),  # need to include the starting timepoint and the next timepoint
-                        n_cells=1,
-                    )
-                    pred_embed = pred_embed[0]  # get the first (and only) batch
+            _, pred_embed, _ = self.latent_ode_model.predict(
+                torch.FloatTensor(cell),
+                torch.FloatTensor([tp, next_tps[0]]),
+                n_cells=1,
+            )
+            pred_embed = pred_embed[0]  # get the first (and only) batch
+            next_timepoint_embeds.append(pred_embed[1].detach().numpy())
 
-                    if first_data_embed_from_predict is None:
-                        first_data_embed_from_predict = pred_embed[0]
+        return np.vstack(next_timepoint_embeds)
 
-                    # attach the next timepoint to the list
-                    next_timepoint_embeds.append(pred_embed[1].detach().numpy())
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        """
+        self.latent_ode_model.eval()
 
-                next_timepoint_embeds = np.vstack(next_timepoint_embeds)
-                # now we need to create the ann_data object
-                final_ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
-                ] = next_timepoint_embeds
+        data = test_ann_data.X.toarray()
+        cell_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
+        unique_tps = sorted(np.unique(cell_tps))
 
-                print(
-                    "First cell embeddings from predict:", first_data_embed_from_predict
-                )
-                # this was none at one point, not too sure why...
-                # for now, we'll just assert it's not none and assess later!
-                assert first_data_embed_from_predict is not None
+        next_timepoint_gene_expr = []
+        for cell, tp in zip(data, cell_tps):
+            # given the unique_tps that we have, find the next timepoint
+            next_tps = [t for t in unique_tps if t > tp]
+            if not next_tps:
+                # if there is no next timepoint, we just return a NaN object
+                next_timepoint_gene_expr.append(np.full((data.shape[1],), np.nan))
+                continue
 
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
-                # for the next timepoint gene expression
-                # let's do this one by one, as we want to preserve ordering
-                # and the fact that cells will have different next timepoints
-                next_timepoint_gene_expr = []
-                for cell, tp in zip(data, cell_tps):
-                    # given the unique_tps that we have, find the next timepoint
-                    next_tps = [t for t in unique_tps if t > tp]
-                    if not next_tps:
-                        # if there is no next timepoint, we just return a NaN object (we won't be looking here anyways)
-                        next_timepoint_gene_expr.append(
-                            np.full((data.shape[1],), np.nan)
-                        )
-                        continue
+            cell = cell.reshape(1, -1)
 
-                    cell = cell.reshape(1, -1)
+            _, _, recon_obs = self.latent_ode_model.predict(
+                torch.FloatTensor(cell),
+                torch.FloatTensor([tp, next_tps[0]]),
+                n_cells=1,
+            )
+            recon_obs = recon_obs[0]  # get the first (and only) batch
+            next_timepoint_gene_expr.append(recon_obs[1].detach().numpy())
 
-                    _, _, recon_obs = self.latent_ode_model.predict(
-                        torch.FloatTensor(cell),
-                        torch.FloatTensor(
-                            [tp, next_tps[0]]
-                        ),  # need to include the starting timepoint and the next timepoint
-                        n_cells=1,
-                    )
-                    recon_obs = recon_obs[0]  # get the first (and only) batch
-
-                    # attach the next timepoint to the list
-                    next_timepoint_gene_expr.append(recon_obs[1].detach().numpy())
-
-                next_timepoint_gene_expr = np.vstack(next_timepoint_gene_expr)
-                # now we need to create the ann_data object
-                final_ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-                ] = next_timepoint_gene_expr
-
-        # finally write out to the expected output path
-        final_ann_data.write_h5ad(expected_output_path)
+        return np.vstack(next_timepoint_gene_expr)
 
 
 if __name__ == "__main__":

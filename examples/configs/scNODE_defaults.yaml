@@ -1,9 +1,48 @@
+datasets:
+  - tag: defaultGarciaAlonso
+
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
- - name: BaseMetric
-   trajectory_infer_model:
-    name: OptimalTransport
-    use_gene_expr: false
+  # - name: ClassifierMetrics
+  #   trajectory_infer_model:
+  #     name: Classifier
+
+  # - name: ClassifierMetrics
+  #   trajectory_infer_model:
+  #     name: kNN
+
+  - name: ClassifierMetrics
+    k_folds: 1
+    trajectory_infer_model:
+      name: OptimalTransport
+      # n_neighbors: 5
+  #     metric: 'cosine'
+  #     n_neighbors: 1
+
+  # - name: ARI
+# TODO: figure out why unbalanced OT does not work for Suo...
+# TODO: add this as a test
+# - name: EmbeddingMetrics
+# - name: ARI
+#   trajectory_infer_model:
+#     name: Classifier
+# TODO: add this into some test later!
+# metrics:
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: Classifier
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: Classifier
+#     n_estimators: 50
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: kNN
+#     n_neighbors: 5
+#  - name: GraphSimMetric
+#    trajectory_infer_model:
+#     name: kNN
+#     n_neighbors: 5
