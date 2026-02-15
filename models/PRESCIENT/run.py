@@ -8,13 +8,13 @@ using the BaseModel runner structure used across the project.
 import os
 from datetime import datetime
 from types import SimpleNamespace
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import torch
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -26,6 +26,7 @@ def _sorted_unique(values):
         return list(np.sort(np.unique(values)))
     try:
         import natsort  # type: ignore
+
         return list(natsort.natsorted(np.unique(values)))
     except Exception:
         return list(sorted(np.unique(values).tolist()))
@@ -36,6 +37,7 @@ def _import_prescient():
         from prescient.train.run import run as prescient_train_run  # type: ignore
         from prescient.train.model import AutoGenerator  # type: ignore
         from prescient.simulate import sim as prescient_sim  # type: ignore
+
         return prescient_train_run, AutoGenerator, prescient_sim
     except Exception as exc:
         raise ImportError(
@@ -99,11 +101,9 @@ def _prescient_train_init(args: SimpleNamespace):
     if a.weight_name is not None:
         a.weight = a.weight_name
 
-    name = (
-        "{weight}-"
-        "{activation}_{layers}_{k_dim}-"
-        "{train_tau}"
-    ).format(**a.__dict__)
+    name = ("{weight}-" "{activation}_{layers}_{k_dim}-" "{train_tau}").format(
+        **a.__dict__
+    )
 
     a.out_dir = os.path.join(args.out_dir, name, f"seed_{a.seed}")
     config = _prescient_init_config(a)
@@ -128,6 +128,7 @@ def _prescient_train_init(args: SimpleNamespace):
 def _ensure_dense(x):
     try:
         import scipy.sparse as sp  # type: ignore
+
         if sp.issparse(x):
             return x.toarray()
     except Exception:
@@ -135,7 +136,9 @@ def _ensure_dense(x):
     return np.asarray(x)
 
 
-def _prepare_prescient_data(ann_data, time_col: str, k_dim: int, num_neighbors_umap: int):
+def _prepare_prescient_data(
+    ann_data, time_col: str, k_dim: int, num_neighbors_umap: int
+):
     from sklearn.preprocessing import StandardScaler  # type: ignore
     from sklearn.decomposition import PCA  # type: ignore
 
@@ -162,7 +165,10 @@ def _prepare_prescient_data(ann_data, time_col: str, k_dim: int, num_neighbors_u
     um = None
     try:
         import umap  # type: ignore
-        um = umap.UMAP(n_components=2, metric="euclidean", n_neighbors=num_neighbors_umap)
+
+        um = umap.UMAP(
+            n_components=2, metric="euclidean", n_neighbors=num_neighbors_umap
+        )
         xu = um.fit_transform(xp)
     except Exception:
         if xp.shape[1] >= 2:
@@ -171,9 +177,15 @@ def _prepare_prescient_data(ann_data, time_col: str, k_dim: int, num_neighbors_u
             xu = np.zeros((xp.shape[0], 2))
 
     x_list = [torch.from_numpy(x[tps_idx == i]).float() for i in range(len(unique_tps))]
-    xp_list = [torch.from_numpy(xp[tps_idx == i]).float() for i in range(len(unique_tps))]
-    xu_list = [torch.from_numpy(xu[tps_idx == i]).float() for i in range(len(unique_tps))]
-    w_list = [np.ones(x_list[i].shape[0], dtype=np.float32) for i in range(len(unique_tps))]
+    xp_list = [
+        torch.from_numpy(xp[tps_idx == i]).float() for i in range(len(unique_tps))
+    ]
+    xu_list = [
+        torch.from_numpy(xu[tps_idx == i]).float() for i in range(len(unique_tps))
+    ]
+    w_list = [
+        np.ones(x_list[i].shape[0], dtype=np.float32) for i in range(len(unique_tps))
+    ]
 
     data_pt = {
         "data": X,
@@ -241,7 +253,9 @@ class PRESCIENT(BaseModel):
         """
         Training logic for PRESCIENT.
         """
-        cache_path = os.path.join(self.config["output_path"], "trained_prescient_model.pth")
+        cache_path = os.path.join(
+            self.config["output_path"], "trained_prescient_model.pth"
+        )
         metadata = self.config.get("model", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
@@ -287,7 +301,9 @@ class PRESCIENT(BaseModel):
 
         min_cells = min(len(x) for x in data_pt["xp"])
         if min_cells == 0:
-            raise ValueError("PRESCIENT training data has an empty timepoint; cannot train.")
+            raise ValueError(
+                "PRESCIENT training data has an empty timepoint; cannot train."
+            )
 
         prescient_train_run, _auto_gen, _sim = _import_prescient()
 
@@ -306,7 +322,7 @@ class PRESCIENT(BaseModel):
             activation=metadata.get("activation", "softplus"),
             layers=int(metadata.get("layers", 1)),
             pretrain_epochs=int(metadata.get("pretrain_epochs", 500)),
-            train_epochs=int(metadata.get("train_epochs", 1)), #TODO set to be 2500
+            train_epochs=int(metadata.get("train_epochs", 1)),  # TODO set to be 2500
             train_lr=float(metadata.get("train_lr", 0.01)),
             train_dt=float(metadata.get("train_dt", 0.1)),
             train_sd=float(metadata.get("train_sd", 0.5)),
@@ -345,11 +361,14 @@ class PRESCIENT(BaseModel):
             pickle_protocol=4,
         )
 
-    def generate(self, test_ann_data, expected_output_path):
-        """
-        Generation logic with interpolation.
-        Returns an AnnData object containing the generated samples.
-        """
+    def _simulate_tp_series(self, test_ann_data):
+        if hasattr(self, "_cached_sim_tp_latent"):
+            return (
+                self._cached_sim_tp_latent,
+                self._cached_sim_tp_recon,
+                self._cached_tp_idx,
+            )
+
         metadata = self.config.get("model", {}).get("metadata", {})
         n_sim_cells = int(metadata.get("n_sim_cells", 2000))
 
@@ -399,32 +418,42 @@ class PRESCIENT(BaseModel):
         )
 
         sim_steps = all_sims[0]
-        step_indices = [int(round(i / config.train_dt)) for i in range(len(self.unique_tps))]
-        sim_tp_latent = [sim_steps[min(idx, sim_steps.shape[0] - 1)] for idx in step_indices]
+        step_indices = [
+            int(round(i / config.train_dt)) for i in range(len(self.unique_tps))
+        ]
+        sim_tp_latent = [
+            sim_steps[min(idx, sim_steps.shape[0] - 1)] for idx in step_indices
+        ]
         sim_tp_recon = [
             self.scaler.inverse_transform(self.pca.inverse_transform(each))
             for each in sim_tp_latent
         ]
 
-        final_ann_data = test_ann_data.copy()
-        print(f"Now populating: {self.required_outputs}")
+        self._cached_sim_tp_latent = sim_tp_latent
+        self._cached_sim_tp_recon = sim_tp_recon
+        self._cached_tp_idx = tp_idx
+        return sim_tp_latent, sim_tp_recon, tp_idx
 
-        for output in self.required_outputs:
-            if output == RequiredOutputColumns.EMBEDDING:
-                embeds = _fill_from_sim(sim_tp_latent, tp_idx)
-                final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
-                next_embeds = _fill_from_next(sim_tp_latent, tp_idx)
-                final_ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value
-                ] = next_embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
-                next_expr = _fill_from_next(sim_tp_recon, tp_idx)
-                final_ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-                ] = next_expr
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        """
+        sim_tp_latent, _, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_sim(sim_tp_latent, tp_idx)
 
-        final_ann_data.write_h5ad(expected_output_path)
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
+        sim_tp_latent, _, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_next(sim_tp_latent, tp_idx)
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        """
+        _, sim_tp_recon, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_next(sim_tp_recon, tp_idx)
 
 
 if __name__ == "__main__":

@@ -17,12 +17,10 @@ import geomloss
 from sklearn.decomposition import PCA
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 
-_SCIMF_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "scIMF_module")
-)
+_SCIMF_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "scIMF_module"))
 if os.path.isdir(_SCIMF_PATH) and _SCIMF_PATH not in sys.path:
     sys.path.append(_SCIMF_PATH)
 
@@ -35,6 +33,7 @@ from load_Data import constructOutDir  # type: ignore
 def _ensure_dense_float32(x):
     try:
         import scipy.sparse as sp  # type: ignore
+
         if sp.issparse(x):
             x = x.toarray()
     except Exception:
@@ -48,6 +47,7 @@ def _sorted_unique(values):
         return list(np.sort(np.unique(values)))
     try:
         import natsort  # type: ignore
+
         return list(natsort.natsorted(np.unique(values)))
     except Exception:
         return list(sorted(np.unique(values).tolist()))
@@ -130,7 +130,9 @@ class scIMF(BaseModel):
         config.for_train = True
 
         config.split_type = (
-            "all_times" if len(config.leaveouts) == 0 else f"leaveout_{'_'.join(map(str, config.leaveouts))}"
+            "all_times"
+            if len(config.leaveouts) == 0
+            else f"leaveout_{'_'.join(map(str, config.leaveouts))}"
         )
 
         config.Train_ts = list(range(1, n_tps))
@@ -180,11 +182,13 @@ class scIMF(BaseModel):
 
         if os.path.exists(cache_path):
             print("Trained scIMF model found, loading from file.")
-            cache = torch.load(cache_path, map_location="cpu",weights_only=False)
+            cache = torch.load(cache_path, map_location="cpu", weights_only=False)
             self.tp_to_idx = cache["tp_to_idx"]
             self.idx_to_tp = {i: tp for tp, i in self.tp_to_idx.items()}
             self.pca_model = cache["pca_model"]
-            self.data_t0 = torch.FloatTensor(cache["data_t0"]) if "data_t0" in cache else None
+            self.data_t0 = (
+                torch.FloatTensor(cache["data_t0"]) if "data_t0" in cache else None
+            )
 
             config_dict = cache["config"]
             args = SimpleNamespace(**config_dict)
@@ -211,13 +215,16 @@ class scIMF(BaseModel):
         self.pca_model = pca
 
         data_listAllT = [
-            torch.FloatTensor(data[np.where(cell_tps == t)[0], :]) for t in range(0, n_tps)
+            torch.FloatTensor(data[np.where(cell_tps == t)[0], :])
+            for t in range(0, n_tps)
         ]
 
         available_tps = sorted(set(cell_tps.tolist()))
         if 0 not in available_tps:
             raise ValueError("scIMF training requires timepoint 0 in training data.")
-        config.train_t = [t for t in available_tps if t != 0 and t not in config.leaveouts]
+        config.train_t = [
+            t for t in available_tps if t != 0 and t not in config.leaveouts
+        ]
         config.Train_ts = [t for t in available_tps if t != 0]
 
         model = MultiCNet(config)
@@ -258,11 +265,15 @@ class scIMF(BaseModel):
                     losses_list.append(loss_train_t.item())
 
                     if (train_t == config.train_t[-1]) and config.use_intLoss:
-                        loss_energy = (torch.mean(latent_xs_energy_predict[-1][:, -1])) / train_t
+                        loss_energy = (
+                            torch.mean(latent_xs_energy_predict[-1][:, -1])
+                        ) / train_t
                         losses_energy.append(loss_energy.item())
-                        loss_all = ((loss_train_t * config.lambda_marginal) / num_train_t) + loss_energy
+                        loss_all = (
+                            (loss_train_t * config.lambda_marginal) / num_train_t
+                        ) + loss_energy
                     else:
-                        loss_all = ((loss_train_t * config.lambda_marginal) / num_train_t)
+                        loss_all = (loss_train_t * config.lambda_marginal) / num_train_t
 
                     loss_all.backward(retain_graph=True)
 
@@ -271,7 +282,9 @@ class scIMF(BaseModel):
                     train_loss_energy = np.mean(losses_energy)
 
                 if config.train_clip > 0:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.train_clip)
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), config.train_clip
+                    )
                 optimizer.step()
                 scheduler.step()
 
@@ -358,13 +371,11 @@ class scIMF(BaseModel):
         data_pca = self.pca_model.transform(data_log)
         return torch.FloatTensor(data_pca[mask])
 
-    def generate(self, test_ann_data, expected_output_path):
-        """
-        Generation logic with interpolation for scIMF.
-        Returns an AnnData object containing the generated samples.
-        """
+    def _generate_outputs(self, test_ann_data):
+        if hasattr(self, "_cached_outputs"):
+            return self._cached_outputs
+
         self.model.eval()
-        final_ann_data = test_ann_data.copy()
 
         time_col = ObservationColumns.TIMEPOINT.value
         cell_tps = test_ann_data.obs[time_col].values
@@ -398,45 +409,60 @@ class scIMF(BaseModel):
                 raise ValueError(f"Timepoint {tp} not found in generated samples.")
             embeds[mask] = _select_generated(latent_pred, tp_idx, int(mask.sum()), rng)
 
-        if RequiredOutputColumns.EMBEDDING in self.required_outputs:
-            final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
-
-        if RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING in self.required_outputs:
-            next_embeds = np.full((test_ann_data.n_obs, n_features), np.nan, dtype=embeds.dtype)
-            for i, tp in enumerate(ordered_unique_tps):
-                mask = cell_tps == tp
-                if i + 1 >= len(ordered_unique_tps):
-                    continue
-                next_tp = ordered_unique_tps[i + 1]
-                next_idx = self.tp_to_idx.get(next_tp)
-                if next_idx is None:
-                    continue
-                next_embeds[mask] = _select_generated(latent_pred, next_idx, int(mask.sum()), rng)
-
-            final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value] = next_embeds
-
-        if RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION in self.required_outputs:
-            next_gene_expr = np.full(
-                (test_ann_data.n_obs, test_ann_data.n_vars),
-                np.nan,
-                dtype=np.float32,
+        next_embeds = np.full(
+            (test_ann_data.n_obs, n_features), np.nan, dtype=embeds.dtype
+        )
+        for i, tp in enumerate(ordered_unique_tps):
+            mask = cell_tps == tp
+            if i + 1 >= len(ordered_unique_tps):
+                continue
+            next_tp = ordered_unique_tps[i + 1]
+            next_idx = self.tp_to_idx.get(next_tp)
+            if next_idx is None:
+                continue
+            next_embeds[mask] = _select_generated(
+                latent_pred, next_idx, int(mask.sum()), rng
             )
-            for i, tp in enumerate(ordered_unique_tps):
-                mask = cell_tps == tp
-                if i + 1 >= len(ordered_unique_tps):
-                    continue
-                next_tp = ordered_unique_tps[i + 1]
-                next_idx = self.tp_to_idx.get(next_tp)
-                if next_idx is None:
-                    continue
-                next_latent = _select_generated(latent_pred, next_idx, int(mask.sum()), rng)
-                next_gene_expr[mask] = self.pca_model.inverse_transform(next_latent)
 
-            final_ann_data.obsm[
-                RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-            ] = next_gene_expr
+        next_gene_expr = np.full(
+            (test_ann_data.n_obs, test_ann_data.n_vars),
+            np.nan,
+            dtype=np.float32,
+        )
+        for i, tp in enumerate(ordered_unique_tps):
+            mask = cell_tps == tp
+            if i + 1 >= len(ordered_unique_tps):
+                continue
+            next_tp = ordered_unique_tps[i + 1]
+            next_idx = self.tp_to_idx.get(next_tp)
+            if next_idx is None:
+                continue
+            next_latent = _select_generated(latent_pred, next_idx, int(mask.sum()), rng)
+            next_gene_expr[mask] = self.pca_model.inverse_transform(next_latent)
 
-        final_ann_data.write_h5ad(expected_output_path)
+        self._cached_outputs = (embeds, next_embeds, next_gene_expr)
+        return self._cached_outputs
+
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        """
+        embeds, _, _ = self._generate_outputs(test_ann_data)
+        return embeds
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
+        _, next_embeds, _ = self._generate_outputs(test_ann_data)
+        return next_embeds
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        """
+        _, _, next_gene_expr = self._generate_outputs(test_ann_data)
+        return next_gene_expr
 
 
 if __name__ == "__main__":

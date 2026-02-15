@@ -12,7 +12,7 @@ import numpy as np
 import torch
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 
 def _sorted_unique(values: List) -> List:
@@ -21,6 +21,7 @@ def _sorted_unique(values: List) -> List:
         return list(np.sort(np.unique(values)))
     try:
         import natsort  # type: ignore
+
         return list(natsort.natsorted(np.unique(values)))
     except Exception:
         return list(sorted(np.unique(values).tolist()))
@@ -29,6 +30,7 @@ def _sorted_unique(values: List) -> List:
 def _ensure_dense(x) -> np.ndarray:
     try:
         import scipy.sparse as sp  # type: ignore
+
         if sp.issparse(x):
             return x.toarray()
     except Exception:
@@ -102,7 +104,9 @@ def _build_args(metadata: Dict, data_path: str, output_path: str, n_genes: int) 
                 "resume_checkpoint", os.path.join(output_path, "squidiff_checkpoints")
             ),
             "use_fp16": _as_bool(metadata.get("use_fp16", False), False),
-            "fp16_scale_growth": _as_float(metadata.get("fp16_scale_growth", 1e-3), 1e-3),
+            "fp16_scale_growth": _as_float(
+                metadata.get("fp16_scale_growth", 1e-3), 1e-3
+            ),
             "gene_size": _as_int(metadata.get("gene_size", n_genes), n_genes),
             "output_dim": _as_int(metadata.get("output_dim", n_genes), n_genes),
             "num_layers": _as_int(metadata.get("num_layers", 3), 3),
@@ -112,7 +116,9 @@ def _build_args(metadata: Dict, data_path: str, output_path: str, n_genes: int) 
             "logger_path": metadata.get(
                 "logger_path", os.path.join(output_path, "squidiff_logs")
             ),
-            "use_drug_structure": _as_bool(metadata.get("use_drug_structure", False), False),
+            "use_drug_structure": _as_bool(
+                metadata.get("use_drug_structure", False), False
+            ),
             "comb_num": _as_int(metadata.get("comb_num", 1), 1),
             "use_ddim": _as_bool(metadata.get("use_ddim", True), True),
             "drug_dimension": _as_int(metadata.get("drug_dimension", 1024), 1024),
@@ -143,7 +149,9 @@ def _run_training(args: Dict) -> None:
     )
     model.to(dist_util.dev())
 
-    schedule_sampler = create_named_schedule_sampler(args["schedule_sampler"], diffusion)
+    schedule_sampler = create_named_schedule_sampler(
+        args["schedule_sampler"], diffusion
+    )
 
     try:
         data = prepared_data(
@@ -234,7 +242,9 @@ def _load_model(args: Dict, model_path: str):
     return model, diffusion, dist_util.dev()
 
 
-def _encode_latent(model, x: np.ndarray, device, batch_size: int, use_encoder: bool) -> np.ndarray:
+def _encode_latent(
+    model, x: np.ndarray, device, batch_size: int, use_encoder: bool
+) -> np.ndarray:
     if not use_encoder or not hasattr(model, "encoder"):
         return x.astype(np.float32)
 
@@ -256,7 +266,9 @@ def _encode_latent(model, x: np.ndarray, device, batch_size: int, use_encoder: b
 
     embeddings = []
     for start in range(0, x.shape[0], batch_size):
-        batch = torch.tensor(x[start : start + batch_size], dtype=torch.float32, device=device)
+        batch = torch.tensor(
+            x[start : start + batch_size], dtype=torch.float32, device=device
+        )
         with torch.no_grad():
             z_sem = _encoder_forward(batch)
         embeddings.append(z_sem.detach().cpu().numpy())
@@ -277,11 +289,15 @@ def _sample_outputs(
 
     outputs = []
     for start in range(0, x.shape[0], batch_size):
-        batch = torch.tensor(x[start : start + batch_size], dtype=torch.float32, device=device)
+        batch = torch.tensor(
+            x[start : start + batch_size], dtype=torch.float32, device=device
+        )
         with torch.no_grad():
             if use_encoder and hasattr(model, "encoder"):
                 try:
-                    z_sem = model.encoder(batch, label=None, drug_dose=None, control_feature=None)
+                    z_sem = model.encoder(
+                        batch, label=None, drug_dose=None, control_feature=None
+                    )
                 except TypeError:
                     z_sem = model.encoder(batch)
                 pred = sample_fn(
@@ -303,7 +319,10 @@ def _sample_outputs(
 
 def _next_timepoint_mask(cell_tps: np.ndarray, unique_tps: List) -> np.ndarray:
     ordered = _sorted_unique(unique_tps)
-    next_map = {ordered[i]: (ordered[i + 1] if i + 1 < len(ordered) else None) for i in range(len(ordered))}
+    next_map = {
+        ordered[i]: (ordered[i + 1] if i + 1 < len(ordered) else None)
+        for i in range(len(ordered))
+    }
     return np.array([next_map.get(tp) is not None for tp in cell_tps], dtype=bool)
 
 
@@ -312,7 +331,9 @@ class Squidiff(BaseModel):
         """
         Training logic for Squidiff.
         """
-        cache_path = os.path.join(self.config["output_path"], "trained_squidiff_model.pt")
+        cache_path = os.path.join(
+            self.config["output_path"], "trained_squidiff_model.pt"
+        )
         metadata = self.config.get("model", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
@@ -331,17 +352,23 @@ class Squidiff(BaseModel):
         self.unique_tps = unique_tps
         self.tp_to_idx = tp_to_idx
 
-        train_data_path = os.path.join(self.config["output_path"], "squidiff_train.h5ad")
+        train_data_path = os.path.join(
+            self.config["output_path"], "squidiff_train.h5ad"
+        )
         grouped_adata.write_h5ad(train_data_path)
 
         n_genes = grouped_adata.X.shape[1]
-        args = _build_args(metadata, train_data_path, self.config["output_path"], n_genes)
+        args = _build_args(
+            metadata, train_data_path, self.config["output_path"], n_genes
+        )
 
         _run_training(args)
 
         model_path = os.path.join(args["resume_checkpoint"], "model.pt")
         if not os.path.exists(model_path):
-            raise FileNotFoundError("Squidiff training did not produce a model.pt checkpoint.")
+            raise FileNotFoundError(
+                "Squidiff training did not produce a model.pt checkpoint."
+            )
 
         self.model_path = model_path
         self.args = args
@@ -356,11 +383,10 @@ class Squidiff(BaseModel):
             cache_path,
         )
 
-    def generate(self, test_ann_data, expected_output_path):
-        """
-        Generation logic for Squidiff.
-        Returns an AnnData object containing the generated samples.
-        """
+    def _generate_outputs(self, test_ann_data):
+        if hasattr(self, "_cached_outputs"):
+            return self._cached_outputs
+
         if not hasattr(self, "model_path"):
             raise ValueError("Model not trained or loaded; cannot generate outputs.")
 
@@ -391,20 +417,35 @@ class Squidiff(BaseModel):
         unique_tps = _sorted_unique(cell_tps)
         has_next = _next_timepoint_mask(cell_tps, unique_tps)
 
-        print(f"Now populating: {self.required_outputs}")
-        for output in self.required_outputs:
-            if output == RequiredOutputColumns.EMBEDDING:
-                final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
-                next_expr = np.full_like(preds, np.nan, dtype=np.float32)
-                next_expr[has_next] = preds[has_next]
-                final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value] = next_expr
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
-                next_latent = np.full_like(next_embeds, np.nan, dtype=np.float32)
-                next_latent[has_next] = next_embeds[has_next]
-                final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value] = next_latent
+        next_expr = np.full_like(preds, np.nan, dtype=np.float32)
+        next_expr[has_next] = preds[has_next]
 
-        final_ann_data.write_h5ad(expected_output_path)
+        next_latent = np.full_like(next_embeds, np.nan, dtype=np.float32)
+        next_latent[has_next] = next_embeds[has_next]
+
+        self._cached_outputs = (embeds, next_latent, next_expr)
+        return self._cached_outputs
+
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        """
+        embeds, _, _ = self._generate_outputs(test_ann_data)
+        return embeds
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
+        _, next_latent, _ = self._generate_outputs(test_ann_data)
+        return next_latent
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        """
+        _, _, next_expr = self._generate_outputs(test_ann_data)
+        return next_expr
 
 
 if __name__ == "__main__":

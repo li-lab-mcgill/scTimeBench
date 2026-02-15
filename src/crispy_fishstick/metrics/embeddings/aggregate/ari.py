@@ -11,19 +11,11 @@ import logging
 
 import numpy as np
 import scanpy as sc
-import anndata
 from sklearn.metrics import adjusted_rand_score
 from sklearn.neighbors import NearestNeighbors
 
 
 class ARI(AggregateEmbeddingMetrics):
-    def _setup_model_output_requirements(self):
-        self.output_path_name = OutputPathName.EMBEDDING
-        self.required_outputs = [
-            RequiredOutputFiles.EMBEDDING,
-            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
-        ]
-
     def _defaults(self):
         return {
             "n_neighbors": 15,
@@ -44,6 +36,10 @@ class ARI(AggregateEmbeddingMetrics):
         cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].to_numpy()
         timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
 
+        if embeddings.shape[0] != cell_types.shape[0]:
+            raise ValueError(
+                "Embedding count does not match number of cell type labels."
+            )
 
         # silence the numba warnings
         logging.getLogger("numba").setLevel(logging.WARNING)

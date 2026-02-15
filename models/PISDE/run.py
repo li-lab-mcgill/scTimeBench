@@ -8,13 +8,13 @@ It keeps the BaseModel runner structure used across the project.
 import os
 import sys
 from types import SimpleNamespace
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import torch
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 
 _PISDE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "PISDE_module"))
@@ -32,6 +32,7 @@ def _sorted_unique(values):
         return list(np.sort(np.unique(values)))
     try:
         import natsort  # type: ignore
+
         return list(natsort.natsorted(np.unique(values)))
     except Exception:
         return list(sorted(np.unique(values).tolist()))
@@ -52,6 +53,7 @@ def _map_leaveouts(leaveouts, mapping, n_tps):
 def _ensure_dense(x):
     try:
         import scipy.sparse as sp  # type: ignore
+
         if sp.issparse(x):
             return x.toarray()
     except Exception:
@@ -152,7 +154,11 @@ def _select_checkpoint(config):
         return best_path
     train_dir = os.path.dirname(config.train_pt)
     candidates = sorted(
-        [p for p in os.listdir(train_dir) if p.startswith("train.") and p.endswith(".pt")]
+        [
+            p
+            for p in os.listdir(train_dir)
+            if p.startswith("train.") and p.endswith(".pt")
+        ]
     )
     if not candidates:
         raise FileNotFoundError("No PI-SDE checkpoints found.")
@@ -169,7 +175,7 @@ class PISDE(BaseModel):
 
         if os.path.exists(cache_path):
             print("Trained PI-SDE model cache found, loading from file.")
-            cache = torch.load(cache_path, map_location="cpu",weights_only=False)
+            cache = torch.load(cache_path, map_location="cpu", weights_only=False)
             self.data_path = cache["data_path"]
             self.config_dir = cache["config_dir"]
             self.unique_tps = cache["unique_tps"]
@@ -184,7 +190,9 @@ class PISDE(BaseModel):
             all_tps = ann_data.obs[time_col].unique().tolist()
 
         unique_tps = _sorted_unique(all_tps)
-        unique_tps, tp_counts = _filter_timepoints_with_data(ann_data, unique_tps, time_col)
+        unique_tps, tp_counts = _filter_timepoints_with_data(
+            ann_data, unique_tps, time_col
+        )
         dropped = [tp for tp, count in tp_counts.items() if count == 0]
         if dropped:
             print(
@@ -196,9 +204,7 @@ class PISDE(BaseModel):
 
         tp_to_idx = {tp: idx for idx, tp in enumerate(unique_tps)}
 
-        data_dict = _build_pisde_data(
-            ann_data, unique_tps, tp_to_idx, time_col
-        )
+        data_dict = _build_pisde_data(ann_data, unique_tps, tp_to_idx, time_col)
 
         data_path = os.path.join(self.config["output_path"], "pisde_data.pt")
         torch.save({"xp": data_dict["xp"], "y": data_dict["y"]}, data_path)
@@ -215,7 +221,9 @@ class PISDE(BaseModel):
         args.train_clip = float(metadata.get("train_clip", args.train_clip))
         args.save = int(metadata.get("save", args.save))
 
-        args.sinkhorn_scaling = float(metadata.get("sinkhorn_scaling", args.sinkhorn_scaling))
+        args.sinkhorn_scaling = float(
+            metadata.get("sinkhorn_scaling", args.sinkhorn_scaling)
+        )
         args.sinkhorn_blur = float(metadata.get("sinkhorn_blur", args.sinkhorn_blur))
         args.ns = float(metadata.get("ns", args.ns))
 
@@ -251,17 +259,23 @@ class PISDE(BaseModel):
         try:
             if leaveouts is not None:
                 mapped_leaveouts = _map_leaveouts(leaveouts, tp_to_idx, n_tps)
-                config = pisde_train.run_leaveout(args, init_config, leaveouts=mapped_leaveouts)
+                config = pisde_train.run_leaveout(
+                    args, init_config, leaveouts=mapped_leaveouts
+                )
             else:
                 config = pisde_train.run(args, init_config)
         except RuntimeError as exc:
             msg = str(exc)
-            if args.use_cuda and ("CUBLAS_STATUS_NOT_INITIALIZED" in msg or "CUDA error" in msg):
+            if args.use_cuda and (
+                "CUBLAS_STATUS_NOT_INITIALIZED" in msg or "CUDA error" in msg
+            ):
                 print("CUDA initialization failed; retrying PI-SDE training on CPU.")
                 args.use_cuda = False
                 if leaveouts is not None:
                     mapped_leaveouts = _map_leaveouts(leaveouts, tp_to_idx, n_tps)
-                    config = pisde_train.run_leaveout(args, init_config, leaveouts=mapped_leaveouts)
+                    config = pisde_train.run_leaveout(
+                        args, init_config, leaveouts=mapped_leaveouts
+                    )
                 else:
                     config = pisde_train.run(args, init_config)
             else:
@@ -282,23 +296,26 @@ class PISDE(BaseModel):
             cache_path,
         )
 
-    def generate(self, test_ann_data, expected_output_path):
-        """
-        Generation logic with interpolation.
-        Returns an AnnData object containing the generated samples.
-        """
+    def _simulate_tp_series(self, test_ann_data):
+        if hasattr(self, "_cached_sim_tp"):
+            return self._cached_sim_tp, self._cached_tp_idx
+
         metadata = self.config.get("model", {}).get("metadata", {})
         n_sim_cells = int(metadata.get("n_sim_cells", 2000))
 
         config_pt = os.path.join(self.config_dir, "config.pt")
-        config_dict = torch.load(config_pt,weights_only=False)
+        config_dict = torch.load(config_pt, weights_only=False)
         config = SimpleNamespace(**config_dict)
 
-        device = torch.device(f"cuda:{config.device}" if config.use_cuda and torch.cuda.is_available() else "cpu")
+        device = torch.device(
+            f"cuda:{config.device}"
+            if config.use_cuda and torch.cuda.is_available()
+            else "cpu"
+        )
 
         model = ForwardSDE(config)
         ckpt_path = _select_checkpoint(config)
-        checkpoint = torch.load(ckpt_path, map_location="cpu",weights_only=False)
+        checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
         model.to(device)
         model.eval()
@@ -323,21 +340,30 @@ class PISDE(BaseModel):
             )
         tp_idx = np.array([self.tp_to_idx[t] for t in cell_tps], dtype=int)
 
-        final_ann_data = test_ann_data.copy()
-        print(f"Now populating: {self.required_outputs}")
+        self._cached_sim_tp = sim_tp
+        self._cached_tp_idx = tp_idx
+        return sim_tp, tp_idx
 
-        for output in self.required_outputs:
-            if output == RequiredOutputColumns.EMBEDDING:
-                embeds = _fill_from_sim(sim_tp, tp_idx)
-                final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
-                next_embeds = _fill_from_next(sim_tp, tp_idx)
-                final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value] = next_embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
-                next_expr = _fill_from_next(sim_tp, tp_idx)
-                final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value] = next_expr
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the current timepoint.
+        """
+        sim_tp, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_sim(sim_tp, tp_idx)
 
-        final_ann_data.write_h5ad(expected_output_path)
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """
+        Generate embeddings for the next timepoint.
+        """
+        sim_tp, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_next(sim_tp, tp_idx)
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        """
+        Generate gene expression for the next timepoint.
+        """
+        sim_tp, tp_idx = self._simulate_tp_series(test_ann_data)
+        return _fill_from_next(sim_tp, tp_idx)
 
 
 if __name__ == "__main__":
