@@ -1,7 +1,7 @@
 """
 Graph Similarity Metric Base Class
 """
-from crispy_fishstick.metrics.base import OutputPathName
+
 from crispy_fishstick.metrics.embeddings.aggregate.base import AggregateEmbeddingMetrics
 from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputFiles
 from crispy_fishstick.shared.utils import load_test_dataset, load_output_file
@@ -11,6 +11,7 @@ import logging
 
 import numpy as np
 import scanpy as sc
+import anndata
 from sklearn.metrics import adjusted_rand_score
 from sklearn.neighbors import NearestNeighbors
 
@@ -43,10 +44,6 @@ class ARI(AggregateEmbeddingMetrics):
         cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].to_numpy()
         timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
 
-        if embeddings.shape[0] != cell_types.shape[0]:
-            raise ValueError(
-                "Embedding count does not match number of cell type labels."
-            )
 
         # silence the numba warnings
         logging.getLogger("numba").setLevel(logging.WARNING)
