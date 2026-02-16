@@ -24,7 +24,11 @@ class ARI(AggregateEmbeddingMetrics):
 
     def _embedding_eval(self, output_path):
         """
-        The embedding-based metric evaluation function.
+        The embedding-based metric evaluation function. The function works as follows:
+        1. Load and use the embeddings to calculate a knn graph.
+        2. Use the inferred knn graph to transfer cell type labels.
+        3. Calculate the ARI on these cell type labels.
+        4. Compare ARI for ground truth cell embeddings vs next timepoint embeddings.
         """
         embeddings = load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
         next_timepoint_embeddings = load_output_file(
