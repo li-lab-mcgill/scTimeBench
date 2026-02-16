@@ -49,8 +49,8 @@ class ARI(AggregateEmbeddingMetrics):
         logging.getLogger("numba").setLevel(logging.WARNING)
 
         unique_timepoints = sorted(np.unique(timepoints))
-        if len(unique_timepoints) < 2:
-            raise ValueError("At least two timepoints are required for ARI.")
+        # if len(unique_timepoints) < 2:
+        #     raise ValueError("At least two timepoints are required for ARI.")
 
         def compute_ari(embeds, labels):
             if embeds.shape[0] == 0:
