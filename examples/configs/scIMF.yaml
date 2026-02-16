@@ -1,4 +1,4 @@
-##TODO 
+##TODO
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: auto_device
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: cache_n_cells
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: cuda_device
@@ -6,22 +6,8 @@
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: use_cuda
 
 datasets:
-  - name: GarciaAlonsoDataset
-    data_path: ./data/garcia-alonso/human_germ.h5ad
-    # these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-      - name: CopySplitFilter
-  - name: SuoDataset
-    data_path: ./data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
-        train_pct: 0.8
+  - tag: defaultGarciaAlonso
+  - tag: defaultSuo
 model:
   name: scIMF
   train_and_test_script: ./models/scIMF/train_and_test.sh

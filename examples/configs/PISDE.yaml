@@ -1,26 +1,12 @@
 datasets:
-  - name: GarciaAlonsoDataset
-    data_path: ./data/garcia-alonso/human_germ.h5ad
-    # these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-      - name: CopySplitFilter
-  - name: SuoDataset
-    data_path: ./data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
-        train_pct: 0.8
+  - tag: defaultGarciaAlonso
+  - tag: defaultSuo
 
 model:
   name: PISDE
   train_and_test_script: ./models/PISDE/train_and_test.sh
   metadata:
-    train_epochs: 100
+    train_epochs: 1
     train_lr: 0.001
     train_lambda: 0.1
     train_batch: 0.1
@@ -45,4 +31,3 @@ metrics:
  - name: GraphEditDistance
  - name: AverageShortestPathDiff
  - name: JaccardSimilarity
-

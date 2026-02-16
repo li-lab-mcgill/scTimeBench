@@ -9,18 +9,16 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from crispy_fishstick.shared.constants import ObservationColumns
 
 
-_CELL_MNN_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "MNN_module")
-)
+_CELL_MNN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "MNN_module"))
 if os.path.isdir(_CELL_MNN_PATH) and _CELL_MNN_PATH not in sys.path:
     sys.path.append(_CELL_MNN_PATH)
 
@@ -76,12 +74,15 @@ def _build_time_to_data(ann_data, time_mapping: Dict) -> Dict[float, torch.Tenso
         time_to_indices.setdefault(mapped, []).append(idx)
 
     time_to_data = {
-        t: torch.tensor(data[idxs], dtype=torch.float32) for t, idxs in time_to_indices.items()
+        t: torch.tensor(data[idxs], dtype=torch.float32)
+        for t, idxs in time_to_indices.items()
     }
     return time_to_data
 
 
-def _pca_transform(x: np.ndarray, components: np.ndarray, mean: np.ndarray) -> np.ndarray:
+def _pca_transform(
+    x: np.ndarray, components: np.ndarray, mean: np.ndarray
+) -> np.ndarray:
     return (x - mean) @ components
 
 
@@ -205,7 +206,10 @@ class CellMNNRunner(BaseModel):
             cache_path,
         )
 
-    def generate(self, test_ann_data, expected_output_path):
+    def _generate_all_outputs(self, test_ann_data):
+        if hasattr(self, "_cached_generation"):
+            return self._cached_generation
+
         if not hasattr(self, "model"):
             raise ValueError("Model not trained or loaded; cannot generate outputs.")
 
@@ -243,13 +247,19 @@ class CellMNNRunner(BaseModel):
                 delta_t = next_t_val - t_val
 
                 z = torch.tensor(cell[None, :], dtype=torch.float32, device=self.device)
-                t_tensor = torch.tensor([[t_val]], dtype=torch.float32, device=self.device)
-                dt_tensor = torch.tensor([[delta_t]], dtype=torch.float32, device=self.device)
+                t_tensor = torch.tensor(
+                    [[t_val]], dtype=torch.float32, device=self.device
+                )
+                dt_tensor = torch.tensor(
+                    [[delta_t]], dtype=torch.float32, device=self.device
+                )
 
                 z_pred, _p, _lam = self.model(z, t_tensor, dt_tensor)
                 z_pred_np = z_pred.cpu().numpy()[0]
                 next_embeds[idx] = z_pred_np
-                next_expr[idx] = _pca_inverse(z_pred_np[None, :], pca_components, pca_mean)[0]
+                next_expr[idx] = _pca_inverse(
+                    z_pred_np[None, :], pca_components, pca_mean
+                )[0]
 
         if invalid_next > 0:
             print(
@@ -260,19 +270,20 @@ class CellMNNRunner(BaseModel):
             next_embeds[fill_mask] = embeds[fill_mask]
             next_expr[fill_mask] = data[fill_mask]
 
-        final_ann_data = test_ann_data.copy()
-        print(f"Now populating: {self.required_outputs}")
-        for output in self.required_outputs:
-            if output == RequiredOutputColumns.EMBEDDING:
-                final_ann_data.obsm[RequiredOutputColumns.EMBEDDING.value] = embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING:
-                final_ann_data.obsm[RequiredOutputColumns.NEXT_TIMEPOINT_EMBEDDING.value] = next_embeds
-            elif output == RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION:
-                final_ann_data.obsm[
-                    RequiredOutputColumns.NEXT_TIMEPOINT_GENE_EXPRESSION.value
-                ] = next_expr
+        self._cached_generation = (embeds, next_embeds, next_expr)
+        return self._cached_generation
 
-        final_ann_data.write_h5ad(expected_output_path)
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        embeds, _, _ = self._generate_all_outputs(test_ann_data)
+        return embeds
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        _, next_embeds, _ = self._generate_all_outputs(test_ann_data)
+        return next_embeds
+
+    def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
+        _, _, next_expr = self._generate_all_outputs(test_ann_data)
+        return next_expr
 
 
 if __name__ == "__main__":

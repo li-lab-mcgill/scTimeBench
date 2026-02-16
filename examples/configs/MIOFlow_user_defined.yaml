@@ -1,11 +1,6 @@
 datasets:
-  - name: GarciaAlonsoDataset
-    data_path: ./data/garcia-alonso/human_germ.h5ad
-    # these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/simple_cell_line.txt
-      - name: CopySplitFilter
+  - tag: defaultGarciaAlonso
+  - tag: defaultSuo
 
 model:
   name: MIOFlow

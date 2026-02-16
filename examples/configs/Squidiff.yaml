@@ -1,20 +1,7 @@
 datasets:
-  - name: GarciaAlonsoDataset
-    data_path: ./data/garcia-alonso/human_germ.h5ad
-    # these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-      - name: CopySplitFilter
-  - name: SuoDataset
-    data_path: ./data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
-      - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
-        train_pct: 0.8
+  - tag: defaultGarciaAlonso
+  - tag: defaultSuo
+
 model:
   name: Squidiff
   train_and_test_script: ./models/Squidiff/train_and_test.sh

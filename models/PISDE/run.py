@@ -12,6 +12,7 @@ from typing import List, Optional
 
 import numpy as np
 import torch
+from sklearn.decomposition import PCA
 
 from crispy_fishstick.model_utils.model_runner import main, BaseModel
 from crispy_fishstick.shared.constants import ObservationColumns
@@ -148,6 +149,29 @@ def _fill_from_next(sim_list: List[np.ndarray], tp_idx: np.ndarray) -> np.ndarra
     return out
 
 
+def _fit_pca_projection(x: np.ndarray, embedding_dim: int):
+    x = np.asarray(x, dtype=np.float32)
+    if x.ndim != 2:
+        raise ValueError(f"Expected 2D data for PCA fit, got shape {x.shape}")
+
+    n_samples, n_features = x.shape
+    max_components = min(int(embedding_dim), n_features, max(1, n_samples - 1))
+    if max_components <= 0:
+        raise ValueError("Unable to fit PCA: invalid number of components.")
+
+    svd_solver = "arpack" if max_components < min(n_samples, n_features) else "full"
+    pca = PCA(n_components=max_components, svd_solver=svd_solver)
+    pca.fit(x)
+    return pca.components_.astype(np.float32), pca.mean_.astype(np.float32)
+
+
+def _project_with_pca(
+    x: np.ndarray, components: np.ndarray, mean: np.ndarray
+) -> np.ndarray:
+    x = np.asarray(x, dtype=np.float32)
+    return (x - mean) @ components.T
+
+
 def _select_checkpoint(config):
     best_path = config.train_pt.format("best")
     if os.path.exists(best_path):
@@ -180,6 +204,9 @@ class PISDE(BaseModel):
             self.config_dir = cache["config_dir"]
             self.unique_tps = cache["unique_tps"]
             self.tp_to_idx = cache["tp_to_idx"]
+            self.embedding_dim = int(metadata.get("embedding_dim", 50))
+            self.pca_components = cache.get("pca_components")
+            self.pca_mean = cache.get("pca_mean")
             return
 
         time_col = ObservationColumns.TIMEPOINT.value
@@ -285,6 +312,12 @@ class PISDE(BaseModel):
         self.config_dir = config.out_dir
         self.unique_tps = unique_tps
         self.tp_to_idx = tp_to_idx
+        self.embedding_dim = int(metadata.get("embedding_dim", 50))
+
+        train_x = _ensure_dense(ann_data.X).astype(np.float32)
+        self.pca_components, self.pca_mean = _fit_pca_projection(
+            train_x, self.embedding_dim
+        )
 
         torch.save(
             {
@@ -292,9 +325,25 @@ class PISDE(BaseModel):
                 "config_dir": self.config_dir,
                 "unique_tps": self.unique_tps,
                 "tp_to_idx": self.tp_to_idx,
+                "pca_components": self.pca_components,
+                "pca_mean": self.pca_mean,
             },
             cache_path,
         )
+
+    def _ensure_pca_projection(self, test_ann_data):
+        if (
+            getattr(self, "pca_components", None) is not None
+            and getattr(self, "pca_mean", None) is not None
+        ):
+            return
+
+        print(
+            "[warn] PI-SDE cache missing PCA projection; fitting PCA on test data for embeddings."
+        )
+        fallback_dim = int(getattr(self, "embedding_dim", 50))
+        x = _ensure_dense(test_ann_data.X).astype(np.float32)
+        self.pca_components, self.pca_mean = _fit_pca_projection(x, fallback_dim)
 
     def _simulate_tp_series(self, test_ann_data):
         if hasattr(self, "_cached_sim_tp"):
@@ -348,15 +397,19 @@ class PISDE(BaseModel):
         """
         Generate embeddings for the current timepoint.
         """
+        self._ensure_pca_projection(test_ann_data)
         sim_tp, tp_idx = self._simulate_tp_series(test_ann_data)
-        return _fill_from_sim(sim_tp, tp_idx)
+        sim_current = _fill_from_sim(sim_tp, tp_idx)
+        return _project_with_pca(sim_current, self.pca_components, self.pca_mean)
 
     def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
         """
         Generate embeddings for the next timepoint.
         """
+        self._ensure_pca_projection(test_ann_data)
         sim_tp, tp_idx = self._simulate_tp_series(test_ann_data)
-        return _fill_from_next(sim_tp, tp_idx)
+        sim_next = _fill_from_next(sim_tp, tp_idx)
+        return _project_with_pca(sim_next, self.pca_components, self.pca_mean)
 
     def generate_next_tp_gex(self, test_ann_data) -> np.ndarray:
         """
