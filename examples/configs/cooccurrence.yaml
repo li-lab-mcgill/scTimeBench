@@ -10,4 +10,4 @@ metrics:
   - name: GraphSimMetric
 
 metrics_skiplist:
-  - name: StackedDensityPlot
+  - name: StackedBarPlot

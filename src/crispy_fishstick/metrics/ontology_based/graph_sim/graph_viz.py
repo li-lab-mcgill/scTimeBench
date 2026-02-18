@@ -68,10 +68,10 @@ class GraphVisualization(GraphSimMetric):
         return  # Visualization metric does not return a numeric score
 
 
-class StackedDensityPlot(GraphSimMetric):
+class StackedBarPlot(GraphSimMetric):
     def _graph_sim_eval(self, graph_pred, graph_ref):
         """
-        This is a special metric that generates stacked density plots for the predicted trajectory.
+        This is a special metric that generates stacked bar plots for the predicted trajectory.
 
         We build both the predicted and reference graphs and save them as images.
         """
@@ -82,9 +82,9 @@ class StackedDensityPlot(GraphSimMetric):
         CELLTYPE_COL = "Cell Type"
         COUNT_COL = "Count"
 
-        def plot_stacked_density(traj_data, output_path, title):
+        def plot_stacked_bar(traj_data, output_path, title):
             """
-            Plots a stacked area chart of cell type ratios over time.
+            Plots a stacked bar chart of cell type ratios over time.
             Expects traj_data to be a DataFrame with columns for Time, Cell Type, and Count.
             """
             # 1. Pivot the data:
@@ -100,38 +100,29 @@ class StackedDensityPlot(GraphSimMetric):
             # 2. Sort index to ensure time flows correctly (6 -> 21)
             df_pivot.sort_index(inplace=True)
 
-            # 3. Normalize to 1 (100%) to create a "Density" / Ratio plot
+            # 3. Normalize to 1 (100%) to create a "bar" / Ratio plot
             # div(..., axis=0) divides each row by its sum
             df_ratios = df_pivot.div(df_pivot.sum(axis=1), axis=0)
 
-            # 4. Plot
-            plt.figure(figsize=(15, 6))
-
-            # 'area' creates a stacked plot by default.
-            # It uses the Index (your real float timepoints) as the x-axis automatically.
+            # 4. Plot as stacked bars
             ax = df_ratios.plot(
-                kind="area",
+                kind="bar",
                 stacked=True,
                 cmap="viridis",
-                alpha=0.8,
+                alpha=0.9,
                 figsize=(10, 6),
-                linewidth=0,  # Removes lines between stacks for a smoother look
+                width=0.85,
             )
 
-            # 5. Force exact X-axis ticks
-            # This ensures you see 6, 9, 12... instead of auto-generated ticks
-            real_timepoints = df_ratios.index.tolist()
-            ax.set_xticks(real_timepoints)
-
-            # Format: 2 decimal places
-            labels = [f"{x:.2f}" for x in real_timepoints]
-
-            # Apply rotation
+            # 5. Force exact X-axis labels from the real timepoints
+            labels = [f"{x:.2f}" for x in df_ratios.index.tolist()]
             ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+
+            # Keep the y-axis bounded to proportions
+            ax.set_ylim(0, 1)
 
             # Add a little padding at the bottom so rotated text doesn't get cut off
             plt.subplots_adjust(bottom=0.2)
-            plt.xlim(min(real_timepoints), max(real_timepoints))
 
             plt.title(title)
             plt.xlabel("Time Point")
@@ -143,7 +134,7 @@ class StackedDensityPlot(GraphSimMetric):
 
             plt.savefig(output_path)
             plt.close()  # Close the figure to free memory
-            logging.info(f"Stacked area plot saved to {output_path}")
+            logging.info(f"Stacked bar plot saved to {output_path}")
 
         per_tp_traj = self.trajectory_infer_model.infer_trajectory(
             self.output_path, per_tp=True
@@ -216,17 +207,17 @@ class StackedDensityPlot(GraphSimMetric):
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
         ref_plot_output = os.path.join(
-            self.dataset_dir, "reference_stacked_density_plot.png"
+            self.dataset_dir, "reference_stacked_bar_plot.png"
         )
         if not os.path.exists(ref_plot_output):
-            plot_stacked_density(
+            plot_stacked_bar(
                 source_df,
                 ref_plot_output,
                 f"True Cell Type Proportions Over {self.time_label} for {self.dataset_name}",
             )
-        plot_stacked_density(
+        plot_stacked_bar(
             target_df,
-            os.path.join(self.traj_dir, "target_stacked_density_plot.png"),
+            os.path.join(self.traj_dir, "target_stacked_bar_plot.png"),
             f'Predicted Target Cell Type Proportions Over {self.time_label} for {self.config.model["name"]} on {self.dataset_name}',
         )
 

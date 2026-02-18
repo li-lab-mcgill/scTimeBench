@@ -1,13 +1,13 @@
 datasets:
-  - tag: defaultGarciaAlonsoRounded
-  - tag: defaultSuo
+  - tag: defaultGarciaAlonso
+  # - tag: defaultSuo
   - tag: defaultGarciaAlonsoPseudotimeEvenCells
-  - tag: defaultSuoPseudotimeEvenCells
+  # - tag: defaultSuoPseudotimeEvenCells
 
 model:
   name: Moscot
   train_and_test_script: ./models/moscot/train_and_test.sh
 
 metrics:
-  - name: GraphVisualization
-  - name: StackedDensityPlot
+  # - name: GraphVisualization
+  - name: StackedBarPlot
