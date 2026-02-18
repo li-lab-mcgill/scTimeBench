@@ -16,6 +16,12 @@ from sklearn.neighbors import NearestNeighbors
 
 
 class ARI(AggregateEmbeddingMetrics):
+    def _setup_model_output_requirements(self):
+        self.required_outputs = [
+            RequiredOutputFiles.EMBEDDING,
+            RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
+        ]
+
     def _defaults(self):
         return {
             "n_neighbors": 15,

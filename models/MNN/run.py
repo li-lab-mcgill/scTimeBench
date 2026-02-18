@@ -83,11 +83,22 @@ def _build_time_to_data(ann_data, time_mapping: Dict) -> Dict[float, torch.Tenso
 def _pca_transform(
     x: np.ndarray, components: np.ndarray, mean: np.ndarray
 ) -> np.ndarray:
-    return (x - mean) @ components
+    x = np.nan_to_num(x, nan=0.0, posinf=0.0, neginf=0.0)
+    transformed = (x - mean) @ components
+    return np.nan_to_num(transformed, nan=0.0, posinf=0.0, neginf=0.0)
 
 
 def _pca_inverse(z: np.ndarray, components: np.ndarray, mean: np.ndarray) -> np.ndarray:
-    return z @ components.T + mean
+    z = np.nan_to_num(z, nan=0.0, posinf=0.0, neginf=0.0)
+    inverse = z @ components.T + mean
+    return np.nan_to_num(inverse, nan=0.0, posinf=0.0, neginf=0.0)
+
+
+def _model_state_is_finite(state_dict: Dict[str, torch.Tensor]) -> bool:
+    for tensor in state_dict.values():
+        if not torch.isfinite(tensor).all():
+            return False
+    return True
 
 
 def _resolve_device(metadata: Dict) -> torch.device:
@@ -129,17 +140,25 @@ class CellMNNRunner(BaseModel):
             self.ordered_time_labels = cache["ordered_time_labels"]
             self.latent_dim = int(cache["latent_dim"])
 
-            pca_components = torch.tensor(cache["pca_components"], dtype=torch.float32)
-            pca_mean = torch.tensor(cache["pca_mean"], dtype=torch.float32)
+            if not _model_state_is_finite(cache["model_state"]):
+                print(
+                    "[warn] Cached Cell-MNN weights contain non-finite values; "
+                    "ignoring cache and retraining."
+                )
+            else:
+                pca_components = torch.tensor(
+                    cache["pca_components"], dtype=torch.float32
+                )
+                pca_mean = torch.tensor(cache["pca_mean"], dtype=torch.float32)
 
-            self.model = CellMNN(
-                latent_dim=self.latent_dim,
-                pca_components=pca_components,
-                pca_mean=pca_mean,
-            )
-            self.model.load_state_dict(cache["model_state"])
-            self.model.to(self.device)
-            return
+                self.model = CellMNN(
+                    latent_dim=self.latent_dim,
+                    pca_components=pca_components,
+                    pca_mean=pca_mean,
+                )
+                self.model.load_state_dict(cache["model_state"])
+                self.model.to(self.device)
+                return
 
         if all_tps is None:
             raise ValueError("all_tps is required to build timepoint mapping.")
@@ -261,14 +280,23 @@ class CellMNNRunner(BaseModel):
                     z_pred_np[None, :], pca_components, pca_mean
                 )[0]
 
+        fill_mask = ~np.isfinite(next_embeds).all(axis=1)
+        if fill_mask.any():
+            print(
+                f"[warn] CellMNN produced non-finite next-timepoint values for {fill_mask.sum()} cells; "
+                "falling back to current embeddings/expressions for those rows."
+            )
+            next_embeds[fill_mask] = embeds[fill_mask]
+            next_expr[fill_mask] = data[fill_mask]
+
         if invalid_next > 0:
             print(
                 f"[warn] CellMNN could not infer next timepoint for {invalid_next} cells; "
                 "filling with current embeddings to avoid NaNs."
             )
-            fill_mask = ~np.isfinite(next_embeds).all(axis=1)
-            next_embeds[fill_mask] = embeds[fill_mask]
-            next_expr[fill_mask] = data[fill_mask]
+            tp_fill_mask = np.isnan(next_embeds).all(axis=1)
+            next_embeds[tp_fill_mask] = embeds[tp_fill_mask]
+            next_expr[tp_fill_mask] = data[tp_fill_mask]
 
         self._cached_generation = (embeds, next_embeds, next_expr)
         return self._cached_generation

@@ -4,7 +4,7 @@ Filter based on only the cells existing in the lineage information.
 
 from crispy_fishstick.shared.dataset.base import BaseDatasetFilter
 from crispy_fishstick.shared.constants import ObservationColumns
-from crispy_fishstick.shared.helpers import parse_cell_lineage
+from crispy_fishstick.shared.helpers import parse_cell_lineage, parse_equivalence
 
 
 class LineageDatasetFilter(BaseDatasetFilter):
@@ -26,6 +26,18 @@ class LineageDatasetFilter(BaseDatasetFilter):
         """
         Filter the dataset to only include cells present in the lineage information.
         """
+
+        ann_data = ann_data.copy()
+
+        # first normalize dataset labels to canonical names from equivalence mapping
+        equivalence_dict = parse_equivalence(self.cell_equivalence_file)
+        if len(equivalence_dict) > 0:
+            cell_type_col = ObservationColumns.CELL_TYPE.value
+            original_labels = ann_data.obs[cell_type_col]
+            mapped_labels = original_labels.map(equivalence_dict)
+            ann_data.obs[cell_type_col] = mapped_labels.where(
+                mapped_labels.notna(), original_labels
+            )
 
         # based off the config, we should filter our dataset
         # for only the cells that are in the lineage information

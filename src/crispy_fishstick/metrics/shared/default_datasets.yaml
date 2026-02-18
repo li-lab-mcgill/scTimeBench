@@ -1,4 +1,5 @@
 # this defines the default datasets and group-specific defaults for metrics
+#### Core Embeddings/Cell Ontology Datasets ####
 datasets:
   - name: SuoDataset
     tag: defaultSuo
@@ -17,6 +18,7 @@ datasets:
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./examples/cell_lineages/germ/equal_names.txt
       - name: CopySplitFilter
 
   - name: MaDataset
@@ -28,6 +30,57 @@ datasets:
         cell_lineage_file: ./examples/cell_lineages/pancreas/trunk_lineage.txt
       - name: CopySplitFilter
 
+
+### Core Gene Expression Prediction Datasets ###
+  - name: MaDataset
+    tag: EasyMa
+    data_path: ./data/ma/ma.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3,4]
+
+  - name: OlaniruDataset
+    tag: EasyOlaniru
+    data_path: ./data/olaniru/olaniru.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3,4]
+
+  - name: MaOlaniruDataset
+    tag: EasyMaOlaniru
+    data_path: ./data/maolaniru/maolaniru.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3,4]
+
+  - name: ZebrafishDataset
+    tag: EasyZebrafish
+    data_path: ./data/ZB/zebrafish.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3]
+
+  - name: DrosophilaDataset
+    tag: EasyDrosophila
+    data_path: ./data/DR/drosophila.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3]
+
+  - name: MEFDataset
+    tag: EasyMEF
+    data_path: ./data/MEF/mef.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [1,3]
+
+#### Metric-specific Defaults ####
 metric_groups:
   embeddings:
     dataset_tags:
@@ -39,3 +92,7 @@ metric_groups:
       - defaultSuo
       - defaultGarciaAlonso
       - defaultMa
+  gex_prediction:
+    dataset_tags:
+      - EasyMa
+      - defaultGarciaAlonso

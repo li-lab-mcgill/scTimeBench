@@ -1,2 +1,2 @@
-GC, GC_mitotic
-oogonia, oogonia_STRA8, oogonia_meiotic
+GC<= GC_mitotic
+oogonia<= oogonia_STRA8, oogonia_meiotic

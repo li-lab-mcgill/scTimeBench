@@ -15,7 +15,7 @@ def parse_equivalence(file_path):
     Returns:
     --------
     dict
-        Dictionary mapping normalized cell type names to one or more equivalent names
+        Dictionary mapping alias cell type names to their canonical name.
     """
     if file_path is None:
         return {}
@@ -28,24 +28,15 @@ def parse_equivalence(file_path):
     # for each row in the file:
     for row in content.splitlines():
         # Split by , and clean up first
-        cells = [cell.strip() for cell in row.split(",") if cell.strip()]
+        canonical, aliases = [cell.strip() for cell in row.split("<=") if cell.strip()]
+        aliases = [cell.strip() for cell in aliases.split(",") if cell.strip()]
 
-        if not cells:
+        if not aliases:
             continue
 
-        # then let's build the equivalence mapping
-        key = cells[0]
-        values = cells[1:]
-
-        if not values:
-            continue
-
-        if key not in equivalence:
-            equivalence[key] = []
-
-        for value in values:
-            if value not in equivalence[key]:
-                equivalence[key].append(value)
+        for alias in aliases:
+            if alias:
+                equivalence[alias] = canonical
 
     return equivalence
 
@@ -62,7 +53,7 @@ def parse_cell_lineage(file_path, equivalence_file_path=None):
     Returns:
     --------
     dict
-        Dictionary mapping normalized cell types to their root
+        Dictionary mapping canonicalized cell types to their descendants
     """
     equivalence_dict = parse_equivalence(equivalence_file_path)
 
@@ -76,26 +67,18 @@ def parse_cell_lineage(file_path, equivalence_file_path=None):
         # Split by => and clean up first
         cells = [cell.strip() for cell in row.split("=>") if cell.strip()]
 
-        # replace names using equivalence mapping, then normalize to lists
-        normalized_cells = []
-        for cell in cells:
-            if cell in equivalence_dict:
-                mapped = equivalence_dict[cell]
-                normalized_cells.append(
-                    mapped if isinstance(mapped, list) else [mapped]
-                )
-            else:
-                normalized_cells.append([cell])
+        # replace aliases with canonical names
+        normalized_cells = [equivalence_dict.get(cell, cell) for cell in cells]
 
-        # then let's build the lineage mapping, expanding one-to-many mappings
+        # then let's build the lineage mapping
         for i in range(len(normalized_cells) - 1):
-            sources = normalized_cells[i]
-            targets = normalized_cells[i + 1]
-            for source in sources:
-                if source not in lineage:
-                    lineage[source] = []
-                for target in targets:
-                    if target not in lineage[source]:
-                        lineage[source].append(target)
+            source = normalized_cells[i]
+            target = normalized_cells[i + 1]
+
+            if source not in lineage:
+                lineage[source] = []
+
+            if target not in lineage[source]:
+                lineage[source].append(target)
 
     return lineage

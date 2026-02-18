@@ -1,10 +1,10 @@
-HSC ELP, LMPP_MLP
-CD5-mature B, MATURE_B
-Immature B, IMMATURE_B
-Pro-B, PRO_B
-Small-pre-B, SMALL_PRE_B
-Large-pre-B, LARGE_PRE_B
-Pre-pro-B, PRE_PRO_B
-Plasma B, PLASMA_B
-Cycling B, CYCLING_B
-Late-pro-B, LATE_PRO_B
+HSC ELP<= LMPP_MLP
+CD5-mature B<= MATURE_B
+Immature B<= IMMATURE_B
+Pro-B<= PRO_B
+Small-pre-B<= SMALL_PRE_B
+Large-pre-B<= LARGE_PRE_B
+Pre-pro-B<= PRE_PRO_B
+Plasma B<= PLASMA_B
+Cycling B<= CYCLING_B
+Late-pro-B<= LATE_PRO_B

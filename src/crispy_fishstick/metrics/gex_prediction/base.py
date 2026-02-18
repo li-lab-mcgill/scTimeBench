@@ -2,7 +2,15 @@
 Gene expression prediction metrics.
 """
 from crispy_fishstick.metrics.base import BaseMetric
-from crispy_fishstick.shared.dataset.registry import SuoDataset, GarciaAlonsoDataset
+from crispy_fishstick.shared.dataset.registry import (
+    MaDataset,
+    OlaniruDataset,
+    MaOlaniruDataset,
+    ZebrafishDataset,
+    DrosophilaDataset,
+    MEFDataset,
+)
+
 
 import json
 import os
@@ -12,13 +20,19 @@ class GexPredictionMetrics(BaseMetric):
     def _setup_supported_datasets(self):
         # ** NOTE: must define the following two attributes, though each subclass **
         self.supported_datasets = [
-            SuoDataset.__name__,
-            GarciaAlonsoDataset.__name__,
+            MaDataset.__name__,
+            OlaniruDataset.__name__,
+            MaOlaniruDataset.__name__,
+            ZebrafishDataset.__name__,
+            DrosophilaDataset.__name__,
+            MEFDataset.__name__,
         ]
 
-        # get the path to the default datasets, under ./default_datasets.yaml
+        self.default_dataset_group = "gex_prediction"
+
+        # get the path to the shared default datasets config
         self.default_datasets_path = os.path.join(
-            os.path.dirname(__file__), "default_datasets.yaml"
+            os.path.dirname(__file__), "..", "shared", "default_datasets.yaml"
         )
 
     def _defaults(self):
