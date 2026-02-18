@@ -5,6 +5,7 @@ from crispy_fishstick.metrics.ontology_based.base import OntologyBasedMetrics
 from crispy_fishstick.shared.constants import RequiredOutputFiles
 from crispy_fishstick.shared.helpers import parse_cell_lineage
 from crispy_fishstick.shared.dataset.filters.lineage import LineageDatasetFilter
+from crispy_fishstick.shared.dataset.base import BaseDataset
 from crispy_fishstick.trajectory_infer.base import TrajectoryInferenceMethodFactory
 
 import numpy as np
@@ -18,6 +19,8 @@ class AdjacencyMatrixType:
 
 
 CELL_TYPE_TO_ID_KEY = "cell_type_to_id"
+DATASET_NAME_KEY = "dataset_name"
+OUTPUT_PATH_KEY = "output_path"
 
 
 class GraphSimMetric(OntologyBasedMetrics):
@@ -54,7 +57,7 @@ class GraphSimMetric(OntologyBasedMetrics):
             [RequiredOutputFiles.NEXT_CELLTYPE],
         ]
 
-    def _build_ref_graph(self, dataset):
+    def _build_ref_graph(self, dataset: BaseDataset):
         """
         Build the reference graph from the cell lineage tree.
         """
@@ -103,6 +106,7 @@ class GraphSimMetric(OntologyBasedMetrics):
         return {
             AdjacencyMatrixType.UNWEIGHTED: adjacency_matrix,
             CELL_TYPE_TO_ID_KEY: cell_type_to_id,
+            DATASET_NAME_KEY: dataset.get_name(),
         }
 
     def _build_pred_graph(self, output_path, cell_type_to_id):
@@ -155,6 +159,7 @@ class GraphSimMetric(OntologyBasedMetrics):
         return {
             AdjacencyMatrixType.WEIGHTED: weighted_adjacency_matrix,
             AdjacencyMatrixType.UNWEIGHTED: adjacency_matrix,
+            OUTPUT_PATH_KEY: output_path,
         }
 
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):

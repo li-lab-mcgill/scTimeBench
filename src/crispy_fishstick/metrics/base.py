@@ -149,10 +149,13 @@ class BaseMetric:
 
         for model, dataset in zip(self.models, self.datasets):
             # first we skip if we already have the evaluation in the database
-            if self.db_manager.has_eval(
-                model,
-                self.__class__.__name__,
-                self._get_param_encoding(),
+            if (
+                self.db_manager.has_eval(
+                    model,
+                    self.__class__.__name__,
+                    self._get_param_encoding(),
+                )
+                and not self.config.force_rerun
             ):
                 logging.info(
                     f"Evaluation for metric {self.__class__.__name__} with params {self.params} already exists for model {model}. Skipping evaluation."
@@ -170,14 +173,16 @@ class BaseMetric:
                 self.config.run_type == RunType.AUTO_TRAIN_TEST
                 or self.config.run_type == RunType.TRAIN_ONLY
             ):
-                # only run this if one of the model outputs doesn't already exist
-                # here we will go through the required outputs and check if they exist
+                # ** Note: we always rerun if some list is not complete this because of issue: https://github.com/ehuan2/crispy-fishstick/issues/53 **
+                # ** This will not necessarily re-run the model, and the only time that is not saved is the activation of the venv **
+                # ** But this should be okay because that time is negligible, and this ensures that **
+                # ** The model outputs give what are expected. The model outputs should still be cached however. **
                 if all(
                     isinstance(outputs_list, list)
                     for outputs_list in self.required_outputs
                 ):
-                    # list of list case
-                    required_outputs_exist = any(
+                    # list of list case -- require all of them to exist
+                    required_outputs_exist = all(
                         all(
                             os.path.exists(os.path.join(output_path, output.value))
                             for output in output_set

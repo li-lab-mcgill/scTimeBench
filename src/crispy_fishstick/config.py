@@ -126,6 +126,12 @@ class Config:
             help="Optional base directory for dataset files, otherwise uses root paths specified in the config. If used, treats paths in config as either absolute or relative to this directory.",
         )
 
+        parser.add_argument(
+            "--force_rerun",
+            action="store_true",
+            help="Usually duplicate model evaluations are skipped. This flag forces re-running even if evaluations already exist.",
+        )
+
         # Parse known arguments
         args = parser.parse_args()
 

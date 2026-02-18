@@ -26,6 +26,7 @@ TRAJ_CONFIG_FILE = "traj_config.json"
 NEXT_TP_PROBS_FILE = "next_timepoint_probs.npy"
 NEXT_TP_INDICES_FILE = "next_timepoint_indices.npy"
 IDX_TO_CELLTYPE_FILE = "index_to_cell_type.json"
+INFERRED_TRAJ_PER_TP_FILE = "inferred_trajectory_per_tp.json"
 
 
 def register_trajectory_inference_method(cls):
@@ -309,7 +310,7 @@ class BaseTrajectoryInferMethod:
         return next_tp_embed_probs, indices, idx_to_cell_types
 
     @final
-    def infer_trajectory(self, output_path):
+    def infer_trajectory(self, output_path, per_tp=False):
         """
         Infer the trajectory using kNN graph-based method.
 
@@ -329,11 +330,24 @@ class BaseTrajectoryInferMethod:
         # there is no need to store in the database
         # and also store under trajectory_infer/<hash-of-traj-model>/traj_config.yaml
         # and trajectory_infer/<hash-of-traj-model>/inferred_trajectory.json
-        if os.path.exists(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE)):
+        if not per_tp and os.path.exists(
+            os.path.join(traj_infer_path, INFERRED_TRAJ_FILE)
+        ):
             logging.info(
                 f"Inferred trajectory already exists at {traj_infer_path}, loading from file."
             )
             with open(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE), "r") as f:
+                inferred_traj = json.load(f)
+            return inferred_traj
+        elif per_tp and os.path.exists(
+            os.path.join(traj_infer_path, INFERRED_TRAJ_PER_TP_FILE)
+        ):
+            logging.info(
+                f"Inferred trajectory already exists at {traj_infer_path}, loading from file."
+            )
+            with open(
+                os.path.join(traj_infer_path, INFERRED_TRAJ_PER_TP_FILE), "r"
+            ) as f:
                 inferred_traj = json.load(f)
             return inferred_traj
 
@@ -343,37 +357,36 @@ class BaseTrajectoryInferMethod:
         with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
             f.write(str(self))
 
+        # subset for only cells that are not at the last timepoint
+        timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
+        valid_timepoints = np.where(timepoints < timepoints.max())[0]
+        cell_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].iloc[
+            valid_timepoints
+        ]
+        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
+            valid_timepoints
+        ]
+
         # ** Note: if the NEXT_CELLTYPE file already exists, then use that instead (OT methods) **
         next_celltype_path = os.path.join(
             output_path, RequiredOutputFiles.NEXT_CELLTYPE.value
         )
+        # this next block gets the next cell type for us, matching the same indices as valid_timepoints
         if os.path.exists(next_celltype_path):
-            # now let's build the inferred trajectory based on the NEXT_CELLTYPE predictions
-            inferred_traj = {}
-
+            logging.debug(
+                f"Next cell type file found at {next_celltype_path}. Using it for trajectory inference."
+            )
             # load the next cell types from the parquet file
             next_celltype_df = pd.read_parquet(next_celltype_path)
             next_cell_types = next_celltype_df[
                 ObservationColumns.CELL_TYPE.value
             ].values
-
-            # subset for only cells that are not at the last timepoint
-            timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
-            valid_timepoints = np.where(timepoints < timepoints.max())[0]
-
-            cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
-                valid_timepoints
-            ]
             next_cell_types_valid = next_cell_types[valid_timepoints]
 
-            # only look at the indices where next_cell_types is not null
-            for cur_cell, next_cell in zip(cell_types, next_cell_types_valid):
-                if cur_cell not in inferred_traj:
-                    inferred_traj[cur_cell] = {}
-                if next_cell not in inferred_traj[cur_cell]:
-                    inferred_traj[cur_cell][next_cell] = 0
-                inferred_traj[cur_cell][next_cell] += 1
         else:
+            logging.debug(
+                f"No next cell type file found at {next_celltype_path}. Using trajectory inference model to predict next cell types."
+            )
             # always start by training to ensure that the model is fitted
             # we need to do the train_only option here instead of calling _train directly
             # because it does some preprocessing we don't want to repeat
@@ -381,40 +394,60 @@ class BaseTrajectoryInferMethod:
             self.train_and_predict(
                 output_path, test_ann_data, traj_infer_path, train_only=True
             )
-
             logging.debug(
                 f"Inferring trajectory using trajectory inference model: {self.__class__.__name__}"
             )
-
             # then we run the predict next timepoint to get the embeddings
             next_tp_embed_probs, indices, idx_to_cell_types = self.predict_next_tp(
                 output_path, test_ann_data, traj_infer_path
             )
-
-            # only choose the timepoints that are listed by the timepoint embeddings
-            cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
-                indices
+            next_cell_types_valid = [
+                idx_to_cell_types[np.argmax(probs)] for probs in next_tp_embed_probs
             ]
+            assert all(
+                indices == valid_timepoints.tolist()
+            ), "Indices from trajectory inference do not match valid timepoints."
 
-            inferred_traj = {}
-            # TODO: uncomment the portion below to do it per timepoint -- right now for simplicity we won't include it
-            for cur_cell, next_tp_proba in zip(cell_types, next_tp_embed_probs):
-                predicted_next = idx_to_cell_types[np.argmax(next_tp_proba)]
+        inferred_traj = {}
+
+        if not per_tp:
+            for cur_cell, next_cell in zip(cell_types, next_cell_types_valid):
                 if cur_cell not in inferred_traj:
                     inferred_traj[cur_cell] = {}
-                if predicted_next not in inferred_traj[cur_cell]:
-                    inferred_traj[cur_cell][predicted_next] = 0
-                inferred_traj[cur_cell][predicted_next] += 1
+                if next_cell not in inferred_traj[cur_cell]:
+                    inferred_traj[cur_cell][next_cell] = 0
+                inferred_traj[cur_cell][next_cell] += 1
+
+            logging.debug(f"Constructed cell lineage (raw counts): {inferred_traj}")
+
+            # then we should normalize the counts to get probabilities
+            for source_cell_type in inferred_traj.keys():
+                total_counts = sum(inferred_traj[source_cell_type].values())
+                for target_cell_type in inferred_traj[source_cell_type]:
+                    inferred_traj[source_cell_type][target_cell_type] /= total_counts
+
+            with open(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE), "w") as f:
+                json.dump(inferred_traj, f)
+
+            return inferred_traj
+
+        # now it's per tp
+        for cur_cell, next_cell, cell_tp in zip(
+            cell_types, next_cell_types_valid, cell_tps
+        ):
+            if cell_tp not in inferred_traj:
+                inferred_traj[cell_tp] = {}
+            if cur_cell not in inferred_traj[cell_tp]:
+                inferred_traj[cell_tp][cur_cell] = {}
+            if next_cell not in inferred_traj[cell_tp][cur_cell]:
+                inferred_traj[cell_tp][cur_cell][next_cell] = 0
+
+            inferred_traj[cell_tp][cur_cell][next_cell] += 1
 
         logging.debug(f"Constructed cell lineage (raw counts): {inferred_traj}")
 
-        # then we should normalize the counts to get probabilities
-        for source_cell_type in inferred_traj.keys():
-            total_counts = sum(inferred_traj[source_cell_type].values())
-            for target_cell_type in inferred_traj[source_cell_type]:
-                inferred_traj[source_cell_type][target_cell_type] /= total_counts
-
-        with open(os.path.join(traj_infer_path, INFERRED_TRAJ_FILE), "w") as f:
+        # we don't normalize the per-tp counts
+        with open(os.path.join(traj_infer_path, INFERRED_TRAJ_PER_TP_FILE), "w") as f:
             json.dump(inferred_traj, f)
 
         return inferred_traj
@@ -435,7 +468,7 @@ class BaseTrajectoryInferMethod:
 
 
 class TrajectoryInferenceMethodFactory:
-    def get_trajectory_infer_method(self, traj_config):
+    def get_trajectory_infer_method(self, traj_config) -> BaseTrajectoryInferMethod:
         # returns the trajectory inference model based on the config
         method_name = traj_config.get("name", DEFAULT_METHOD)
         if method_name not in TRAJECTORY_INFER_METHOD_REGISTRY:

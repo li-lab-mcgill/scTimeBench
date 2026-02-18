@@ -148,6 +148,21 @@ def main(model_class: BaseModel):
 
     output_path = yaml_config["output_path"]
 
+    # Initialize the model
+    model: BaseModel = model_class(yaml_config)
+
+    # first let's check if the required outputs already exist -- and skip the whole process if so
+    if all(
+        [
+            os.path.exists(os.path.join(output_path, required_output.value))
+            for required_output in model.required_outputs
+        ]
+    ):
+        print(
+            "All required output files already exist, skipping training and generation."
+        )
+        return
+
     # Otherwise we have to load the data and train/test the model
     print("Loading dataset...")
     train_ann_data, test_ann_data = yaml_config["dataset"].load_data()
@@ -160,9 +175,6 @@ def main(model_class: BaseModel):
         + test_ann_data.obs[time_col].unique().tolist()
     )
     all_tps = list(set(all_tps))
-
-    # Initialize the model
-    model: BaseModel = model_class(yaml_config)
 
     print(f"Training and/or loading the model: {model_class.__name__}")
     # let's let the train() function handle the caching as well

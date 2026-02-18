@@ -2,47 +2,14 @@ from crispy_fishstick.metrics.ontology_based.graph_sim.base import (
     GraphSimMetric,
     AdjacencyMatrixType,
 )
+from crispy_fishstick.metrics.ontology_based.graph_sim.utils import floyd_warshall
 
 import numpy as np
 import logging
-import json
 
 
 # TODO: add some unit tests for this metric!
 class AverageShortestPathDiff(GraphSimMetric):
-    def _floyd_warshall(self, adj_matrix):
-        """
-        Compute shortest paths using Floyd-Warshall algorithm.
-
-        Args:
-            adj_matrix: Adjacency matrix where 0 means no edge
-
-        Returns:
-            Distance matrix with shortest paths
-        """
-        n = adj_matrix.shape[0]
-
-        # Initialize distance matrix
-        # Set to infinity where there's no edge, keep actual weights otherwise
-        dist = np.full((n, n), np.inf)
-
-        # Set distances based on adjacency matrix
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    dist[i][j] = 0
-                elif adj_matrix[i][j] > 0:
-                    dist[i][j] = adj_matrix[i][j]
-
-        # Floyd-Warshall algorithm
-        for k in range(n):
-            for i in range(n):
-                for j in range(n):
-                    if dist[i][k] + dist[k][j] < dist[i][j]:
-                        dist[i][j] = dist[i][k] + dist[k][j]
-
-        return dist
-
     def _graph_sim_eval(self, graph_pred, graph_ref):
         """
         Calculate average shortest path difference between predicted and reference graphs.
@@ -57,21 +24,16 @@ class AverageShortestPathDiff(GraphSimMetric):
         graph_ref_adj = graph_ref[AdjacencyMatrixType.UNWEIGHTED].astype(np.float32)
 
         # Step 1: Compute Floyd-Warshall on reference graph
-        ref_shortest_paths = self._floyd_warshall(graph_ref_adj)
+        ref_shortest_paths = floyd_warshall(graph_ref_adj)
         logging.debug(f"Reference shortest paths:\n{ref_shortest_paths}")
 
         # Step 2: Compute Floyd-Warshall on predicted graph
-        pred_shortest_paths = self._floyd_warshall(graph_pred_adj)
+        pred_shortest_paths = floyd_warshall(graph_pred_adj)
         logging.debug(f"Predicted shortest paths:\n{pred_shortest_paths}")
 
         # Step 3: Create masks from both the reference and predicted shortest path matrices
         ref_invalid_mask = np.isinf(ref_shortest_paths)
         pred_invalid_mask = np.isinf(pred_shortest_paths)
-
-        # then calculate the number of false positives -- paths that exist in predicted but not in reference
-        false_positives = np.sum(ref_invalid_mask & ~pred_invalid_mask).item()
-        # and the number of false negatives -- paths that exist in reference but not in predicted
-        false_negatives = np.sum(~ref_invalid_mask & pred_invalid_mask).item()
 
         # Step 4: Calculate the average shortest path difference only on valid entries
         both_valid = ~ref_invalid_mask & ~pred_invalid_mask
@@ -112,15 +74,4 @@ class AverageShortestPathDiff(GraphSimMetric):
 
         logging.debug(f"Average Shortest Path Difference: {avg_diff:.4f}")
 
-        return json.dumps(
-            {
-                "false_positives": false_positives,
-                "avg_diff": avg_diff,
-                "false_negatives": false_negatives,
-                "overlap_paths": overlap_paths,
-                # total paths should just be from reference, the total number of actual paths
-                # you can take
-                "total_paths": np.sum(~ref_invalid_mask).item()
-                - ref_shortest_paths.shape[0],  # exclude self-paths
-            }
-        )
+        return avg_diff
