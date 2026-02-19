@@ -18,7 +18,7 @@ class TimeSplitDatasetFilter(BaseDatasetFilter):
         """
         return {
             "test_tps": self.test_tps,
-            "use_time_indices": self.config.get("use_time_indices", False),
+            "use_time_indices": self.dataset_dict.get("use_time_indices", False),
         }
 
     def filter(self, ann_data, **kwargs):

@@ -9,7 +9,7 @@ from crispy_fishstick.trajectory_infer.base import (
     TrajectoryInferenceMethodFactory,
     BaseTrajectoryInferMethod,
 )
-from crispy_fishstick.trajectory_infer.classifier import Classifier, ClassifierTypes
+from crispy_fishstick.trajectory_infer.classifier import Classifier
 from crispy_fishstick.trajectory_infer.kNN import kNN
 from sklearn.neighbors import NearestNeighbors
 from sklearn.metrics import f1_score
@@ -42,27 +42,19 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
             TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
                 self.metric_config.get(
                     "trajectory_infer_model",
-                    {
-                        "name": Classifier.__name__,
-                        "classifier": ClassifierTypes.RANDOM_FOREST.value,
-                    },
+                    {"name": Classifier.__name__, "model_classifier": True},
                 )
             )
         )
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
     def _embedding_eval(self, output_path, dataset):
-        test_ann_data = self.trajectory_infer_model._prep_data(output_path)
-        traj_infer_path = self.trajectory_infer_model._get_traj_infer_path(output_path)
-
         # grab the probabilities needed
         probas_and_labels, _ = self.trajectory_infer_model.train_and_predict(
-            output_path, test_ann_data, traj_infer_path
+            output_path
         )
         test_probas, _ = probas_and_labels
-        next_tp_probas, _, _ = self.trajectory_infer_model.predict_next_tp(
-            output_path, test_ann_data, traj_infer_path
-        )
+        next_tp_probas, _, _ = self.trajectory_infer_model.predict_next_tp(output_path)
 
         logging.debug(f"Test probabilities: {test_probas}")
         entropy = -np.sum(
@@ -106,7 +98,10 @@ class EmbeddingGiniIndex(TrajectoryEmbeddingMetrics):
 
         self.trajectory_infer_model: kNN = (
             TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
-                self.metric_config.get("trajectory_infer_model", {"name": kNN.__name__})
+                self.metric_config.get(
+                    "trajectory_infer_model",
+                    {"name": kNN.__name__, "model_classifier": True},
+                )
             )
         )
         if not isinstance(self.trajectory_infer_model, kNN):
