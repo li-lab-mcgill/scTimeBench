@@ -201,24 +201,29 @@ class StackedBarPlot(GraphSimMetric):
 
         logging.debug(f"Per-timepoint predicted trajectory: {per_tp_traj}")
 
-        # we can get the source cell type counts by aggregating over the target cell types
+        # the source records should be from test_ann_data not from the predicted trajectory
         source_records = []
+        for tp in unique_tps:
+            tp_data = test_ann_data.obs[
+                test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == tp
+            ]
+            tp_counts = tp_data[ObservationColumns.CELL_TYPE.value].value_counts()
+            for cell_type, count in tp_counts.items():
+                source_records.append(
+                    {
+                        TIMEPOINT_COL: tp,
+                        CELLTYPE_COL: cell_type,
+                        COUNT_COL: count,
+                    }
+                )
+
         target_records = []
 
         for tp, traj in per_tp_traj.items():
             tp = float(tp)
             target_cell_types = {}
 
-            for source_cell_type, target_distribution in traj.items():
-                total_count = sum(target_distribution.values())
-                source_records.append(
-                    {
-                        TIMEPOINT_COL: tp,
-                        CELLTYPE_COL: source_cell_type,
-                        COUNT_COL: total_count,
-                    }
-                )
-
+            for _, target_distribution in traj.items():
                 for target_cell_type, count in target_distribution.items():
                     if target_cell_type not in target_cell_types:
                         target_cell_types[target_cell_type] = 0
@@ -237,22 +242,6 @@ class StackedBarPlot(GraphSimMetric):
                         COUNT_COL: count,
                     }
                 )
-
-        # then finally we add the real last timepoint from the test data
-        last_tp_data = test_ann_data.obs[
-            test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == last_tp
-        ]
-        last_tp_cell_type_counts = last_tp_data[
-            ObservationColumns.CELL_TYPE.value
-        ].value_counts()
-        for cell_type, count in last_tp_cell_type_counts.items():
-            source_records.append(
-                {
-                    TIMEPOINT_COL: last_tp,
-                    CELLTYPE_COL: cell_type,
-                    COUNT_COL: count,
-                }
-            )
 
         # then let's create DataFrames
         source_df = pd.DataFrame(source_records)

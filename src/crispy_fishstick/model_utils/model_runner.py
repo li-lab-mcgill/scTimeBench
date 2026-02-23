@@ -93,7 +93,7 @@ class BaseModel:
                 print(f"Output file {output_file} already exists, skipping generation.")
                 continue
 
-            print(f"Generating {required_output.value}...")
+            print(f"Generating {required_output.value}...", flush=True)
             if required_output == RequiredOutputFiles.EMBEDDING:
                 result = self.generate_embedding(test_ann_data)
                 np.save(output_file, result)
@@ -221,15 +221,15 @@ def main(model_class: BaseModel):
     )
     all_tps = list(set(all_tps))
 
-    print(f"Training and/or loading the model: {model_class.__name__}")
+    print(f"Training and/or loading the model: {model_class.__name__}", flush=True)
     # let's let the train() function handle the caching as well
     model.train(train_ann_data, all_tps=all_tps)
     print("Training/loading complete.")
 
     # Generate outputs - each required output saved to its own file
-    print(f"Starting generation to {output_path}")
+    print(f"Starting generation to {output_path}", flush=True)
     model.generate(test_ann_data)
-    print("Generation complete.")
+    print("Generation complete.", flush=True)
 
     # Verify that all required output files were created
     print(f"Verifying generated outputs at {output_path}")

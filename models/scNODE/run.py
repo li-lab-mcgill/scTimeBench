@@ -16,6 +16,7 @@ from crispy_fishstick.shared.constants import ObservationColumns
 import numpy as np
 import torch
 import scanpy as sc
+import random
 from optim.running import constructscNODEModel, scNODETrainWithPreTrain
 
 
@@ -78,10 +79,16 @@ def model_training(
     pretrain_iters = metadata.get("pretrain_iters", 200)
     pretrain_lr = 1e-3
     epochs = metadata.get("epochs", 10)
+    seed = metadata.get("seed", 42)
     iters = 100
     batch_size = 32
     lr = 1e-3
     latent_ode_model = model_setup(train_data[0].shape[1])
+
+    # now let's set the seed for reproducibility -- not quite sure which one, but let's do all
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
     return scNODETrainWithPreTrain(
         train_data,
