@@ -1,13 +1,9 @@
-datasets:
-  - tag: defaultGarciaAlonso
-  - tag: defaultSuo
-
 model:
   name: CellMNN
   train_and_test_script: ./models/MNN/train_and_test.sh
   metadata:
     # training
-    epochs: 1
+    epochs: 100
     steps_per_epoch: 100
     batch_size: 256
     gamma: 0.1
@@ -19,12 +15,9 @@ model:
     latent_dim: 5
     # device
     use_cuda: true
-    cuda_device: 2
+    cuda_device: 0
     auto_device: true
 
 metrics:
- - name: GraphEditDistance
- - name: AverageShortestPathDiff
- - name: JaccardSimilarity
- - name: ARI
- - name: ClassificationEntropy
+  - name: OTLossMetric
+  #- name: GraphSimMetric

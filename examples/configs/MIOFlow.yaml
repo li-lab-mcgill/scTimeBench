@@ -1,13 +1,9 @@
-datasets:
-  - tag: defaultGarciaAlonso
-  - tag: defaultSuo
-
 model:
   name: MIOFlow
   train_and_test_script: ./models/MIOFlow/train_and_test.sh
   metadata:
-    n_local_epochs: 20
-    n_epochs: 80
+    n_local_epochs: 40
+    n_epochs: 40
     n_post_local_epochs: 0
     batch_size: 64
     layers: "16,32,16"
@@ -26,8 +22,5 @@ model:
     t_max: 5
 
 metrics:
- - name: GraphEditDistance
- - name: AverageShortestPathDiff
- - name: JaccardSimilarity
- - name: ARI
- - name: ClassificationEntropy
+  - name: OTLossMetric
+ # - name: GraphSimMetric

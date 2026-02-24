@@ -1,0 +1,54 @@
+datasets:
+  - name: MaOlaniruDataset
+    #tag: EasyMaOlaniru
+    data_path: ./rtx_data/maolaniru.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [2,4,6,11]
+
+  - name: MaOlaniruDataset
+    #tag: MediumMaOlaniru
+    data_path: ./rtx_data/maolaniru.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [12,13,14]
+
+  - name: MaOlaniruDataset
+    #tag: HardMaOlaniru
+    data_path: ./rtx_data/maolaniru.h5ad
+     # these filters need to be in order!
+    filters:
+      - name: TimeSplitDatasetFilter
+        test_tps: [2,4,6,12,13,14]
+model:
+  name: PRESCIENT
+  train_and_test_script: ./models/PRESCIENT/train_and_test.sh
+  metadata:
+    pretrain_epochs: 500
+    train_epochs: 2000
+    train_lr: 0.01
+    train_dt: 0.1
+    train_sd: 0.5
+    train_tau: 1.0e-6
+    train_batch: 0.1
+    train_clip: 0.25
+    save: 100
+    pretrain: true
+    train: true
+    seed: 2
+    gpu: 0
+    weight: weight
+    weight_name: null
+    loss: euclidean
+    k_dim: 500
+    activation: softplus
+    layers: 1
+    num_neighbors_umap: 10
+    # n_sim_cells: 2000
+    epoch: best
+
+metrics:
+  #- name: GraphSimMetric
+  - name: OTLossMetric

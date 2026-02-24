@@ -10,3 +10,4 @@ model:
 
 metrics:
   - name: GraphSimMetric
+  - name: OTLossMetric

@@ -5,26 +5,23 @@
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: leaveouts
 # 2026-02-04 16:26:28,575 | DEBUG | root | [warn] Ignoring unknown scIMF config parameter: use_cuda
 
-datasets:
-  - tag: defaultGarciaAlonso
-  - tag: defaultSuo
 model:
   name: scIMF
   train_and_test_script: ./models/scIMF/train_and_test.sh
   metadata:
     train_epochs: 200
     train_lr: 0.001
-    train_batch: 64
-    train_clip: 1.0
+    train_batch: 512
+    train_clip: 0.1
     save: 100
     seed: 0
     latent_dim: 50
-    sinkhorn_blur: 0.05
-    sinkhorn_scaling: 0.9
+    sinkhorn_blur: 0.1
+    sinkhorn_scaling: 0.7
     lambda_marginal: 1.0
-    use_intLoss: false
+    use_intLoss: true
     use_cuda: true
-    cuda_device: 0
+    cuda_device: 1
     auto_device: true
     leaveouts: null
     dataset: AnnData
@@ -32,8 +29,5 @@ model:
 
 
 metrics:
- - name: GraphEditDistance
- - name: AverageShortestPathDiff
- - name: JaccardSimilarity
- - name: ARI
- - name: ClassificationEntropy
+  # - name: OTLossMetric
+ - name: GraphSimMetric

@@ -1,3 +1,7 @@
+datasets:
+  - tag: EasyMa
+  - tag: HardMa
+  - tag: MediumMa
 model:
   name: PRESCIENT
   train_and_test_script: ./models/PRESCIENT/train_and_test.sh
@@ -14,7 +18,7 @@ model:
     pretrain: true
     train: true
     seed: 2
-    gpu: 2
+    gpu: 1
     weight: weight
     weight_name: null
     loss: euclidean
@@ -26,6 +30,5 @@ model:
     epoch: best
 
 metrics:
-  #- name: MMDLoss
   #- name: GraphSimMetric
-  - name: OTLossMetric
+   - name: OTLossMetric

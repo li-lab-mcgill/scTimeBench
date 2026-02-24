@@ -8,3 +8,4 @@ model:
 
 metrics:
  - name: GraphVisualization
+ - name: OTLossMetric

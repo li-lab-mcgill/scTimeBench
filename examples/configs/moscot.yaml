@@ -11,3 +11,4 @@ model:
 metrics:
   # - name: GraphVisualization
   - name: StackedBarPlot
+  - name: OTLossMetric
