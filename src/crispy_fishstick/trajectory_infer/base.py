@@ -11,6 +11,7 @@ from crispy_fishstick.shared.utils import (
     load_test_dataset,
     load_output_file,
     get_dataset,
+    is_log_normalized_to_counts,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
@@ -150,6 +151,12 @@ class BaseTrajectoryInferMethod:
         - Original gene expr/embedding at time t (for all t)
         """
         if self.uses_gene_expr():
+            # first we check that X is normalized to counts as expected
+            # because this should happen at the filter stage
+            assert is_log_normalized_to_counts(test_ann_data), (
+                "Data is not log-normalized to counts as expected for gene expression-based trajectory inference. "
+                "Please use LogNormFilter to ensure that the data is properly normalized before running the trajectory inference model."
+            )
             return test_ann_data.X.toarray()
         else:
             return load_output_file(output_path, RequiredOutputFiles.EMBEDDING)

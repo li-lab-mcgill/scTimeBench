@@ -117,3 +117,22 @@ def load_output_file(output_path, required_output: RequiredOutputFiles):
 
     OUTPUT_FILE_CACHE[file_path] = output_file
     return output_file
+
+
+def is_log_normalized_to_counts(ann_data, threshold=20, counts=10_000):
+    """
+    Heuristic to determine if the data is log-normalized to a certain counts threshold.
+    Checks if the maximum value in ann_data.X is less than or equal to the threshold,
+    which would suggest that the data is log-normalized to counts=10_000.
+
+    Args:
+        ann_data: The AnnData object to check
+        threshold: The threshold value to check against
+        counts: The expected counts value (default is 10_000)
+
+    Returns:
+        True if the data is log-normalized to the expected counts, False otherwise
+    """
+    return ann_data.X.max() < threshold and np.allclose(
+        np.sum(np.expm1(ann_data.X), axis=1), 1e4
+    )

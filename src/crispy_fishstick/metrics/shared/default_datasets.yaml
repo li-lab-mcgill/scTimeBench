@@ -9,6 +9,7 @@ datasets:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
+      - name: LogNormFilter
       - name: CopySplitFilter
 
   - name: GarciaAlonsoDataset
@@ -21,6 +22,7 @@ datasets:
         cell_equivalence_file: ./examples/cell_lineages/germ/equal_names.txt
       - name: RoundingFilter
         min_cells_per_timepoint: 10
+      - name: LogNormFilter
       - name: CopySplitFilter
 
   - name: MaDataset
@@ -30,6 +32,7 @@ datasets:
     filters:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/pancreas/trunk_lineage.txt
+      - name: LogNormFilter
       - name: CopySplitFilter
 
   - name: GarciaAlonsoDataset

@@ -5,6 +5,7 @@ from crispy_fishstick.trajectory_infer.base import (
     BaseTrajectoryInferMethod,
 )
 from crispy_fishstick.shared.constants import ObservationColumns
+from crispy_fishstick.shared.utils import is_log_normalized_to_counts
 from enum import Enum
 import logging
 
@@ -101,9 +102,35 @@ class CellTypist(BaseTrajectoryInferMethod):
         }
 
     def _preprocess(self, data):
-        sc.pp.normalize_total(data, target_sum=1e4)
-        sc.pp.log1p(data)
-        return data
+        # detect if the data is already normalized, and if so, check to see if it's
+        # CP10K, and if not, then we warn the user that this might not be ideal for CellTypist performance
+        if is_log_normalized_to_counts(data):
+            logging.debug("Data appears to be already normalized to CP10K.")
+            return data
+
+        if data.X.max() <= 20:
+            logging.debug(
+                "Data appears to be log-transformed but not normalized. We need to normalize in any case"
+                " for CellTypist to work. Proceed with caution as this might not be ideal for CellTypist performance."
+            )
+
+            logging.debug(
+                f"Average summed expression per cell: {np.mean(np.sum(np.expm1(data.X), axis=1))}... Rescaling for CellTypist."
+            )
+            # first we clip any negative values to 0, as CellTypist doesn't handle negative values well
+            data.X = np.clip(data.X, a_min=0, a_max=None)
+            # then we rescale the data to have a total count of 1e4 per cell, which is what CellTypist expects
+            data.X = np.expm1(data.X)  # undo log1p transformation
+            sc.pp.normalize_total(data, target_sum=1e4)
+            sc.pp.log1p(data.X)  # log-transform again after normalization
+            return data
+
+        # should not get here...
+        raise ValueError(
+            "Data should either be log-normalized to 10_000 counts or be log-transformed but not normalized (due to predicted values). "
+            "Please check the input data and ensure it is properly preprocessed for CellTypist performance. "
+            "Hint: You should be training and running with LogNormFilter for your particular dataset."
+        )
 
     def _subclass_train(self, X_train, y_train, traj_infer_path):
         """
