@@ -51,7 +51,7 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
             output_path
         )
         test_probas, _ = probas_and_labels
-        next_tp_probas, _, _ = self.trajectory_infer_model.predict_next_tp(output_path)
+        next_tp_probas, _ = self.trajectory_infer_model.predict_next_tp(output_path)
 
         logging.debug(f"Test probabilities: {test_probas}")
         entropy = -np.sum(
