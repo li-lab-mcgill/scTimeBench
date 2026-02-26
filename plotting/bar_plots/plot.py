@@ -17,11 +17,14 @@ import matplotlib.pyplot as plt
 # df = pd.read_csv(StringIO(csv_data))
 df = pd.read_csv("bar.csv")
 
-# 2. Filter for 'Real Time'
+# 2. Setup Global Color Consistency
+all_methods = sorted(df["method"].unique())
+palette = dict(zip(all_methods, sns.color_palette("tab10", len(all_methods))))
+
+# 3. Filter for 'Real Time' and Process Thresholds
 df_rt = df[df["time_type"] == "Real Time"].copy()
 
 
-# 3. Handle Threshold Logic: (1 - threshold), and if inf then 0
 def process_threshold(val):
     if val == float("inf") or np.isinf(val):
         return 0.0
@@ -30,53 +33,81 @@ def process_threshold(val):
 
 df_rt["adj_threshold"] = df_rt["threshold"].apply(process_threshold)
 
-# 4. Prepare Metric Bars
+# 4. Prepare Data for Plotting
+# Create Metric rows
 df_metrics = df_rt.copy()
-df_metrics["Category"] = df_metrics["setting"] + " " + df_metrics["metric"]
+df_metrics["Category"] = df_metrics["metric"]
 df_metrics["PlotValue"] = df_metrics["result"]
 
-# 5. Prepare Threshold Bars (One per setting per method)
+# Create Threshold rows
 df_thresh = (
     df_rt[["method", "dataset", "setting", "adj_threshold"]].drop_duplicates().copy()
 )
-df_thresh["Category"] = df_thresh["setting"] + " Threshold (1-thr)"
+df_thresh["Category"] = "1 - Threshold"
 df_thresh["PlotValue"] = df_thresh["adj_threshold"]
 
-# 6. Combine and Reset Index (To avoid duplicate label error)
 plot_df = pd.concat(
     [
-        df_metrics[["method", "dataset", "Category", "PlotValue"]],
-        df_thresh[["method", "dataset", "Category", "PlotValue"]],
+        df_metrics[["method", "dataset", "setting", "Category", "PlotValue"]],
+        df_thresh[["method", "dataset", "setting", "Category", "PlotValue"]],
     ]
 ).reset_index(drop=True)
 
-# 7. Plotting
+# 5. Generate Separate Plots for each (Dataset, Setting)
 datasets = plot_df["dataset"].unique()
+settings = plot_df["setting"].unique()
+
+
+# ... (Previous data processing remains the same)
 
 for ds in datasets:
-    ds_data = plot_df[plot_df["dataset"] == ds].copy()
+    for st in settings:
+        # Subset data for this specific plot
+        subset = plot_df[(plot_df["dataset"] == ds) & (plot_df["setting"] == st)].copy()
 
-    # Define a clean order for the x-axis
-    order = sorted(ds_data["Category"].unique(), key=lambda x: ("Threshold" in x, x))
-    ds_data["Category"] = pd.Categorical(
-        ds_data["Category"], categories=order, ordered=True
-    )
-    ds_data = ds_data.sort_values("Category")
+        # Omit the plot if it's entirely empty
+        if subset.empty:
+            continue
 
-    plt.figure(figsize=(14, 7))
-    sns.set_style("whitegrid")
+        # 1. Identify which methods actually have data in this subset
+        # This prevents "gaps" for failed methods
+        present_methods = [m for m in all_methods if m in subset["method"].unique()]
 
-    ax = sns.barplot(
-        data=ds_data, x="Category", y="PlotValue", hue="method", palette="muted"
-    )
+        # Define Category Order
+        metrics_in_subset = [
+            c for c in subset["Category"].unique() if "Threshold" not in c
+        ]
+        order = sorted(metrics_in_subset) + ["1 - Threshold"]
+        subset["Category"] = pd.Categorical(
+            subset["Category"], categories=order, ordered=True
+        )
+        subset = subset.sort_values("Category")
 
-    plt.title(
-        f"Comprehensive Metrics for Dataset: {ds}", fontsize=16, fontweight="bold"
-    )
-    plt.xticks(rotation=45, ha="right")
-    plt.ylabel("Value", fontsize=12)
-    plt.legend(title="Method", bbox_to_anchor=(1.05, 1), loc="upper left")
-    plt.tight_layout()
+        plt.figure(figsize=(10, 6))
+        sns.set_style("whitegrid")
 
-    plt.savefig(f"bar_plot_{ds}.svg", format="svg", bbox_inches="tight")
-    plt.close()
+        # 2. Use 'present_methods' for hue_order to collapse gaps
+        ax = sns.barplot(
+            data=subset,
+            x="Category",
+            y="PlotValue",
+            hue="method",
+            palette=palette,  # Colors stay mapped to specific methods
+            hue_order=present_methods,  # This removes the empty gaps
+        )
+
+        plt.title(f"Dataset {ds} ({st})", fontsize=14, fontweight="bold")
+        plt.ylabel("Value", fontsize=12)
+        plt.xlabel("Metric", fontsize=12)
+        plt.ylim(0, 1.1)
+
+        # Move legend outside so it doesn't overlap bars
+        plt.legend(title="Method", bbox_to_anchor=(1.05, 1), loc="upper left")
+        plt.tight_layout()
+        plt.savefig(
+            f'bar_plot_{ds.replace(" ", "_")}_{st.replace(" ", "_")}.svg',
+            format="svg",
+            bbox_inches="tight",
+        )
+        plt.close()
+        # plt.show()

@@ -143,54 +143,6 @@ scNODE,Ma,Simple,F1,Pseudotime,0.857,0.038
 scNODE,Ma,Simple,Accuracy,Pseudotime,0.938,0.038
 scNODE,Ma,Simple,AUROC,Pseudotime,0.923,0.038
 scNODE,Ma,Simple,Jaccard,Pseudotime,0.286,0.038
-scNODE embeds,Suo,All Paths,F1,Real Time,0.791,0.023
-scNODE embeds,Suo,All Paths,Accuracy,Real Time,0.769,0.023
-scNODE embeds,Suo,All Paths,AUROC,Real Time,0.463,0.023
-scNODE embeds,Suo,All Paths,Jaccard,Real Time,0.654,0.023
-scNODE embeds,Suo,Simple,F1,Real Time,0.291,0.004
-scNODE embeds,Suo,Simple,Accuracy,Real Time,0.678,0.004
-scNODE embeds,Suo,Simple,AUROC,Real Time,0.718,0.004
-scNODE embeds,Suo,Simple,Jaccard,Real Time,0.170,0.004
-scNODE embeds,Suo,All Paths,F1,Pseudotime,0.489,0.121
-scNODE embeds,Suo,All Paths,Accuracy,Pseudotime,0.620,0.121
-scNODE embeds,Suo,All Paths,AUROC,Pseudotime,0.436,0.121
-scNODE embeds,Suo,All Paths,Jaccard,Pseudotime,0.324,0.121
-scNODE embeds,Suo,Simple,F1,Pseudotime,0.267,0.009
-scNODE embeds,Suo,Simple,Accuracy,Pseudotime,0.636,0.009
-scNODE embeds,Suo,Simple,AUROC,Pseudotime,0.639,0.009
-scNODE embeds,Suo,Simple,Jaccard,Pseudotime,0.154,0.009
-scNODE embeds,Garcia Alonso,All Paths,F1,Real Time,0.538,0.289
-scNODE embeds,Garcia Alonso,All Paths,Accuracy,Real Time,0.667,0.289
-scNODE embeds,Garcia Alonso,All Paths,AUROC,Real Time,0.281,0.289
-scNODE embeds,Garcia Alonso,All Paths,Jaccard,Real Time,0.368,0.289
-scNODE embeds,Garcia Alonso,Simple,F1,Real Time,0.417,0.013
-scNODE embeds,Garcia Alonso,Simple,Accuracy,Real Time,0.611,0.013
-scNODE embeds,Garcia Alonso,Simple,AUROC,Real Time,0.761,0.013
-scNODE embeds,Garcia Alonso,Simple,Jaccard,Real Time,0.263,0.013
-scNODE embeds,Garcia Alonso,All Paths,F1,Pseudotime,0.837,0.034
-scNODE embeds,Garcia Alonso,All Paths,Accuracy,Pseudotime,0.806,0.034
-scNODE embeds,Garcia Alonso,All Paths,AUROC,Pseudotime,0.500,0.034
-scNODE embeds,Garcia Alonso,All Paths,Jaccard,Pseudotime,0.720,0.034
-scNODE embeds,Garcia Alonso,Simple,F1,Pseudotime,0.556,0.016
-scNODE embeds,Garcia Alonso,Simple,Accuracy,Pseudotime,0.778,0.016
-scNODE embeds,Garcia Alonso,Simple,AUROC,Pseudotime,0.858,0.016
-scNODE embeds,Garcia Alonso,Simple,Jaccard,Pseudotime,0.385,0.016
-scNODE embeds,Ma,All Paths,F1,Real Time,0.875,0.129
-scNODE embeds,Ma,All Paths,Accuracy,Real Time,0.875,0.129
-scNODE embeds,Ma,All Paths,AUROC,Real Time,0.365,0.129
-scNODE embeds,Ma,All Paths,Jaccard,Real Time,0.778,0.129
-scNODE embeds,Ma,Simple,F1,Real Time,0.800,0.129
-scNODE embeds,Ma,Simple,Accuracy,Real Time,0.938,0.129
-scNODE embeds,Ma,Simple,AUROC,Real Time,0.795,0.129
-scNODE embeds,Ma,Simple,Jaccard,Real Time,0.667,0.129
-scNODE embeds,Ma,All Paths,F1,Pseudotime,0.900,0.104
-scNODE embeds,Ma,All Paths,Accuracy,Pseudotime,0.875,0.104
-scNODE embeds,Ma,All Paths,AUROC,Pseudotime,0.444,0.104
-scNODE embeds,Ma,All Paths,Jaccard,Pseudotime,0.818,0.104
-scNODE embeds,Ma,Simple,F1,Pseudotime,0.750,0.104
-scNODE embeds,Ma,Simple,Accuracy,Pseudotime,0.875,0.104
-scNODE embeds,Ma,Simple,AUROC,Pseudotime,0.872,0.104
-scNODE embeds,Ma,Simple,Jaccard,Pseudotime,0.600,0.104
 WOT,Garcia Alonso,All Paths,F1,Real Time,0.560,0.461
 WOT,Garcia Alonso,All Paths,Accuracy,Real Time,0.694,0.461
 WOT,Garcia Alonso,All Paths,AUROC,Real Time,0.241,0.461
