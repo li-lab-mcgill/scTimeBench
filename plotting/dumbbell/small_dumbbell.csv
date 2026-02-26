@@ -1,0 +1,145 @@
+method,dataset,setting,metric,time_type,result,threshold
+Cooccurrence,Suo,All Paths,F1,Real Time,0.549,0.161
+Cooccurrence,Suo,All Paths,Accuracy,Real Time,0.661,0.161
+Cooccurrence,Suo,All Paths,AUROC,Real Time,0.369,0.161
+Cooccurrence,Suo,All Paths,Jaccard,Real Time,0.379,0.161
+Cooccurrence,Suo,Simple,F1,Real Time,0.364,0.164
+Cooccurrence,Suo,Simple,Accuracy,Real Time,0.884,0.164
+Cooccurrence,Suo,Simple,AUROC,Real Time,0.651,0.164
+Cooccurrence,Suo,Simple,Jaccard,Real Time,0.222,0.164
+Cooccurrence,Suo,All Paths,F1,Pseudotime,0.568,0.186
+Cooccurrence,Suo,All Paths,Accuracy,Pseudotime,0.661,0.186
+Cooccurrence,Suo,All Paths,AUROC,Pseudotime,0.454,0.186
+Cooccurrence,Suo,All Paths,Jaccard,Pseudotime,0.397,0.186
+Cooccurrence,Suo,Simple,F1,Pseudotime,0.238,0.126
+Cooccurrence,Suo,Simple,Accuracy,Pseudotime,0.736,0.126
+Cooccurrence,Suo,Simple,AUROC,Pseudotime,0.642,0.126
+Cooccurrence,Suo,Simple,Jaccard,Pseudotime,0.135,0.126
+Cooccurrence,Garcia Alonso,All Paths,F1,Real Time,0.694,0.099
+Cooccurrence,Garcia Alonso,All Paths,Accuracy,Real Time,0.583,0.099
+Cooccurrence,Garcia Alonso,All Paths,AUROC,Real Time,0.108,0.099
+Cooccurrence,Garcia Alonso,All Paths,Jaccard,Real Time,0.531,0.099
+Cooccurrence,Garcia Alonso,Simple,F1,Real Time,0.250,0.334
+Cooccurrence,Garcia Alonso,Simple,Accuracy,Real Time,0.833,0.334
+Cooccurrence,Garcia Alonso,Simple,AUROC,Real Time,0.458,0.334
+Cooccurrence,Garcia Alonso,Simple,Jaccard,Real Time,0.143,0.334
+Cooccurrence,Garcia Alonso,All Paths,F1,Pseudotime,0.800,0.126
+Cooccurrence,Garcia Alonso,All Paths,Accuracy,Pseudotime,0.750,0.126
+Cooccurrence,Garcia Alonso,All Paths,AUROC,Pseudotime,0.355,0.126
+Cooccurrence,Garcia Alonso,All Paths,Jaccard,Pseudotime,0.667,0.126
+Cooccurrence,Garcia Alonso,Simple,F1,Pseudotime,0.588,0.126
+Cooccurrence,Garcia Alonso,Simple,Accuracy,Pseudotime,0.806,0.126
+Cooccurrence,Garcia Alonso,Simple,AUROC,Pseudotime,0.845,0.126
+Cooccurrence,Garcia Alonso,Simple,Jaccard,Pseudotime,0.417,0.126
+Cooccurrence,Ma,All Paths,F1,Real Time,0.667,0.291
+Cooccurrence,Ma,All Paths,Accuracy,Real Time,0.688,0.291
+Cooccurrence,Ma,All Paths,AUROC,Real Time,0.175,0.291
+Cooccurrence,Ma,All Paths,Jaccard,Real Time,0.500,0.291
+Cooccurrence,Ma,Simple,F1,Real Time,0.545,0.082
+Cooccurrence,Ma,Simple,Accuracy,Real Time,0.688,0.082
+Cooccurrence,Ma,Simple,AUROC,Real Time,0.744,0.082
+Cooccurrence,Ma,Simple,Jaccard,Real Time,0.375,0.082
+Cooccurrence,Ma,All Paths,F1,Pseudotime,0.857,0.220
+Cooccurrence,Ma,All Paths,Accuracy,Pseudotime,0.813,0.220
+Cooccurrence,Ma,All Paths,AUROC,Pseudotime,0.238,0.220
+Cooccurrence,Ma,All Paths,Jaccard,Pseudotime,0.750,0.220
+Cooccurrence,Ma,Simple,F1,Pseudotime,0.571,0.225
+Cooccurrence,Ma,Simple,Accuracy,Pseudotime,0.813,0.225
+Cooccurrence,Ma,Simple,AUROC,Pseudotime,0.769,0.225
+Cooccurrence,Ma,Simple,Jaccard,Pseudotime,0.400,0.225
+Moscot,Suo,All Paths,F1,Real Time,0.752,0.072
+Moscot,Suo,All Paths,Accuracy,Real Time,0.777,0.072
+Moscot,Suo,All Paths,AUROC,Real Time,0.554,0.072
+Moscot,Suo,All Paths,Jaccard,Real Time,0.603,0.072
+Moscot,Suo,Simple,F1,Real Time,0.311,0.028
+Moscot,Suo,Simple,Accuracy,Real Time,0.744,0.028
+Moscot,Suo,Simple,AUROC,Real Time,0.677,0.028
+Moscot,Suo,Simple,Jaccard,Real Time,0.184,0.028
+Moscot,Suo,All Paths,F1,Pseudotime,0.742,0.031
+Moscot,Suo,All Paths,Accuracy,Pseudotime,0.719,0.031
+Moscot,Suo,All Paths,AUROC,Pseudotime,0.568,0.031
+Moscot,Suo,All Paths,Jaccard,Pseudotime,0.590,0.031
+Moscot,Suo,Simple,F1,Pseudotime,0.387,0.075
+Moscot,Suo,Simple,Accuracy,Pseudotime,0.843,0.075
+Moscot,Suo,Simple,AUROC,Pseudotime,0.683,0.075
+Moscot,Suo,Simple,Jaccard,Pseudotime,0.240,0.075
+Moscot,Garcia Alonso,All Paths,F1,Real Time,0.560,0.328
+Moscot,Garcia Alonso,All Paths,Accuracy,Real Time,0.694,0.328
+Moscot,Garcia Alonso,All Paths,AUROC,Real Time,0.299,0.328
+Moscot,Garcia Alonso,All Paths,Jaccard,Real Time,0.389,0.328
+Moscot,Garcia Alonso,Simple,F1,Real Time,0.345,0.030
+Moscot,Garcia Alonso,Simple,Accuracy,Real Time,0.472,0.030
+Moscot,Garcia Alonso,Simple,AUROC,Real Time,0.645,0.030
+Moscot,Garcia Alonso,Simple,Jaccard,Real Time,0.208,0.030
+Moscot,Garcia Alonso,All Paths,F1,Pseudotime,0.837,0.076
+Moscot,Garcia Alonso,All Paths,Accuracy,Pseudotime,0.806,0.076
+Moscot,Garcia Alonso,All Paths,AUROC,Pseudotime,0.444,0.076
+Moscot,Garcia Alonso,All Paths,Jaccard,Pseudotime,0.720,0.076
+Moscot,Garcia Alonso,Simple,F1,Pseudotime,0.588,0.067
+Moscot,Garcia Alonso,Simple,Accuracy,Pseudotime,0.806,0.067
+Moscot,Garcia Alonso,Simple,AUROC,Pseudotime,0.871,0.067
+Moscot,Garcia Alonso,Simple,Jaccard,Pseudotime,0.417,0.067
+Moscot,Ma,All Paths,F1,Real Time,0.875,0.137
+Moscot,Ma,All Paths,Accuracy,Real Time,0.875,0.137
+Moscot,Ma,All Paths,AUROC,Real Time,0.429,0.137
+Moscot,Ma,All Paths,Jaccard,Real Time,0.778,0.137
+Moscot,Ma,Simple,F1,Real Time,0.800,0.137
+Moscot,Ma,Simple,Accuracy,Real Time,0.938,0.137
+Moscot,Ma,Simple,AUROC,Real Time,0.846,0.137
+Moscot,Ma,Simple,Jaccard,Real Time,0.667,0.137
+Moscot,Ma,All Paths,F1,Pseudotime,0.947,0.112
+Moscot,Ma,All Paths,Accuracy,Pseudotime,0.938,0.112
+Moscot,Ma,All Paths,AUROC,Pseudotime,0.508,0.112
+Moscot,Ma,All Paths,Jaccard,Pseudotime,0.900,0.112
+Moscot,Ma,Simple,F1,Pseudotime,0.857,0.098
+Moscot,Ma,Simple,Accuracy,Pseudotime,0.938,0.098
+Moscot,Ma,Simple,AUROC,Pseudotime,0.923,0.098
+Moscot,Ma,Simple,Jaccard,Pseudotime,0.750,0.098
+scNODE,Suo,All Paths,F1,Real Time,0.738,0.024
+scNODE,Suo,All Paths,Accuracy,Real Time,0.736,0.024
+scNODE,Suo,All Paths,AUROC,Real Time,0.517,0.024
+scNODE,Suo,All Paths,Jaccard,Real Time,0.584,0.024
+scNODE,Suo,Simple,F1,Real Time,0.267,0.011
+scNODE,Suo,Simple,Accuracy,Real Time,0.727,0.011
+scNODE,Suo,Simple,AUROC,Real Time,0.613,0.011
+scNODE,Suo,Simple,Jaccard,Real Time,0.154,0.011
+scNODE,Suo,All Paths,F1,Pseudotime,0.678,0.020
+scNODE,Suo,All Paths,Accuracy,Pseudotime,0.694,0.020
+scNODE,Suo,All Paths,AUROC,Pseudotime,0.598,0.020
+scNODE,Suo,All Paths,Jaccard,Pseudotime,0.513,0.020
+scNODE,Suo,Simple,F1,Pseudotime,0.204,0.011
+scNODE,Suo,Simple,Accuracy,Pseudotime,0.678,0.011
+scNODE,Suo,Simple,AUROC,Pseudotime,0.561,0.011
+scNODE,Suo,Simple,Jaccard,Pseudotime,0.114,0.011
+scNODE,Garcia Alonso,All Paths,F1,Real Time,0.500,inf
+scNODE,Garcia Alonso,All Paths,Accuracy,Real Time,0.667,inf
+scNODE,Garcia Alonso,All Paths,AUROC,Real Time,0.228,inf
+scNODE,Garcia Alonso,All Paths,Jaccard,Real Time,0.333,inf
+scNODE,Garcia Alonso,Simple,F1,Real Time,0.267,0.118
+scNODE,Garcia Alonso,Simple,Accuracy,Real Time,0.694,0.118
+scNODE,Garcia Alonso,Simple,AUROC,Real Time,0.471,0.118
+scNODE,Garcia Alonso,Simple,Jaccard,Real Time,0.154,0.118
+scNODE,Garcia Alonso,All Paths,F1,Pseudotime,0.500,0.940
+scNODE,Garcia Alonso,All Paths,Accuracy,Pseudotime,0.667,0.940
+scNODE,Garcia Alonso,All Paths,AUROC,Pseudotime,0.349,0.940
+scNODE,Garcia Alonso,All Paths,Jaccard,Pseudotime,0.333,0.940
+scNODE,Garcia Alonso,Simple,F1,Pseudotime,0.333,0.027
+scNODE,Garcia Alonso,Simple,Accuracy,Pseudotime,0.667,0.027
+scNODE,Garcia Alonso,Simple,AUROC,Pseudotime,0.581,0.027
+scNODE,Garcia Alonso,Simple,Jaccard,Pseudotime,0.200,0.027
+scNODE,Ma,All Paths,F1,Real Time,0.667,0.542
+scNODE,Ma,All Paths,Accuracy,Real Time,0.688,0.542
+scNODE,Ma,All Paths,AUROC,Real Time,0.365,0.542
+scNODE,Ma,All Paths,Jaccard,Real Time,0.500,0.542
+scNODE,Ma,Simple,F1,Real Time,0.444,0.016
+scNODE,Ma,Simple,Accuracy,Real Time,0.688,0.016
+scNODE,Ma,Simple,AUROC,Real Time,0.641,0.016
+scNODE,Ma,Simple,Jaccard,Real Time,0.286,0.016
+scNODE,Ma,All Paths,F1,Pseudotime,0.947,0.019
+scNODE,Ma,All Paths,Accuracy,Pseudotime,0.938,0.019
+scNODE,Ma,All Paths,AUROC,Pseudotime,0.508,0.019
+scNODE,Ma,All Paths,Jaccard,Pseudotime,0.538,0.019
+scNODE,Ma,Simple,F1,Pseudotime,0.857,0.038
+scNODE,Ma,Simple,Accuracy,Pseudotime,0.938,0.038
+scNODE,Ma,Simple,AUROC,Pseudotime,0.923,0.038
+scNODE,Ma,Simple,Jaccard,Pseudotime,0.286,0.038
