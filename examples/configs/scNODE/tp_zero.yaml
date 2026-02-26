@@ -1,0 +1,9 @@
+model:
+  name: scNODE
+  train_and_test_script: ./models/scNODE/train_and_test.sh
+
+metrics:
+  - name: GraphSimMetric
+    from_tp_zero: True
+
+# no need to run embedding metrics because we'll run it in embeds.yaml
