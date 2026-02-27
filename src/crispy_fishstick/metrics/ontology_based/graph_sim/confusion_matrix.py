@@ -3,10 +3,14 @@ from crispy_fishstick.metrics.ontology_based.graph_sim.base import (
     AdjacencyMatrixType,
     ThresholdCriteria,
 )
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import (
+    classification_report,
+    roc_auc_score,
+    average_precision_score,
+)
 
 import matplotlib.pyplot as plt
-from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import RocCurveDisplay, PrecisionRecallDisplay
 import logging
 import json
 
@@ -59,6 +63,37 @@ def get_threshold_roc(graph_weighted_pred_adj, graph_ref_adj, title, output_file
     return auc_roc
 
 
+def get_threshold_prc(graph_weighted_pred_adj, graph_ref_adj, title, output_file):
+    """
+    Gets the threshold PRC curve and AUC-PRC score for the predicted graph
+    against the reference graph, treating the weighted adjacency matrix as
+    predicted probabilities and the reference adjacency matrix as true labels.
+    """
+    # now let's get the auc roc score using the weighted adjacency matrix as the predicted probabilities
+    # and the reference adjacency matrix as the true labels
+    # let's first do some more preprocessing onto the weighted, where we get rid of the self loops
+    for i in range(graph_weighted_pred_adj.shape[0]):
+        graph_weighted_pred_adj[i, i] = 0.0
+
+    auc_prc = average_precision_score(
+        graph_ref_adj.flatten().astype(int),
+        graph_weighted_pred_adj.flatten(),
+    )
+
+    logging.debug(f"Graph AUC PRC: {auc_prc}")
+
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    PrecisionRecallDisplay.from_predictions(
+        graph_ref_adj.flatten().astype(int),
+        graph_weighted_pred_adj.flatten(),
+        plot_chance_level=True,
+    )
+    plt.title(title)
+    plt.savefig(output_file)
+    logging.debug(f"Saved ROC curve to {output_file}")
+    return auc_prc
+
+
 class GraphClassificationReport(GraphSimMetric):
     def _graph_sim_eval(self, graph_pred, graph_ref, criteria):
         """
@@ -79,7 +114,13 @@ class GraphClassificationReport(GraphSimMetric):
                     graph_weighted_pred_adj,
                     graph_ref_adj,
                     title=f"Threshold ROC Curve of {self.config.model['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
-                    output_file=self.traj_dir + "/roc_curve.png",
+                    output_file=self.traj_dir + f"/roc_curve_{criteria}.png",
+                ),
+                "auc_prc": get_threshold_prc(
+                    graph_weighted_pred_adj,
+                    graph_ref_adj,
+                    title=f"Threshold PRC Curve of {self.config.model['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
+                    output_file=self.traj_dir + f"/prc_curve_{criteria}.png",
                 ),
             }
         )

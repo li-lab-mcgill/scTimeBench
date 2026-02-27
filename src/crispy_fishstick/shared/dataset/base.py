@@ -114,7 +114,7 @@ class BaseDataset:
         # we also exclude requires_caching and filters since
         # requires_caching should not affect the processing itself
         # and the filters are encoded elsewhere
-        blocklist = ["data_path", "requires_caching", "filters"]
+        blocklist = ["data_path", "requires_caching", "filters", "tag"]
         return json.dumps(
             {
                 k: v

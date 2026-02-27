@@ -11,10 +11,17 @@ including the setup of tables for storing:
 
 import sqlite3
 from crispy_fishstick.config import Config
+from pathlib import Path
+import csv
 
 from crispy_fishstick.metrics.model_manager import ModelManager
-from crispy_fishstick.shared.dataset.base import BaseDataset
+from crispy_fishstick.shared.dataset.base import (
+    BaseDataset,
+    DATASET_FILTER_REGISTRY,
+    DATASET_REGISTRY,
+)
 import json
+import yaml
 
 
 class DatabaseManager:
@@ -161,6 +168,87 @@ class DatabaseManager:
     def close(self):
         self.conn.close()
 
+    def _encode_dataset_from_config(self, dataset_config: dict):
+        dataset_name = dataset_config.get("name")
+        if dataset_name not in DATASET_REGISTRY:
+            return None, None
+
+        filters = dataset_config.get("filters", [])
+        try:
+            dataset_filter_instances = [
+                DATASET_FILTER_REGISTRY[dataset_filter["name"]](
+                    dataset_config,
+                    **{k: v for k, v in dataset_filter.items() if k != "name"},
+                )
+                for dataset_filter in filters
+            ]
+        except KeyError:
+            return None, None
+
+        dataset_instance: BaseDataset = DATASET_REGISTRY[dataset_name](
+            dataset_config,
+            dataset_filter_instances,
+            "",
+        )
+        return dataset_instance.encode_dataset_dict(), dataset_instance.encode_filters()
+
+    def get_dataset_tag_from_id(self, dataset_id):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT name, dataset_dict, dataset_filters FROM datasets
+            WHERE id = ?
+        """,
+            (dataset_id,),
+        )
+        result = cursor.fetchone()
+        if not result:
+            return None
+
+        # now let's look for the dataset tag
+        name, dataset_dict, dataset_filters = result
+
+        shared_path = Path(__file__).resolve().parent / "metrics" / "shared"
+        dataset_files = [
+            shared_path / "default_datasets.yaml",
+            shared_path / "optional_datasets.yaml",
+        ]
+
+        for dataset_file in dataset_files:
+            if not dataset_file.exists():
+                continue
+
+            with open(dataset_file, "r") as f:
+                config = yaml.safe_load(f) or {}
+
+            for dataset in config.get("datasets", []):
+                (
+                    encoded_dataset_dict,
+                    encoded_dataset_filters,
+                ) = self._encode_dataset_from_config(dataset)
+
+                if encoded_dataset_dict is None or encoded_dataset_filters is None:
+                    continue
+
+                if (
+                    dataset.get("name") == name
+                    and encoded_dataset_dict == dataset_dict
+                    and encoded_dataset_filters == dataset_filters
+                ):
+                    return dataset.get("tag")
+
+        parsed_filters = json.loads(dataset_filters)
+        filter_names = [
+            filter_item.get("name")
+            for filter_item in parsed_filters
+            if isinstance(filter_item, dict) and filter_item.get("name")
+        ]
+
+        if len(filter_names) == 0:
+            return name
+
+        return f"{name}-{'-'.join(filter_names)}"
+
     def print_all(self):
         cursor = self.conn.cursor()
         for table in self.table_names:
@@ -170,7 +258,7 @@ class DatabaseManager:
                 # add the model name, dataset name, and metric name for easier reading
                 cursor.execute(
                     """
-                    SELECT evals.id, evals.model_output_id, model_outputs.name, datasets.name, evals.metric_id, metrics.name, evals.result
+                    SELECT model_outputs.name, datasets.id, metrics.name, evals.result
                     FROM evals
                     JOIN model_outputs ON evals.model_output_id = model_outputs.id
                     JOIN metrics ON evals.metric_id = metrics.id
@@ -182,7 +270,18 @@ class DatabaseManager:
 
             rows = cursor.fetchall()
             for row in rows:
-                print(row)
+                if table == "datasets":
+                    # call get_dataset_tag_from_id to get the tag as well
+                    dataset_id = row[0]
+                    dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+                    print(f"({dataset_id}, {dataset_tag})")
+                elif table == "evals":
+                    # now print out evals as normal except do the dataset tag instead
+                    model_name, dataset_id, metric_name, result = row
+                    dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+                    print(f"({model_name}, {metric_name}, {dataset_tag}, {result})")
+                else:
+                    print(row)
         self.conn.commit()
 
     def return_all(self):
@@ -196,6 +295,96 @@ class DatabaseManager:
                 outputs += f"{row}\n"
         self.conn.commit()
         return outputs
+
+    def graph_sim_to_csv(self, output_csv_path):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT metrics.name, model_outputs.name, datasets.id, datasets.name, evals.result
+            FROM evals
+            JOIN metrics ON evals.metric_id = metrics.id
+            JOIN model_outputs ON evals.model_output_id = model_outputs.id
+            JOIN datasets ON model_outputs.dataset_id = datasets.id
+            WHERE metrics.name IN ('GraphClassificationReport', 'JaccardSimilarity')
+        """
+        )
+        rows = cursor.fetchall()
+
+        csvfile = open(output_csv_path, "w", newline="")
+        writer = csv.writer(csvfile)
+
+        writer.writerow(
+            [
+                "method",
+                "dataset",
+                "step_setting",
+                "metric",
+                "time_type",
+                "result",
+            ]
+        )
+
+        seen_threshold_rows = set()
+        metrics_to_retrieve = ["GraphClassificationReport", "JaccardSimilarity"]
+
+        for metric_name, method_name, dataset_id, dataset_name, result_json in rows:
+            if metric_name not in metrics_to_retrieve:
+                continue
+
+            parsed = json.loads(result_json)
+
+            step_setting = parsed.get("criteria")
+            threshold = parsed.get("threshold")
+            eval_payload = parsed.get("eval")
+
+            dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+            time_type = "Pseudotime" if "pseudo" in dataset_tag.lower() else "Real Time"
+
+            threshold_key = (time_type, dataset_name, method_name, step_setting)
+            if threshold_key not in seen_threshold_rows and threshold is not None:
+                writer.writerow(
+                    [
+                        method_name,
+                        dataset_name,
+                        step_setting,
+                        "threshold",
+                        time_type,
+                        threshold,
+                    ]
+                )
+                seen_threshold_rows.add(threshold_key)
+
+            if metric_name == "GraphClassificationReport":
+                if isinstance(eval_payload, str):
+                    eval_payload = json.loads(eval_payload)
+
+                to_retrieve = ["f1", "auc_prc"]
+                for key in to_retrieve:
+                    writer.writerow(
+                        [
+                            method_name,
+                            dataset_name,
+                            step_setting,
+                            key.upper(),
+                            time_type,
+                            eval_payload.get(key),
+                        ]
+                    )
+
+            else:
+                writer.writerow(
+                    [
+                        method_name,
+                        dataset_name,
+                        step_setting,
+                        metric_name,
+                        time_type,
+                        eval_payload,
+                    ]
+                )
+
+        csvfile.close()
+        print(f"Graph similarity results saved to {output_csv_path}")
 
     # ** METRIC RELATED FUNCTIONS **
     def has_metric(self, name: str, parameters: str) -> bool:

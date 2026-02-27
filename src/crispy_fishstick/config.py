@@ -65,6 +65,19 @@ class Config:
         )
 
         parser.add_argument(
+            "--graph_sim_to_csv",
+            action="store_true",
+            help="Print graph similarity evaluations as CSV to stdout",
+        )
+
+        parser.add_argument(
+            "--output_csv_path",
+            type=str,
+            default="graph_sim.csv",
+            help="Optional path to save CSV output of graph similarity evaluations; if omitted, outputs to graph_sim.csv",
+        )
+
+        parser.add_argument(
             "--clear_tables",
             action="store_true",
             help="Clear all entries in the database tables",

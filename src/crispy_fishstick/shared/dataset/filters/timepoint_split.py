@@ -7,7 +7,7 @@ from crispy_fishstick.shared.constants import ObservationColumns
 
 
 class TimeSplitDatasetFilter(BaseDatasetFilter):
-    def __init__(self, config, test_tps):
+    def __init__(self, config, test_tps, **kwargs):
         super().__init__(config)
         self.test_tps = test_tps
         self.splits = True
