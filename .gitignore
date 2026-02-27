@@ -3,6 +3,9 @@ venv/
 venv
 .old_venv/
 
+# Results
+csv_results
+
 # Database files
 *.db
 outputs
