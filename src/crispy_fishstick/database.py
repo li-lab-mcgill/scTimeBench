@@ -12,6 +12,7 @@ including the setup of tables for storing:
 import sqlite3
 from crispy_fishstick.config import Config
 from pathlib import Path
+import csv
 
 from crispy_fishstick.metrics.model_manager import ModelManager
 from crispy_fishstick.shared.dataset.base import (
@@ -294,6 +295,96 @@ class DatabaseManager:
                 outputs += f"{row}\n"
         self.conn.commit()
         return outputs
+
+    def graph_sim_to_csv(self, output_csv_path):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT metrics.name, model_outputs.name, datasets.id, datasets.name, evals.result
+            FROM evals
+            JOIN metrics ON evals.metric_id = metrics.id
+            JOIN model_outputs ON evals.model_output_id = model_outputs.id
+            JOIN datasets ON model_outputs.dataset_id = datasets.id
+            WHERE metrics.name IN ('GraphClassificationReport', 'JaccardSimilarity')
+        """
+        )
+        rows = cursor.fetchall()
+
+        csvfile = open(output_csv_path, "w", newline="")
+        writer = csv.writer(csvfile)
+
+        writer.writerow(
+            [
+                "method",
+                "dataset",
+                "step_setting",
+                "metric",
+                "time_type",
+                "result",
+            ]
+        )
+
+        seen_threshold_rows = set()
+        metrics_to_retrieve = ["GraphClassificationReport", "JaccardSimilarity"]
+
+        for metric_name, method_name, dataset_id, dataset_name, result_json in rows:
+            if metric_name not in metrics_to_retrieve:
+                continue
+
+            parsed = json.loads(result_json)
+
+            step_setting = parsed.get("criteria")
+            threshold = parsed.get("threshold")
+            eval_payload = parsed.get("eval")
+
+            dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+            time_type = "Pseudotime" if "pseudo" in dataset_tag.lower() else "Real Time"
+
+            threshold_key = (time_type, dataset_name, method_name, step_setting)
+            if threshold_key not in seen_threshold_rows and threshold is not None:
+                writer.writerow(
+                    [
+                        method_name,
+                        dataset_name,
+                        step_setting,
+                        "threshold",
+                        time_type,
+                        threshold,
+                    ]
+                )
+                seen_threshold_rows.add(threshold_key)
+
+            if metric_name == "GraphClassificationReport":
+                if isinstance(eval_payload, str):
+                    eval_payload = json.loads(eval_payload)
+
+                to_retrieve = ["f1", "auc_prc"]
+                for key in to_retrieve:
+                    writer.writerow(
+                        [
+                            method_name,
+                            dataset_name,
+                            step_setting,
+                            key.upper(),
+                            time_type,
+                            eval_payload.get(key),
+                        ]
+                    )
+
+            else:
+                writer.writerow(
+                    [
+                        method_name,
+                        dataset_name,
+                        step_setting,
+                        metric_name,
+                        time_type,
+                        eval_payload,
+                    ]
+                )
+
+        csvfile.close()
+        print(f"Graph similarity results saved to {output_csv_path}")
 
     # ** METRIC RELATED FUNCTIONS **
     def has_metric(self, name: str, parameters: str) -> bool:

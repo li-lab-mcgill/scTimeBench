@@ -138,6 +138,12 @@ def main():
         db_manager.close()
         exit()
 
+    if config.graph_sim_to_csv:
+        db_manager = database.DatabaseManager(config)
+        db_manager.graph_sim_to_csv(config.output_csv_path)
+        db_manager.close()
+        exit()
+
     if config.view_evals_by_model:
         view_evals_by_model(config)
         exit()
