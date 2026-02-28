@@ -300,7 +300,7 @@ class DatabaseManager:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT metrics.name, model_outputs.name, datasets.id, datasets.name, evals.result
+            SELECT metrics.name, metrics.parameters, model_outputs.name, datasets.id, datasets.name, evals.result
             FROM evals
             JOIN metrics ON evals.metric_id = metrics.id
             JOIN model_outputs ON evals.model_output_id = model_outputs.id
@@ -321,13 +321,21 @@ class DatabaseManager:
                 "metric",
                 "time_type",
                 "result",
+                "prc_threshold",
             ]
         )
 
         seen_threshold_rows = set()
         metrics_to_retrieve = ["GraphClassificationReport", "JaccardSimilarity"]
 
-        for metric_name, method_name, dataset_id, dataset_name, result_json in rows:
+        for (
+            metric_name,
+            metric_params,
+            method_name,
+            dataset_id,
+            dataset_name,
+            result_json,
+        ) in rows:
             if metric_name not in metrics_to_retrieve:
                 continue
 
@@ -336,6 +344,10 @@ class DatabaseManager:
             step_setting = parsed.get("criteria")
             threshold = parsed.get("threshold")
             eval_payload = parsed.get("eval")
+
+            # now parse the metric params to get the threshold type
+            parsed_metric_params = json.loads(metric_params)
+            threshold_type = parsed_metric_params.get("prc_threshold", False)
 
             dataset_tag = self.get_dataset_tag_from_id(dataset_id)
             time_type = "Pseudotime" if "pseudo" in dataset_tag.lower() else "Real Time"
@@ -350,6 +362,7 @@ class DatabaseManager:
                         "threshold",
                         time_type,
                         threshold,
+                        threshold_type,
                     ]
                 )
                 seen_threshold_rows.add(threshold_key)
@@ -368,6 +381,7 @@ class DatabaseManager:
                             key.upper(),
                             time_type,
                             eval_payload.get(key),
+                            threshold_type,
                         ]
                     )
 
@@ -380,6 +394,7 @@ class DatabaseManager:
                         metric_name,
                         time_type,
                         eval_payload,
+                        threshold_type,
                     ]
                 )
 
