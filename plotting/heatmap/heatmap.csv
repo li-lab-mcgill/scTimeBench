@@ -786,216 +786,384 @@ WOT,MaDataset,simple,JaccardSimilarity,Pseudotime,0.75,True
 scIMF,SuoDataset,all_paths,threshold,Real Time,0.0,True
 scIMF,SuoDataset,all_paths,F1,Real Time,0.6775956284153005,True
 scIMF,SuoDataset,all_paths,AUC_PRC,Real Time,0.5088446855931978,True
+scIMF,SuoDataset,all_paths,PRECISION,Real Time,0.512396694214876,True
+scIMF,SuoDataset,all_paths,RECALL,Real Time,1.0,True
+scIMF,SuoDataset,all_paths,AUC_ROC,Real Time,0.411563696008748,True
 scIMF,SuoDataset,simple,threshold,Real Time,0.0,True
-scIMF,SuoDataset,simple,F1,Real Time,0.16666666666666666,True
-scIMF,SuoDataset,simple,AUC_PRC,Real Time,0.12166381761204195,True
+scIMF,SuoDataset,simple,F1,Real Time,0.1666666666666666,True
+scIMF,SuoDataset,simple,AUC_PRC,Real Time,0.1216638176120419,True
+scIMF,SuoDataset,simple,PRECISION,Real Time,0.0909090909090909,True
+scIMF,SuoDataset,simple,RECALL,Real Time,1.0,True
+scIMF,SuoDataset,simple,AUC_ROC,Real Time,0.6076576576576577,True
 scIMF,GarciaAlonsoDataset,all_paths,threshold,Real Time,0.06284658,True
 scIMF,GarciaAlonsoDataset,all_paths,F1,Real Time,0.6666666666666666,True
 scIMF,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.3887165537765296,True
+scIMF,GarciaAlonsoDataset,all_paths,PRECISION,Real Time,0.5,True
+scIMF,GarciaAlonsoDataset,all_paths,RECALL,Real Time,1.0,True
+scIMF,GarciaAlonsoDataset,all_paths,AUC_ROC,Real Time,0.1820987654320987,True
 scIMF,GarciaAlonsoDataset,simple,threshold,Real Time,0.042349383,True
-scIMF,GarciaAlonsoDataset,simple,F1,Real Time,0.30303030303030304,True
-scIMF,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.19745767872366338,True
+scIMF,GarciaAlonsoDataset,simple,F1,Real Time,0.303030303030303,True
+scIMF,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.1974576787236633,True
+scIMF,GarciaAlonsoDataset,simple,PRECISION,Real Time,0.1785714285714285,True
+scIMF,GarciaAlonsoDataset,simple,RECALL,Real Time,1.0,True
+scIMF,GarciaAlonsoDataset,simple,AUC_ROC,Real Time,0.535483870967742,True
 MIOFlow,SuoDataset,all_paths,threshold,Real Time,0.0,True
 MIOFlow,SuoDataset,all_paths,F1,Real Time,0.6775956284153005,True
 MIOFlow,SuoDataset,all_paths,AUC_PRC,Real Time,0.5836538430314756,True
+MIOFlow,SuoDataset,all_paths,PRECISION,Real Time,0.512396694214876,True
+MIOFlow,SuoDataset,all_paths,RECALL,Real Time,1.0,True
+MIOFlow,SuoDataset,all_paths,AUC_ROC,Real Time,0.5060142154182614,True
 MIOFlow,SuoDataset,simple,threshold,Real Time,0.0,True
-MIOFlow,SuoDataset,simple,F1,Real Time,0.16666666666666666,True
-MIOFlow,SuoDataset,simple,AUC_PRC,Real Time,0.21282607344808302,True
+MIOFlow,SuoDataset,simple,F1,Real Time,0.1666666666666666,True
+MIOFlow,SuoDataset,simple,AUC_PRC,Real Time,0.212826073448083,True
+MIOFlow,SuoDataset,simple,PRECISION,Real Time,0.0909090909090909,True
+MIOFlow,SuoDataset,simple,RECALL,Real Time,1.0,True
+MIOFlow,SuoDataset,simple,AUC_ROC,Real Time,0.5986486486486486,True
 scIMF,MaDataset,all_paths,threshold,Real Time,0.07321966,True
 scIMF,MaDataset,all_paths,F1,Real Time,0.72,True
-scIMF,MaDataset,all_paths,AUC_PRC,Real Time,0.42828282828282827,True
+scIMF,MaDataset,all_paths,AUC_PRC,Real Time,0.4282828282828282,True
+scIMF,MaDataset,all_paths,PRECISION,Real Time,0.5625,True
+scIMF,MaDataset,all_paths,RECALL,Real Time,1.0,True
+scIMF,MaDataset,all_paths,AUC_ROC,Real Time,0.126984126984127,True
 scIMF,MaDataset,simple,threshold,Real Time,0.063189566,True
-scIMF,MaDataset,simple,F1,Real Time,0.46153846153846156,True
+scIMF,MaDataset,simple,F1,Real Time,0.4615384615384615,True
 scIMF,MaDataset,simple,AUC_PRC,Real Time,0.2388888888888889,True
+scIMF,MaDataset,simple,PRECISION,Real Time,0.3,True
+scIMF,MaDataset,simple,RECALL,Real Time,1.0,True
+scIMF,MaDataset,simple,AUC_ROC,Real Time,0.5384615384615384,True
 CellMNN,SuoDataset,all_paths,threshold,Real Time,0.0,True
 CellMNN,SuoDataset,all_paths,F1,Real Time,0.6775956284153005,True
 CellMNN,SuoDataset,all_paths,AUC_PRC,Real Time,0.5509758744348956,True
+CellMNN,SuoDataset,all_paths,PRECISION,Real Time,0.512396694214876,True
+CellMNN,SuoDataset,all_paths,RECALL,Real Time,1.0,True
+CellMNN,SuoDataset,all_paths,AUC_ROC,Real Time,0.5117550574084199,True
 CellMNN,SuoDataset,simple,threshold,Real Time,0.0,True
-CellMNN,SuoDataset,simple,F1,Real Time,0.16666666666666666,True
-CellMNN,SuoDataset,simple,AUC_PRC,Real Time,0.15622746141709848,True
+CellMNN,SuoDataset,simple,F1,Real Time,0.1666666666666666,True
+CellMNN,SuoDataset,simple,AUC_PRC,Real Time,0.1562274614170984,True
+CellMNN,SuoDataset,simple,PRECISION,Real Time,0.0909090909090909,True
+CellMNN,SuoDataset,simple,RECALL,Real Time,1.0,True
+CellMNN,SuoDataset,simple,AUC_ROC,Real Time,0.6698198198198198,True
 scIMF,GarciaAlonsoDataset,all_paths,threshold,Pseudotime,0.08484006,True
 scIMF,GarciaAlonsoDataset,all_paths,F1,Pseudotime,0.6666666666666666,True
 scIMF,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.3999629296412922,True
+scIMF,GarciaAlonsoDataset,all_paths,PRECISION,Pseudotime,0.5,True
+scIMF,GarciaAlonsoDataset,all_paths,RECALL,Pseudotime,1.0,True
+scIMF,GarciaAlonsoDataset,all_paths,AUC_ROC,Pseudotime,0.2716049382716049,True
 scIMF,GarciaAlonsoDataset,simple,threshold,Pseudotime,0.08484006,True
-scIMF,GarciaAlonsoDataset,simple,F1,Pseudotime,0.47619047619047616,True
+scIMF,GarciaAlonsoDataset,simple,F1,Pseudotime,0.4761904761904761,True
 scIMF,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.2736111111111111,True
+scIMF,GarciaAlonsoDataset,simple,PRECISION,Pseudotime,0.3125,True
+scIMF,GarciaAlonsoDataset,simple,RECALL,Pseudotime,1.0,True
+scIMF,GarciaAlonsoDataset,simple,AUC_ROC,Pseudotime,0.7612903225806451,True
 MIOFlow,GarciaAlonsoDataset,all_paths,threshold,Real Time,0.035149384,True
 MIOFlow,GarciaAlonsoDataset,all_paths,F1,Real Time,0.6666666666666666,True
 MIOFlow,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.3754397851708878,True
+MIOFlow,GarciaAlonsoDataset,all_paths,PRECISION,Real Time,0.5,True
+MIOFlow,GarciaAlonsoDataset,all_paths,RECALL,Real Time,1.0,True
+MIOFlow,GarciaAlonsoDataset,all_paths,AUC_ROC,Real Time,0.1975308641975308,True
 MIOFlow,GarciaAlonsoDataset,simple,threshold,Real Time,0.014368541,True
-MIOFlow,GarciaAlonsoDataset,simple,F1,Real Time,0.30303030303030304,True
-MIOFlow,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.15874458874458874,True
+MIOFlow,GarciaAlonsoDataset,simple,F1,Real Time,0.303030303030303,True
+MIOFlow,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.1587445887445887,True
+MIOFlow,GarciaAlonsoDataset,simple,PRECISION,Real Time,0.1785714285714285,True
+MIOFlow,GarciaAlonsoDataset,simple,RECALL,Real Time,1.0,True
+MIOFlow,GarciaAlonsoDataset,simple,AUC_ROC,Real Time,0.5096774193548387,True
 MIOFlow,MaDataset,all_paths,threshold,Real Time,0.083333336,True
 MIOFlow,MaDataset,all_paths,F1,Real Time,0.72,True
-MIOFlow,MaDataset,all_paths,AUC_PRC,Real Time,0.45606060606060606,True
+MIOFlow,MaDataset,all_paths,AUC_PRC,Real Time,0.456060606060606,True
+MIOFlow,MaDataset,all_paths,PRECISION,Real Time,0.5625,True
+MIOFlow,MaDataset,all_paths,RECALL,Real Time,1.0,True
+MIOFlow,MaDataset,all_paths,AUC_ROC,Real Time,0.2063492063492064,True
 MIOFlow,MaDataset,simple,threshold,Real Time,0.033099297,True
-MIOFlow,MaDataset,simple,F1,Real Time,0.42857142857142855,True
-MIOFlow,MaDataset,simple,AUC_PRC,Real Time,0.31313131313131315,True
+MIOFlow,MaDataset,simple,F1,Real Time,0.4285714285714285,True
+MIOFlow,MaDataset,simple,AUC_PRC,Real Time,0.3131313131313131,True
+MIOFlow,MaDataset,simple,PRECISION,Real Time,0.2727272727272727,True
+MIOFlow,MaDataset,simple,RECALL,Real Time,1.0,True
+MIOFlow,MaDataset,simple,AUC_ROC,Real Time,0.641025641025641,True
 CellMNN,GarciaAlonsoDataset,all_paths,threshold,Real Time,0.003024956,True
 CellMNN,GarciaAlonsoDataset,all_paths,F1,Real Time,0.6666666666666666,True
 CellMNN,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.4362938596491229,True
+CellMNN,GarciaAlonsoDataset,all_paths,PRECISION,Real Time,0.5,True
+CellMNN,GarciaAlonsoDataset,all_paths,RECALL,Real Time,1.0,True
+CellMNN,GarciaAlonsoDataset,all_paths,AUC_ROC,Real Time,0.2808641975308641,True
 CellMNN,GarciaAlonsoDataset,simple,threshold,Real Time,0.0,True
 CellMNN,GarciaAlonsoDataset,simple,F1,Real Time,0.2857142857142857,True
 CellMNN,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.2265497076023392,True
+CellMNN,GarciaAlonsoDataset,simple,PRECISION,Real Time,0.1666666666666666,True
+CellMNN,GarciaAlonsoDataset,simple,RECALL,Real Time,1.0,True
+CellMNN,GarciaAlonsoDataset,simple,AUC_ROC,Real Time,0.6322580645161291,True
 PRESCIENT,SuoDataset,all_paths,threshold,Real Time,0.0,True
 PRESCIENT,SuoDataset,all_paths,F1,Real Time,0.6775956284153005,True
 PRESCIENT,SuoDataset,all_paths,AUC_PRC,Real Time,0.5392814469283593,True
+PRESCIENT,SuoDataset,all_paths,PRECISION,Real Time,0.512396694214876,True
+PRESCIENT,SuoDataset,all_paths,RECALL,Real Time,1.0,True
+PRESCIENT,SuoDataset,all_paths,AUC_ROC,Real Time,0.4592673592126845,True
 PRESCIENT,SuoDataset,simple,threshold,Real Time,0.0,True
-PRESCIENT,SuoDataset,simple,F1,Real Time,0.16666666666666666,True
-PRESCIENT,SuoDataset,simple,AUC_PRC,Real Time,0.11128029667873038,True
+PRESCIENT,SuoDataset,simple,F1,Real Time,0.1666666666666666,True
+PRESCIENT,SuoDataset,simple,AUC_PRC,Real Time,0.1112802966787303,True
+PRESCIENT,SuoDataset,simple,PRECISION,Real Time,0.0909090909090909,True
+PRESCIENT,SuoDataset,simple,RECALL,Real Time,1.0,True
+PRESCIENT,SuoDataset,simple,AUC_ROC,Real Time,0.5662162162162162,True
 MIOFlow,GarciaAlonsoDataset,all_paths,threshold,Pseudotime,0.0020100502,True
 MIOFlow,GarciaAlonsoDataset,all_paths,F1,Pseudotime,0.6666666666666666,True
 MIOFlow,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.4319515179809297,True
+MIOFlow,GarciaAlonsoDataset,all_paths,PRECISION,Pseudotime,0.5,True
+MIOFlow,GarciaAlonsoDataset,all_paths,RECALL,Pseudotime,1.0,True
+MIOFlow,GarciaAlonsoDataset,all_paths,AUC_ROC,Pseudotime,0.3209876543209876,True
 MIOFlow,GarciaAlonsoDataset,simple,threshold,Pseudotime,0.0020100502,True
 MIOFlow,GarciaAlonsoDataset,simple,F1,Pseudotime,0.4,True
-MIOFlow,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.28705882352941176,True
+MIOFlow,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.2870588235294117,True
+MIOFlow,GarciaAlonsoDataset,simple,PRECISION,Pseudotime,0.25,True
+MIOFlow,GarciaAlonsoDataset,simple,RECALL,Pseudotime,1.0,True
+MIOFlow,GarciaAlonsoDataset,simple,AUC_ROC,Pseudotime,0.7354838709677419,True
 CellMNN,MaDataset,all_paths,threshold,Real Time,0.029411765,True
 CellMNN,MaDataset,all_paths,F1,Real Time,0.8181818181818182,True
 CellMNN,MaDataset,all_paths,AUC_PRC,Real Time,0.5107142857142857,True
+CellMNN,MaDataset,all_paths,PRECISION,Real Time,0.6923076923076923,True
+CellMNN,MaDataset,all_paths,RECALL,Real Time,1.0,True
+CellMNN,MaDataset,all_paths,AUC_ROC,Real Time,0.4444444444444444,True
 CellMNN,MaDataset,simple,threshold,Real Time,0.029411765,True
 CellMNN,MaDataset,simple,F1,Real Time,0.6666666666666666,True
-CellMNN,MaDataset,simple,AUC_PRC,Real Time,0.38333333333333336,True
+CellMNN,MaDataset,simple,AUC_PRC,Real Time,0.3833333333333333,True
+CellMNN,MaDataset,simple,PRECISION,Real Time,0.5,True
+CellMNN,MaDataset,simple,RECALL,Real Time,1.0,True
+CellMNN,MaDataset,simple,AUC_ROC,Real Time,0.7692307692307693,True
 scIMF,SuoDataset,all_paths,threshold,Pseudotime,0.0,True
 scIMF,SuoDataset,all_paths,F1,Pseudotime,0.6775956284153005,True
 scIMF,SuoDataset,all_paths,AUC_PRC,Pseudotime,0.5528599105859078,True
+scIMF,SuoDataset,all_paths,PRECISION,Pseudotime,0.512396694214876,True
+scIMF,SuoDataset,all_paths,RECALL,Pseudotime,1.0,True
+scIMF,SuoDataset,all_paths,AUC_ROC,Pseudotime,0.462547840349918,True
 scIMF,SuoDataset,simple,threshold,Pseudotime,0.0,True
-scIMF,SuoDataset,simple,F1,Pseudotime,0.16666666666666666,True
-scIMF,SuoDataset,simple,AUC_PRC,Pseudotime,0.15004234392283683,True
+scIMF,SuoDataset,simple,F1,Pseudotime,0.1666666666666666,True
+scIMF,SuoDataset,simple,AUC_PRC,Pseudotime,0.1500423439228368,True
+scIMF,SuoDataset,simple,PRECISION,Pseudotime,0.0909090909090909,True
+scIMF,SuoDataset,simple,RECALL,Pseudotime,1.0,True
+scIMF,SuoDataset,simple,AUC_ROC,Pseudotime,0.6666666666666667,True
 scIMF,MaDataset,all_paths,threshold,Pseudotime,0.17648679,True
 scIMF,MaDataset,all_paths,F1,Pseudotime,0.8181818181818182,True
 scIMF,MaDataset,all_paths,AUC_PRC,Pseudotime,0.5043209876543211,True
+scIMF,MaDataset,all_paths,PRECISION,Pseudotime,0.6923076923076923,True
+scIMF,MaDataset,all_paths,RECALL,Pseudotime,1.0,True
+scIMF,MaDataset,all_paths,AUC_ROC,Pseudotime,0.3968253968253968,True
 scIMF,MaDataset,simple,threshold,Pseudotime,0.17648679,True
 scIMF,MaDataset,simple,F1,Pseudotime,0.6666666666666666,True
-scIMF,MaDataset,simple,AUC_PRC,Pseudotime,0.41111111111111115,True
+scIMF,MaDataset,simple,AUC_PRC,Pseudotime,0.4111111111111111,True
+scIMF,MaDataset,simple,PRECISION,Pseudotime,0.5,True
+scIMF,MaDataset,simple,RECALL,Pseudotime,1.0,True
+scIMF,MaDataset,simple,AUC_ROC,Pseudotime,0.7948717948717949,True
 CellMNN,GarciaAlonsoDataset,all_paths,threshold,Pseudotime,0.0046602893,True
 CellMNN,GarciaAlonsoDataset,all_paths,F1,Pseudotime,0.6666666666666666,True
-CellMNN,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.41931605975723624,True
+CellMNN,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.4193160597572362,True
+CellMNN,GarciaAlonsoDataset,all_paths,PRECISION,Pseudotime,0.5,True
+CellMNN,GarciaAlonsoDataset,all_paths,RECALL,Pseudotime,1.0,True
+CellMNN,GarciaAlonsoDataset,all_paths,AUC_ROC,Pseudotime,0.2901234567901234,True
 CellMNN,GarciaAlonsoDataset,simple,threshold,Pseudotime,0.0,True
 CellMNN,GarciaAlonsoDataset,simple,F1,Pseudotime,0.2857142857142857,True
-CellMNN,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.21638888888888888,True
+CellMNN,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.2163888888888888,True
+CellMNN,GarciaAlonsoDataset,simple,PRECISION,Pseudotime,0.1666666666666666,True
+CellMNN,GarciaAlonsoDataset,simple,RECALL,Pseudotime,1.0,True
+CellMNN,GarciaAlonsoDataset,simple,AUC_ROC,Pseudotime,0.6193548387096774,True
 scIMF,SuoDataset,all_paths,JaccardSimilarity,Real Time,0.512396694214876,True
-scIMF,SuoDataset,simple,JaccardSimilarity,Real Time,0.09090909090909091,True
+scIMF,SuoDataset,simple,JaccardSimilarity,Real Time,0.0909090909090909,True
 scIMF,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Real Time,0.5,True
-scIMF,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.17857142857142858,True
+scIMF,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.1785714285714285,True
 scIMF,MaDataset,all_paths,JaccardSimilarity,Real Time,0.5625,True
 scIMF,MaDataset,simple,JaccardSimilarity,Real Time,0.3,True
 scIMF,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Pseudotime,0.5,True
 scIMF,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.3125,True
 scIMF,SuoDataset,all_paths,JaccardSimilarity,Pseudotime,0.512396694214876,True
-scIMF,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.09090909090909091,True
+scIMF,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.0909090909090909,True
 scIMF,MaDataset,all_paths,JaccardSimilarity,Pseudotime,0.6923076923076923,True
 scIMF,MaDataset,simple,JaccardSimilarity,Pseudotime,0.5,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,threshold,Real Time,0.00027777778,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,F1,Real Time,0.6666666666666666,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.4264140180806848,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,PRECISION,Real Time,0.5,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,RECALL,Real Time,1.0,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,AUC_ROC,Real Time,0.337962962962963,True
 PRESCIENT,GarciaAlonsoDataset,simple,threshold,Real Time,0.0,True
 PRESCIENT,GarciaAlonsoDataset,simple,F1,Real Time,0.2857142857142857,True
 PRESCIENT,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.19,True
+PRESCIENT,GarciaAlonsoDataset,simple,PRECISION,Real Time,0.1666666666666666,True
+PRESCIENT,GarciaAlonsoDataset,simple,RECALL,Real Time,1.0,True
+PRESCIENT,GarciaAlonsoDataset,simple,AUC_ROC,Real Time,0.535483870967742,True
 CellMNN,SuoDataset,all_paths,threshold,Pseudotime,0.0,True
 CellMNN,SuoDataset,all_paths,F1,Pseudotime,0.6775956284153005,True
 CellMNN,SuoDataset,all_paths,AUC_PRC,Pseudotime,0.5568371725655404,True
+CellMNN,SuoDataset,all_paths,PRECISION,Pseudotime,0.512396694214876,True
+CellMNN,SuoDataset,all_paths,RECALL,Pseudotime,1.0,True
+CellMNN,SuoDataset,all_paths,AUC_ROC,Pseudotime,0.5306178239475123,True
 CellMNN,SuoDataset,simple,threshold,Pseudotime,0.0,True
-CellMNN,SuoDataset,simple,F1,Pseudotime,0.16666666666666666,True
+CellMNN,SuoDataset,simple,F1,Pseudotime,0.1666666666666666,True
 CellMNN,SuoDataset,simple,AUC_PRC,Pseudotime,0.1434310009504735,True
+CellMNN,SuoDataset,simple,PRECISION,Pseudotime,0.0909090909090909,True
+CellMNN,SuoDataset,simple,RECALL,Pseudotime,1.0,True
+CellMNN,SuoDataset,simple,AUC_ROC,Pseudotime,0.6657657657657658,True
 PRESCIENT,MaDataset,all_paths,threshold,Real Time,0.13039118,True
 PRESCIENT,MaDataset,all_paths,F1,Real Time,0.8181818181818182,True
 PRESCIENT,MaDataset,all_paths,AUC_PRC,Real Time,0.6514550264550265,True
+PRESCIENT,MaDataset,all_paths,PRECISION,Real Time,0.6923076923076923,True
+PRESCIENT,MaDataset,all_paths,RECALL,Real Time,1.0,True
+PRESCIENT,MaDataset,all_paths,AUC_ROC,Real Time,0.4603174603174603,True
 PRESCIENT,MaDataset,simple,threshold,Real Time,0.13039118,True
 PRESCIENT,MaDataset,simple,F1,Real Time,0.5454545454545454,True
 PRESCIENT,MaDataset,simple,AUC_PRC,Real Time,0.6805555555555556,True
+PRESCIENT,MaDataset,simple,PRECISION,Real Time,0.375,True
+PRESCIENT,MaDataset,simple,RECALL,Real Time,1.0,True
+PRESCIENT,MaDataset,simple,AUC_ROC,Real Time,0.8461538461538461,True
 CellMNN,MaDataset,all_paths,threshold,Pseudotime,0.030011013,True
 CellMNN,MaDataset,all_paths,F1,Pseudotime,0.8181818181818182,True
 CellMNN,MaDataset,all_paths,AUC_PRC,Pseudotime,0.6051587301587302,True
+CellMNN,MaDataset,all_paths,PRECISION,Pseudotime,0.6923076923076923,True
+CellMNN,MaDataset,all_paths,RECALL,Pseudotime,1.0,True
+CellMNN,MaDataset,all_paths,AUC_ROC,Pseudotime,0.4761904761904762,True
 CellMNN,MaDataset,simple,threshold,Pseudotime,0.030011013,True
 CellMNN,MaDataset,simple,F1,Pseudotime,0.6666666666666666,True
 CellMNN,MaDataset,simple,AUC_PRC,Pseudotime,0.6666666666666667,True
+CellMNN,MaDataset,simple,PRECISION,Pseudotime,0.5,True
+CellMNN,MaDataset,simple,RECALL,Pseudotime,1.0,True
+CellMNN,MaDataset,simple,AUC_ROC,Pseudotime,0.8717948717948718,True
 CellMNN,SuoDataset,all_paths,JaccardSimilarity,Real Time,0.512396694214876,True
-CellMNN,SuoDataset,simple,JaccardSimilarity,Real Time,0.09090909090909091,True
+CellMNN,SuoDataset,simple,JaccardSimilarity,Real Time,0.0909090909090909,True
 CellMNN,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Real Time,0.5,True
-CellMNN,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.16666666666666666,True
+CellMNN,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.1666666666666666,True
 CellMNN,MaDataset,all_paths,JaccardSimilarity,Real Time,0.6923076923076923,True
 CellMNN,MaDataset,simple,JaccardSimilarity,Real Time,0.5,True
 CellMNN,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Pseudotime,0.5,True
-CellMNN,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.16666666666666666,True
+CellMNN,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.1666666666666666,True
 CellMNN,SuoDataset,all_paths,JaccardSimilarity,Pseudotime,0.512396694214876,True
-CellMNN,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.09090909090909091,True
+CellMNN,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.0909090909090909,True
 CellMNN,MaDataset,all_paths,JaccardSimilarity,Pseudotime,0.6923076923076923,True
 CellMNN,MaDataset,simple,JaccardSimilarity,Pseudotime,0.5,True
 PISDE,SuoDataset,all_paths,threshold,Real Time,0.0,True
 PISDE,SuoDataset,all_paths,F1,Real Time,0.6775956284153005,True
 PISDE,SuoDataset,all_paths,AUC_PRC,Real Time,0.512396694214876,True
+PISDE,SuoDataset,all_paths,PRECISION,Real Time,0.512396694214876,True
+PISDE,SuoDataset,all_paths,RECALL,Real Time,1.0,True
+PISDE,SuoDataset,all_paths,AUC_ROC,Real Time,0.4152542372881356,True
 PISDE,SuoDataset,simple,threshold,Real Time,0.0,True
-PISDE,SuoDataset,simple,F1,Real Time,0.16666666666666666,True
-PISDE,SuoDataset,simple,AUC_PRC,Real Time,0.08264462809917356,True
+PISDE,SuoDataset,simple,F1,Real Time,0.1666666666666666,True
+PISDE,SuoDataset,simple,AUC_PRC,Real Time,0.0826446280991735,True
+PISDE,SuoDataset,simple,PRECISION,Real Time,0.0909090909090909,True
+PISDE,SuoDataset,simple,RECALL,Real Time,1.0,True
+PISDE,SuoDataset,simple,AUC_ROC,Real Time,0.4549549549549549,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,threshold,Pseudotime,0.045088567,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,F1,Pseudotime,0.8372093023255814,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.6488044363044364,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,PRECISION,Pseudotime,0.72,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,RECALL,Pseudotime,1.0,True
+PRESCIENT,GarciaAlonsoDataset,all_paths,AUC_ROC,Pseudotime,0.5462962962962963,True
 PRESCIENT,GarciaAlonsoDataset,simple,threshold,Pseudotime,0.041697327,True
-PRESCIENT,GarciaAlonsoDataset,simple,F1,Pseudotime,0.47619047619047616,True
+PRESCIENT,GarciaAlonsoDataset,simple,F1,Pseudotime,0.4761904761904761,True
 PRESCIENT,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.4240384615384616,True
+PRESCIENT,GarciaAlonsoDataset,simple,PRECISION,Pseudotime,0.3125,True
+PRESCIENT,GarciaAlonsoDataset,simple,RECALL,Pseudotime,1.0,True
+PRESCIENT,GarciaAlonsoDataset,simple,AUC_ROC,Pseudotime,0.7741935483870968,True
 PRESCIENT,SuoDataset,all_paths,threshold,Pseudotime,0.0,True
 PRESCIENT,SuoDataset,all_paths,F1,Pseudotime,0.6775956284153005,True
 PRESCIENT,SuoDataset,all_paths,AUC_PRC,Pseudotime,0.5904480369249115,True
+PRESCIENT,SuoDataset,all_paths,PRECISION,Pseudotime,0.512396694214876,True
+PRESCIENT,SuoDataset,all_paths,RECALL,Pseudotime,1.0,True
+PRESCIENT,SuoDataset,all_paths,AUC_ROC,Pseudotime,0.5442864953526517,True
 PRESCIENT,SuoDataset,simple,threshold,Pseudotime,0.0,True
-PRESCIENT,SuoDataset,simple,F1,Pseudotime,0.16666666666666666,True
-PRESCIENT,SuoDataset,simple,AUC_PRC,Pseudotime,0.16905276349172213,True
+PRESCIENT,SuoDataset,simple,F1,Pseudotime,0.1666666666666666,True
+PRESCIENT,SuoDataset,simple,AUC_PRC,Pseudotime,0.1690527634917221,True
+PRESCIENT,SuoDataset,simple,PRECISION,Pseudotime,0.0909090909090909,True
+PRESCIENT,SuoDataset,simple,RECALL,Pseudotime,1.0,True
+PRESCIENT,SuoDataset,simple,AUC_ROC,Pseudotime,0.6162162162162161,True
 PRESCIENT,MaDataset,all_paths,threshold,Pseudotime,0.122797355,True
 PRESCIENT,MaDataset,all_paths,F1,Pseudotime,0.8181818181818182,True
 PRESCIENT,MaDataset,all_paths,AUC_PRC,Pseudotime,0.6212962962962963,True
+PRESCIENT,MaDataset,all_paths,PRECISION,Pseudotime,0.6923076923076923,True
+PRESCIENT,MaDataset,all_paths,RECALL,Pseudotime,1.0,True
+PRESCIENT,MaDataset,all_paths,AUC_ROC,Pseudotime,0.5396825396825398,True
 PRESCIENT,MaDataset,simple,threshold,Pseudotime,0.122797355,True
 PRESCIENT,MaDataset,simple,F1,Pseudotime,0.5454545454545454,True
-PRESCIENT,MaDataset,simple,AUC_PRC,Pseudotime,0.45833333333333326,True
+PRESCIENT,MaDataset,simple,AUC_PRC,Pseudotime,0.4583333333333332,True
+PRESCIENT,MaDataset,simple,PRECISION,Pseudotime,0.375,True
+PRESCIENT,MaDataset,simple,RECALL,Pseudotime,1.0,True
+PRESCIENT,MaDataset,simple,AUC_ROC,Pseudotime,0.7948717948717949,True
 PRESCIENT,SuoDataset,all_paths,JaccardSimilarity,Real Time,0.512396694214876,True
-PRESCIENT,SuoDataset,simple,JaccardSimilarity,Real Time,0.09090909090909091,True
+PRESCIENT,SuoDataset,simple,JaccardSimilarity,Real Time,0.0909090909090909,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Real Time,0.5,True
-PRESCIENT,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.16666666666666666,True
+PRESCIENT,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.1666666666666666,True
 PRESCIENT,MaDataset,all_paths,JaccardSimilarity,Real Time,0.6923076923076923,True
 PRESCIENT,MaDataset,simple,JaccardSimilarity,Real Time,0.375,True
 PRESCIENT,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Pseudotime,0.72,True
 PRESCIENT,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.3125,True
 PRESCIENT,SuoDataset,all_paths,JaccardSimilarity,Pseudotime,0.512396694214876,True
-PRESCIENT,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.09090909090909091,True
+PRESCIENT,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.0909090909090909,True
 PRESCIENT,MaDataset,all_paths,JaccardSimilarity,Pseudotime,0.6923076923076923,True
 PRESCIENT,MaDataset,simple,JaccardSimilarity,Pseudotime,0.375,True
 PISDE,GarciaAlonsoDataset,all_paths,threshold,Real Time,0.0,True
 PISDE,GarciaAlonsoDataset,all_paths,F1,Real Time,0.6666666666666666,True
-PISDE,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.48333333333333334,True
+PISDE,GarciaAlonsoDataset,all_paths,AUC_PRC,Real Time,0.4833333333333333,True
+PISDE,GarciaAlonsoDataset,all_paths,PRECISION,Real Time,0.5,True
+PISDE,GarciaAlonsoDataset,all_paths,RECALL,Real Time,1.0,True
+PISDE,GarciaAlonsoDataset,all_paths,AUC_ROC,Real Time,0.4166666666666666,True
 PISDE,GarciaAlonsoDataset,simple,threshold,Real Time,0.0,True
 PISDE,GarciaAlonsoDataset,simple,F1,Real Time,0.2857142857142857,True
-PISDE,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.15111111111111114,True
+PISDE,GarciaAlonsoDataset,simple,AUC_PRC,Real Time,0.1511111111111111,True
+PISDE,GarciaAlonsoDataset,simple,PRECISION,Real Time,0.1666666666666666,True
+PISDE,GarciaAlonsoDataset,simple,RECALL,Real Time,1.0,True
+PISDE,GarciaAlonsoDataset,simple,AUC_ROC,Real Time,0.535483870967742,True
 PISDE,MaDataset,all_paths,threshold,Real Time,0.0,True
 PISDE,MaDataset,all_paths,F1,Real Time,0.72,True
 PISDE,MaDataset,all_paths,AUC_PRC,Real Time,0.5856481481481481,True
+PISDE,MaDataset,all_paths,PRECISION,Real Time,0.5625,True
+PISDE,MaDataset,all_paths,RECALL,Real Time,1.0,True
+PISDE,MaDataset,all_paths,AUC_ROC,Real Time,0.5396825396825398,True
 PISDE,MaDataset,simple,threshold,Real Time,0.0,True
 PISDE,MaDataset,simple,F1,Real Time,0.4,True
 PISDE,MaDataset,simple,AUC_PRC,Real Time,0.2361111111111111,True
+PISDE,MaDataset,simple,PRECISION,Real Time,0.25,True
+PISDE,MaDataset,simple,RECALL,Real Time,1.0,True
+PISDE,MaDataset,simple,AUC_ROC,Real Time,0.5897435897435898,True
 PISDE,GarciaAlonsoDataset,all_paths,threshold,Pseudotime,0.0,True
 PISDE,GarciaAlonsoDataset,all_paths,F1,Pseudotime,0.6666666666666666,True
-PISDE,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.48333333333333334,True
+PISDE,GarciaAlonsoDataset,all_paths,AUC_PRC,Pseudotime,0.4833333333333333,True
+PISDE,GarciaAlonsoDataset,all_paths,PRECISION,Pseudotime,0.5,True
+PISDE,GarciaAlonsoDataset,all_paths,RECALL,Pseudotime,1.0,True
+PISDE,GarciaAlonsoDataset,all_paths,AUC_ROC,Pseudotime,0.4104938271604938,True
 PISDE,GarciaAlonsoDataset,simple,threshold,Pseudotime,0.0,True
 PISDE,GarciaAlonsoDataset,simple,F1,Pseudotime,0.2857142857142857,True
-PISDE,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.15111111111111114,True
+PISDE,GarciaAlonsoDataset,simple,AUC_PRC,Pseudotime,0.1511111111111111,True
+PISDE,GarciaAlonsoDataset,simple,PRECISION,Pseudotime,0.1666666666666666,True
+PISDE,GarciaAlonsoDataset,simple,RECALL,Pseudotime,1.0,True
+PISDE,GarciaAlonsoDataset,simple,AUC_ROC,Pseudotime,0.5225806451612903,True
 PISDE,SuoDataset,all_paths,threshold,Pseudotime,0.0,True
 PISDE,SuoDataset,all_paths,F1,Pseudotime,0.6775956284153005,True
 PISDE,SuoDataset,all_paths,AUC_PRC,Pseudotime,0.510940280399587,True
+PISDE,SuoDataset,all_paths,PRECISION,Pseudotime,0.512396694214876,True
+PISDE,SuoDataset,all_paths,RECALL,Pseudotime,1.0,True
+PISDE,SuoDataset,all_paths,AUC_ROC,Pseudotime,0.4231820667031164,True
 PISDE,SuoDataset,simple,threshold,Pseudotime,0.0,True
-PISDE,SuoDataset,simple,F1,Pseudotime,0.16666666666666666,True
-PISDE,SuoDataset,simple,AUC_PRC,Pseudotime,0.10366549208318182,True
+PISDE,SuoDataset,simple,F1,Pseudotime,0.1666666666666666,True
+PISDE,SuoDataset,simple,AUC_PRC,Pseudotime,0.1036654920831818,True
+PISDE,SuoDataset,simple,PRECISION,Pseudotime,0.0909090909090909,True
+PISDE,SuoDataset,simple,RECALL,Pseudotime,1.0,True
+PISDE,SuoDataset,simple,AUC_ROC,Pseudotime,0.5373873873873873,True
 PISDE,MaDataset,all_paths,threshold,Pseudotime,0.0013766519,True
 PISDE,MaDataset,all_paths,F1,Pseudotime,0.9,True
 PISDE,MaDataset,all_paths,AUC_PRC,Pseudotime,0.6071428571428572,True
+PISDE,MaDataset,all_paths,PRECISION,Pseudotime,0.8181818181818182,True
+PISDE,MaDataset,all_paths,RECALL,Pseudotime,1.0,True
+PISDE,MaDataset,all_paths,AUC_ROC,Pseudotime,0.5873015873015873,True
 PISDE,MaDataset,simple,threshold,Pseudotime,0.00079554494,True
 PISDE,MaDataset,simple,F1,Pseudotime,0.6,True
 PISDE,MaDataset,simple,AUC_PRC,Pseudotime,0.4206349206349206,True
+PISDE,MaDataset,simple,PRECISION,Pseudotime,0.4285714285714285,True
+PISDE,MaDataset,simple,RECALL,Pseudotime,1.0,True
+PISDE,MaDataset,simple,AUC_ROC,Pseudotime,0.782051282051282,True
 PISDE,SuoDataset,all_paths,JaccardSimilarity,Real Time,0.512396694214876,True
-PISDE,SuoDataset,simple,JaccardSimilarity,Real Time,0.09090909090909091,True
+PISDE,SuoDataset,simple,JaccardSimilarity,Real Time,0.0909090909090909,True
 PISDE,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Real Time,0.5,True
-PISDE,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.16666666666666666,True
+PISDE,GarciaAlonsoDataset,simple,JaccardSimilarity,Real Time,0.1666666666666666,True
 PISDE,MaDataset,all_paths,JaccardSimilarity,Real Time,0.5625,True
 PISDE,MaDataset,simple,JaccardSimilarity,Real Time,0.25,True
 PISDE,GarciaAlonsoDataset,all_paths,JaccardSimilarity,Pseudotime,0.5,True
-PISDE,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.16666666666666666,True
+PISDE,GarciaAlonsoDataset,simple,JaccardSimilarity,Pseudotime,0.1666666666666666,True
 PISDE,SuoDataset,all_paths,JaccardSimilarity,Pseudotime,0.512396694214876,True
-PISDE,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.09090909090909091,True
+PISDE,SuoDataset,simple,JaccardSimilarity,Pseudotime,0.0909090909090909,True
 PISDE,MaDataset,all_paths,JaccardSimilarity,Pseudotime,0.8181818181818182,True
-PISDE,MaDataset,simple,JaccardSimilarity,Pseudotime,0.42857142857142855,True
+PISDE,MaDataset,simple,JaccardSimilarity,Pseudotime,0.4285714285714285,True

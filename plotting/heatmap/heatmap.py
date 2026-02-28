@@ -3,68 +3,95 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# 1. Load your dataset
-# Replace 'data.csv' with your actual file path
-# Assuming columns: method, Dataset, setting, metric, TimeType, Value, Error
-df = pd.read_csv("heatmap.csv")
+# --- CONFIGURATION ---
+INPUT_FILE = "heatmap.csv"
+OUTPUT_FILE = "final_filtered_heatmap.svg"
 
-# 2. Pivot to get Real Time and Pseudotime side-by-side to calculate LFC
-# We pivot based on dataset, setting, metric, and method
+# Specify exactly which metrics you want to see
+METRICS_OF_INTEREST = ["AUC_PRC", "AUC_ROC", "JaccardSimilarity"]
+
+# 1. Load and Rename
+df = pd.read_csv(INPUT_FILE)
+
+
+# Renaming logic for 3x groups
+def rename_3x_groups(row):
+    if "3x" in str(row["dataset"]):
+        return f"{row['method']}-3x"
+    return row["method"]
+
+
+df["method"] = df.apply(rename_3x_groups, axis=1)
+
+# 2. Pivot & Calculate LFC
 pivot_df = df.pivot_table(
     index=["dataset", "step_setting", "metric", "method", "prc_threshold"],
     columns="time_type",
     values="result",
 ).reset_index()
 
-# 3. Calculate Log2 Fold Change
-# LFC = log2(Pseudotime / Real Time)
-# This handles the ratio: positive = Pseudotime is higher, negative = Real Time is higher
+# Handle potential zeros before log2
 pivot_df["LFC"] = np.log2(pivot_df["Pseudotime"] / pivot_df["Real Time"])
 
-# 4. Iterate through each dataset and setting to create separate heatmaps
-datasets = pivot_df["dataset"].unique()
-path_types = pivot_df["step_setting"].unique()
-prc_thresholds = pivot_df["prc_threshold"].unique()
+# 3. SUBSET LOGIC: Filter for specific metrics and path settings
+# This ensures we only keep the rows you explicitly care about
+pivot_df = pivot_df[
+    (pivot_df["metric"].isin(METRICS_OF_INTEREST))
+    & (
+        pivot_df["prc_threshold"]
+        == True
+        # ((pivot_df["step_setting"] == "all_paths") & (pivot_df["prc_threshold"] == True)) |
+        # ((pivot_df["step_setting"] != "all_paths") & (pivot_df["prc_threshold"] == False))
+    )
+]
 
-for ds in datasets:
-    for pt in path_types:
-        print(f"Processing Dataset: {ds}, Step Setting: {pt}")
+# 4. Final Pivot
+final_pivot = pivot_df.pivot_table(
+    index=["dataset", "step_setting", "metric"], columns="method", values="LFC"
+)
 
-        # let's choose prc_threshold to true if step_setting is 'all_paths'
-        # and false otherwise
-        prc_threshold = True
-        # Filter for the specific dataset and setting combination
-        subset = pivot_df[
-            (pivot_df["dataset"] == ds)
-            & (pivot_df["step_setting"] == pt)
-            & (pivot_df["prc_threshold"] == prc_threshold)
-            & (pivot_df["metric"].isin(["AUC_PRC", "AUC_ROC", "JaccardSimilarity"]))
-        ]
+# 5. Symmetrical Scaling
+clean_vals = final_pivot.replace([np.inf, -np.inf], np.nan)
+max_abs = clean_vals.abs().max().max()
+if pd.isna(max_abs) or max_abs == 0:
+    max_abs = 1
 
-        # If no data exists for this specific combination, skip it
-        if subset.empty:
-            continue
+# 6. Plotting
+plt.figure(figsize=(14, 10))
+ax = plt.gca()
+ax.set_facecolor("#E0E0E0")  # Grey background for empty cells
 
-        # Pivot for the heatmap: metrics as rows, methods as columns
-        heatmap_data = subset.pivot(index="metric", columns="method", values="LFC")
+sns.heatmap(
+    final_pivot,
+    annot=False,
+    cmap="RdBu_r",
+    center=0,
+    vmin=-max_abs,
+    vmax=max_abs,
+    square=True,
+    linewidths=0.5,
+    cbar_kws={"label": "Log2 Fold Change"},
+    ax=ax,
+)
 
-        # 5. Plot the heatmap
-        plt.figure(figsize=(10, 7))
-        sns.heatmap(
-            heatmap_data,
-            annot=True,  # Show the LFC value in the cell
-            fmt=".3f",  # Format to 3 decimal places
-            cmap="RdBu_r",  # Red (Positive) to Blue (Negative) diverging map
-            center=0,  # Ensure 0 (no change) is the neutral color
-            cbar_kws={"label": "Log2 Fold Change"},
-        )
+# 7. MANUALLY DRAW SLASHES
+rows, cols = final_pivot.shape
+for y in range(rows):
+    for x in range(cols):
+        val = final_pivot.iloc[y, x]
+        if pd.isna(val) or np.isinf(val):
+            ax.text(
+                x + 0.5,
+                y + 0.5,
+                "/",
+                ha="center",
+                va="center",
+                color="black",
+                fontsize=14,
+                fontweight="bold",
+            )
 
-        plt.title(f"Log Fold Change (Pseudotime / Real Time): {ds}")
-        plt.ylabel(f"{pt} Metric")
-        plt.xlabel("Method")
-
-        # Save and/or show
-        filename = f"heatmap_{ds}_{pt.replace(' ', '_')}.svg"
-        plt.savefig(filename, format="svg", bbox_inches="tight")
-        # plt.show()
-        plt.close()
+plt.title(f"LFC Heatmap: {', '.join(METRICS_OF_INTEREST)}")
+plt.tight_layout()
+plt.savefig(OUTPUT_FILE, format="svg")
+# plt.show()
