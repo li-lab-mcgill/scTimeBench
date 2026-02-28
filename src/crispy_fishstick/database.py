@@ -371,7 +371,7 @@ class DatabaseManager:
                 if isinstance(eval_payload, str):
                     eval_payload = json.loads(eval_payload)
 
-                to_retrieve = ["f1", "auc_prc", "precision", "recall"]
+                to_retrieve = ["f1", "auc_prc", "precision", "recall", "auc_roc"]
                 for key in to_retrieve:
                     writer.writerow(
                         [
