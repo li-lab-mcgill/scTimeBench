@@ -1,11 +1,16 @@
+datasets:
+  - tag: defaultSuo
+  - tag: defaultMa
+  - tag: defaultGarciaAlonso
+
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
-# metrics:
-#   - name: GraphSimMetric
-
 metrics:
-  - name: JaccardSimilarity
-    prc_threshold: False
+  - name: GraphClassificationReport
+
+# metrics:
+#   - name: JaccardSimilarity
+#     prc_threshold: False
 # no need to run embedding metrics because we'll run it in embeds.yaml

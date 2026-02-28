@@ -122,5 +122,11 @@ class GraphClassificationReport(GraphSimMetric):
                     title=f"Threshold PRC Curve of {self.config.model['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
                     output_file=self.traj_dir + f"/prc_curve_{criteria}.png",
                 ),
+                "num_pos": graph_ref_adj.sum().item(),
+                "num_neg": (graph_ref_adj == 0).sum().item(),
+                # the worst case jaccard is simply the number of positive edges divided by the total number of edges,
+                # because we're doing intersection over union
+                "worst_case_jaccard": graph_ref_adj.sum().item()
+                / (graph_ref_adj.shape[0] * graph_ref_adj.shape[1]),
             }
         )
