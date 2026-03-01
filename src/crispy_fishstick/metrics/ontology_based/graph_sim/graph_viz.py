@@ -1,3 +1,4 @@
+from crispy_fishstick.metrics.base import skip_metric
 from crispy_fishstick.metrics.ontology_based.graph_sim.base import (
     GraphSimMetric,
     AdjacencyMatrixType,
@@ -7,6 +8,8 @@ from crispy_fishstick.shared.utils import load_test_dataset
 from crispy_fishstick.shared.constants import ObservationColumns
 import os
 import logging
+import json
+import numpy as np
 
 
 class GraphVisualization(GraphSimMetric):
@@ -276,3 +279,97 @@ class StackedBarPlot(GraphSimMetric):
                 target_plot_path,
             )
         )  # return the path of the images to store in db
+
+
+@skip_metric
+class DatasetEntropy(GraphSimMetric):
+    def _graph_sim_eval(self, graph_pred, graph_ref, criteria):
+        """
+        This is a special metric that calculates the entropy of the dataset distribution.
+
+        We measure two types of entropy, measuring different things:
+        1. The entropy of the cell types at each timepoint, measuring how heterogenous
+            the cell population is at a given timepoint. This is averaged across all timepoints,
+            taking a weighted average into account.
+        2. The entropy of the timepoint distribution for each cell type, measuring how well
+            the dataset captures the temporal dynamics of each cell type.
+            This is averaged across all cell types -- because our future metrics don't weight
+            by cell type abundance, we also won't weight this by abundance to be consistent.
+        3. Entropy of the timepoitn distribution for each cell type,
+            but now we weigh by the abundance of each cell type, to get a sense of how well the dataset captures
+            the temporal dynamics of the most abundant cell types.
+        """
+
+        test_ann_data = load_test_dataset(self.output_path)
+
+        time_col = ObservationColumns.TIMEPOINT.value
+        cell_col = ObservationColumns.CELL_TYPE.value
+
+        def shannon_entropy_from_counts(count_vector):
+            counts = np.asarray(count_vector, dtype=float)
+            total = counts.sum()
+            if total <= 0:
+                return 0.0
+
+            probabilities = counts / total
+            probabilities = probabilities[probabilities > 0]
+            if probabilities.size == 0:
+                return 0.0
+
+            return float(-np.sum(probabilities * np.log(probabilities)))
+
+        # Table shape: rows=timepoints, cols=cell types, values=counts.
+        counts_by_time_and_cell = (
+            test_ann_data.obs.groupby([time_col, cell_col]).size().unstack(fill_value=0)
+        )
+
+        if counts_by_time_and_cell.empty:
+            return json.dumps(
+                {
+                    "celltype_entropy_weighted_avg_ref": 0.0,
+                    "timepoint_entropy_per_celltype_avg_ref": 0.0,
+                }
+            )
+
+        # 1) For each timepoint: entropy over cell-type composition.
+        entropy_per_timepoint = counts_by_time_and_cell.apply(
+            shannon_entropy_from_counts, axis=1
+        )
+        cells_per_timepoint = counts_by_time_and_cell.sum(axis=1).astype(float)
+
+        total_cells = cells_per_timepoint.sum()
+        if total_cells == 0:
+            weighted_celltype_entropy = 0.0
+        else:
+            weighted_celltype_entropy = float(
+                (entropy_per_timepoint * cells_per_timepoint).sum() / total_cells
+            )
+
+        # 2) For each cell type: entropy over timepoint distribution.
+        counts_by_cell_and_time = counts_by_time_and_cell.T
+        entropy_per_celltype = counts_by_cell_and_time.apply(
+            shannon_entropy_from_counts, axis=1
+        )
+        mean_time_entropy_per_celltype = float(entropy_per_celltype.mean())
+
+        # 3) For each cell type: entropy over timepoint distribution, weighted by abundance.
+        cells_per_celltype = counts_by_cell_and_time.sum(axis=1).astype(float)
+        if cells_per_celltype.sum() == 0:
+            weighted_time_entropy_per_celltype = 0.0
+        else:
+            weighted_time_entropy_per_celltype = float(
+                (entropy_per_celltype * cells_per_celltype).sum()
+                / cells_per_celltype.sum()
+            )
+
+        num_tps = counts_by_time_and_cell.shape[0]
+
+        return json.dumps(
+            {
+                "celltype_entropy_weighted_avg_ref": weighted_celltype_entropy,
+                "timepoint_entropy_per_celltype_avg_ref": mean_time_entropy_per_celltype
+                / num_tps,
+                "timepoint_entropy_per_celltype_weighted_avg_ref": weighted_time_entropy_per_celltype
+                / num_tps,
+            }
+        )

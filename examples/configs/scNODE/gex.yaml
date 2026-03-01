@@ -1,14 +1,17 @@
 datasets:
   - tag: defaultSuo
-  - tag: defaultMa
-  - tag: defaultGarciaAlonso
+  # - tag: defaultMa
+  # - tag: defaultGarciaAlonso
+  - tag: defaultSuoPseudotimeEvenCells
+  # - tag: defaultMaPseudotimeEvenCells
+  # - tag: defaultGarciaAlonsoPseudotimeEvenCells
 
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
 
 metrics:
-  - name: GraphClassificationReport
+  - name: DatasetEntropy
 
 # metrics:
 #   - name: JaccardSimilarity
