@@ -20,6 +20,7 @@ import random
 import scipy.sparse as sp
 from tqdm import tqdm
 from optim.running import constructscNODEModel, scNODETrainWithPreTrain
+from scipy.sparse import issparse
 
 
 # next we want to prepare the data for training
@@ -28,7 +29,7 @@ def prepare_data(ann_data):
     Prepare data for scNODE training.
     """
     # first we get the data
-    data = ann_data.X
+    data = ann_data.X.toarray() if issparse(ann_data.X) else ann_data.X
 
     # get the time points
     cell_tps = ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
@@ -240,7 +241,11 @@ class scNODE(BaseModel):
 
         # first off let's get the cells at tp0
         # and then project it forward using latent_ode_model.predict
-        data = first_tp_cells.X.toarray()
+        data = (
+            first_tp_cells.X.toarray()
+            if issparse(first_tp_cells.X)
+            else first_tp_cells.X
+        )
         _, _, recon_obs = self.latent_ode_model.predict(
             torch.FloatTensor(data),
             torch.FloatTensor(all_tps),

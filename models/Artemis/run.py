@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 import jax
 
-from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns, RequiredOutputColumns
+from scTimeBench.model_utils.model_runner import main, BaseModel
+from scTimeBench.shared.constants import ObservationColumns, RequiredOutputColumns
 
 
 _ARTEMIS_SRC_PATH = os.path.abspath(

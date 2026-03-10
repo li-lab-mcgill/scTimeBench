@@ -8,7 +8,7 @@ version = "0.1"
 dependencies = [
     "PyYAML",
     "scanpy",
-    "scikit_learn>=1.7",
+    "scikit_learn",
     "fastparquet",
     "pyarrow",
 ]
