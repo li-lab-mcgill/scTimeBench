@@ -4,8 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION ---
-INPUT_FILE = "heatmap.csv"
-OUTPUT_FILE = "split_filtered_heatmap.svg"
+INPUT_FILE = "data_v2.csv"
+OUTPUT_FILE = "split_filtered_heatmap_v2.svg"
 METRICS_OF_INTEREST = ["AUC_PRC", "AUC_ROC", "JaccardSimilarity"]
 
 # 1. Load and Rename
