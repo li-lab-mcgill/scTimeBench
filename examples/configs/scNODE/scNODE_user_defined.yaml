@@ -1,11 +1,13 @@
 datasets:
   - tag: defaultGarciaAlonso
+  - tag: EasyZebrafish
 
 model:
   name: scNODE
   train_and_test_script: ./models/scNODE/train_and_test.sh
   metadata:
-    epochs: 2
+    epochs: 1
+    pretrain_iters: 10
 
 metrics:
- - name: GraphEditDistance
+ - name: BaseMetric

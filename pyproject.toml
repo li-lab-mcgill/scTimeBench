@@ -3,12 +3,12 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "crispy_fishstick"  # This is the name you use for 'pip install'
+name = "scTimeBench"  # This is the name you use for 'pip install'
 version = "0.1"
 dependencies = [
     "PyYAML",
     "scanpy",
-    "scikit_learn>=1.7",
+    "scikit_learn",
     "fastparquet",
     "pyarrow",
 ]
@@ -36,7 +36,7 @@ pypsupertime = [ "pypsupertime" ]
 sceptic = [ "sceptic" ]
 
 [project.scripts]
-crispy_fishstick = "crispy_fishstick.main:main"
+scTimeBench = "scTimeBench.main:main"
 
 # --- UV SPECIFIC CONFIGURATION ---
 

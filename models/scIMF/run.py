@@ -16,8 +16,8 @@ import tqdm
 import geomloss
 from sklearn.decomposition import PCA
 
-from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns
+from scTimeBench.model_utils.model_runner import main, BaseModel
+from scTimeBench.shared.constants import ObservationColumns
 
 
 _SCIMF_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "scIMF_module"))

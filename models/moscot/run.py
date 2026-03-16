@@ -11,9 +11,9 @@ import os
 
 import anndata
 
-from crispy_fishstick.model_utils.model_runner import main
-from crispy_fishstick.model_utils.ot_model_runner import BaseOTModel
-from crispy_fishstick.shared.constants import ObservationColumns
+from scTimeBench.model_utils.model_runner import main
+from scTimeBench.model_utils.ot_model_runner import BaseOTModel
+from scTimeBench.shared.constants import ObservationColumns
 
 from moscot.problems.time import TemporalProblem
 

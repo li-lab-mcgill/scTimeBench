@@ -1,4 +1,4 @@
-# Crispy-Fishstick
+# scTimeBench
 ## Setup
 If the external dependencies such as pypsupertime or sceptic are not used (which they are not used by default), you can install using pip as follows:
 ```
@@ -15,7 +15,7 @@ Due to external dependencies and a more complex setup, we have decided to packag
 ```
 uv sync
 ```
-This allows you to create model run files that use the necessary constants and model runners under the crispy fishstick packages.
+This allows you to create model run files that use the necessary constants and model runners under the scTimeBench packages.
 
 Note: for the other models, we don't need all the dependencies so for example, if you're setting up the moscot environment,
 ```
@@ -29,7 +29,7 @@ uv sync --extra <dependency-group>
 ```
 e.g.:
 ```
-uv sync --extra test --extra dev --extra benchmark --extra graphviz --extra celltypist
+uv sync --extra test --extra dev --extra benchmark
 ```
 or simply
 ```
@@ -48,18 +48,18 @@ before running uv sync.
 - `examples/` defines the examples
     -  `configs/` possible yaml config files to use as a starting point
 - `models/` defines the different models that are possible to use, including defined submodules. Add your own methodology here.
-- `src/` where the crispy-fishstick package lies. See `src/ReadMe.md` for more documentation on the modules that exist there.
+- `src/` where the scTimeBench package lies. See `src/ReadMe.md` for more documentation on the modules that exist there.
 - `test/` unit tests for each model, each metric, and other important modules.
 
 ## Example Run
 Run either using the package itself with:
 ```
-crispy_fishstick --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
+scTimeBench --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
 ```
 
 or with:
 ```
-python src/crispy_fishstick/main.py --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
+python src/scTimeBench/main.py --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
 ```
 
 ## Contributing

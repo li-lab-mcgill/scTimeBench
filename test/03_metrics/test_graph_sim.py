@@ -1,9 +1,9 @@
-from crispy_fishstick.metrics.ontology_based.graph_sim.base import AdjacencyMatrixType
-from crispy_fishstick.metrics.ontology_based.graph_sim.ged import GraphEditDistance
-from crispy_fishstick.metrics.ontology_based.graph_sim.jaccard_similarity import (
+from scTimeBench.metrics.ontology_based.graph_sim.base import AdjacencyMatrixType
+from scTimeBench.metrics.ontology_based.graph_sim.ged import GraphEditDistance
+from scTimeBench.metrics.ontology_based.graph_sim.jaccard_similarity import (
     JaccardSimilarity,
 )
-from crispy_fishstick.metrics.ontology_based.graph_sim.confusion_matrix import (
+from scTimeBench.metrics.ontology_based.graph_sim.confusion_matrix import (
     GraphPrecision,
     GraphRecall,
     GraphF1,

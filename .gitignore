@@ -1,3 +1,8 @@
+# Misc. artifacts
+csv_results/
+*.png
+*.svg
+
 # Virtual environment directory
 venv/
 venv

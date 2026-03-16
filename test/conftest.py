@@ -15,7 +15,7 @@ def run_bench():
             Path(log_file_path).unlink()
 
         cmd = [
-            "crispy_fishstick",
+            "scTimeBench",
             "--config",
             str(config_path),
             "--run_type",
@@ -23,7 +23,7 @@ def run_bench():
             "--output_dir",
             str(workspace / "outputs"),
             "--database_path",
-            str(workspace / "crispy_fishstick.db"),
+            str(workspace / "scTimeBench.db"),
             "--log_file",
             log_file_path,
             "--log_level",

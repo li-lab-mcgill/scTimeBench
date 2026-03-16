@@ -16,8 +16,8 @@ import scipy.sparse as sp
 import torch
 from sklearn.decomposition import PCA
 
-from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns
+from scTimeBench.model_utils.model_runner import main, BaseModel
+from scTimeBench.shared.constants import ObservationColumns
 
 from MIOFlow.utils import set_seeds, config_criterion
 from MIOFlow.models import make_model, Autoencoder

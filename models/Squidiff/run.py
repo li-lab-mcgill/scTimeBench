@@ -11,8 +11,8 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 
-from crispy_fishstick.model_utils.model_runner import main, BaseModel
-from crispy_fishstick.shared.constants import ObservationColumns
+from scTimeBench.model_utils.model_runner import main, BaseModel
+from scTimeBench.shared.constants import ObservationColumns
 
 
 def _single_device() -> torch.device:

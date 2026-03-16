@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from crispy_fishstick.metrics.base import METRIC_REGISTRY
+from scTimeBench.metrics.base import METRIC_REGISTRY
 
 # 1. Define the path to your configs
 CONFIG_DIR = Path(__file__).parent / "configs"
@@ -92,13 +92,13 @@ def test_config_execution(config_path, workspace, run_bench):
     # this is good to test hierarchical metric evaluations as well
 
     # create a minimal config object for database access
-    from crispy_fishstick.database import DatabaseManager
+    from scTimeBench.database import DatabaseManager
 
     class dummy_class:
         def __init__(self, database_path):
             self.database_path = database_path
 
-    test_config = dummy_class(str(workspace / "crispy_fishstick.db"))
+    test_config = dummy_class(str(workspace / "scTimeBench.db"))
     db_manager = DatabaseManager(test_config)
 
     db_contents = db_manager.return_all()
@@ -178,13 +178,13 @@ def test_dummy_dataset(config_path, workspace, run_bench):
             ), f"Expected line not found for metric {submetric.__class__.__name__}."
 
     # finally we should verify that the database is completely empty
-    from crispy_fishstick.database import DatabaseManager
+    from scTimeBench.database import DatabaseManager
 
     class dummy_class:
         def __init__(self, database_path):
             self.database_path = database_path
 
-    test_config = dummy_class(str(workspace / "crispy_fishstick.db"))
+    test_config = dummy_class(str(workspace / "scTimeBench.db"))
     db_manager = DatabaseManager(test_config)
 
     db_contents = db_manager.return_all()
