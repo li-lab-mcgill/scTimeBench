@@ -1,0 +1,12 @@
+model:
+  name: Correlation
+  metadata:
+    correlation_method: spearmanr
+    averaging_method: maximum
+  train_and_test_script: ./models/correlation/train_and_test.sh
+
+metrics:
+  - name: GraphSimMetric
+
+metrics_skiplist:
+  - name: StackedBarPlot
