@@ -1,10 +1,3 @@
-"""
-ExampleRandomSampler script.
-
-We use this script to train the ExampleRandomSampler model on a dataset.
-Where we simply memorize a random sample from each time point.
-"""
-
 # let's add the model_utils path
 import sys
 import os
@@ -138,7 +131,7 @@ class scNODE(BaseMethod):
         # then, we need to prepare this for scNODE training
         traj_data, tps = prepare_data(ann_data)
         latent_ode_model, _, _, _, _ = model_training(
-            traj_data, tps, self.config["model"].get("metadata", {})
+            traj_data, tps, self.config["method"].get("metadata", {})
         )
         # now let's cache the trained model
         self.latent_ode_model = latent_ode_model

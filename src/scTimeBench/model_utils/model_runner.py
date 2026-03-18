@@ -1,5 +1,5 @@
 """
-Note: for this file only, this will be used by other models as a base class
+Note: for this file only, this will be used by other methods as a base class
 And so its context is outside the src/ folder, so we need to use scTimeBench.*
 imports instead of relative imports.
 """
@@ -17,8 +17,8 @@ from scTimeBench.shared.constants import ObservationColumns
 
 
 def get_parser():
-    # parser that will read the input data path and the model output path
-    parser = argparse.ArgumentParser(description="Train ExampleRandomSampler model.")
+    # parser that will read the input data path and the method output path
+    parser = argparse.ArgumentParser(description="Train ExampleRandomSampler method.")
     parser.add_argument(
         "--yaml_config", type=str, help="Path to YAML configuration file"
     )
@@ -48,7 +48,7 @@ def process_yaml(yaml_path):
     return yaml_config
 
 
-# Class to be inherited by all models
+# Class to be inherited by all methods
 class BaseMethod:
     def __init__(self, yaml_config):
         self.config = yaml_config
@@ -185,22 +185,22 @@ class BaseMethod:
         raise NotImplementedError("Subclasses should implement this method.")
 
 
-def main(model_class: BaseMethod):
-    print(f"Starting train and testing for model...")
+def main(method_class: BaseMethod):
+    print(f"Starting train and testing for method...")
     parser = get_parser()
     args = parser.parse_args()
     yaml_config = process_yaml(args.yaml_config)
 
     output_path = yaml_config["output_path"]
 
-    # Initialize the model
-    model: BaseMethod = model_class(yaml_config)
+    # Initialize the method
+    method: BaseMethod = method_class(yaml_config)
 
     # first let's check if the required outputs already exist -- and skip the whole process if so
     if all(
         [
             os.path.exists(os.path.join(output_path, required_output.value))
-            for required_output in model.required_outputs
+            for required_output in method.required_outputs
         ]
     ):
         print(
@@ -208,7 +208,7 @@ def main(model_class: BaseMethod):
         )
         return
 
-    # Otherwise we have to load the data and train/test the model
+    # Otherwise we have to load the data and train/test the method
     print("Loading dataset...")
     train_ann_data, test_ann_data = yaml_config["dataset"].load_data()
 
@@ -221,19 +221,19 @@ def main(model_class: BaseMethod):
     )
     all_tps = list(set(all_tps))
 
-    print(f"Training and/or loading the model: {model_class.__name__}", flush=True)
+    print(f"Training and/or loading the method: {method_class.__name__}", flush=True)
     # let's let the train() function handle the caching as well
-    model.train(train_ann_data, all_tps=all_tps)
+    method.train(train_ann_data, all_tps=all_tps)
     print("Training/loading complete.")
 
     # Generate outputs - each required output saved to its own file
     print(f"Starting generation to {output_path}", flush=True)
-    model.generate(test_ann_data)
+    method.generate(test_ann_data)
     print("Generation complete.", flush=True)
 
     # Verify that all required output files were created
     print(f"Verifying generated outputs at {output_path}")
-    for required_output in model.required_outputs:
+    for required_output in method.required_outputs:
         output_file = os.path.join(output_path, required_output.value)
         if not os.path.exists(output_file):
             raise RuntimeError(f"Required output file was not created: {output_file}")

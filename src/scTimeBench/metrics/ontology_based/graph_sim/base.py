@@ -62,7 +62,7 @@ class GraphSimMetric(OntologyBasedMetrics):
         )
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
-    def _setup_model_output_requirements(self):
+    def _setup_method_output_requirements(self):
         # ** NOTE: must define the following attributes **
         # where we define the output embedding name
         # as well as the required features and outputs
@@ -318,7 +318,7 @@ class GraphSimMetric(OntologyBasedMetrics):
             )
         return thresholds[best_idx]
 
-    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
+    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
         self.output_path = output_path
         self.dataset_dir = dataset.get_dataset_dir()
         self.dataset_name = dataset.get_name()
@@ -352,10 +352,10 @@ class GraphSimMetric(OntologyBasedMetrics):
                     graph_preds, graph_refs, thresholds, criterions
                 )
             ],
-            "model": model,
+            "method": method,
         }
 
-    def _submetric_eval(self, graphs, model):
+    def _submetric_eval(self, graphs, method):
         """
         Wrapper function to call the graph similarity evaluation, and handle database
         logging.
@@ -375,7 +375,7 @@ class GraphSimMetric(OntologyBasedMetrics):
                     }
                 )
                 self.db_manager.insert_eval(
-                    model, self.__class__.__name__, self._get_param_encoding(), eval
+                    method, self.__class__.__name__, self._get_param_encoding(), eval
                 )
 
     def _graph_sim_eval(self, graph_pred, graph_ref, criteria):

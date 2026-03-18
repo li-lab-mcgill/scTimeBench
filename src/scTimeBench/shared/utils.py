@@ -11,7 +11,7 @@ import yaml
 
 from scTimeBench.shared.constants import (
     RequiredOutputFiles,
-    MODEL_CONFIG_FILENAME,
+    METHOD_CONFIG_FILENAME,
 )
 
 DATASET_CACHE_LIMIT = 3  # max number of datasets to cache in memory
@@ -33,19 +33,19 @@ def get_dataset(output_path):
     Get the dataset from the pickled dataset file in output_path.
 
     Args:
-        output_path: Path to the model output directory
+        output_path: Path to the method output directory
     Returns:
         The dataset object loaded from the pickled file
     """
-    # first let's read the model yaml to get the dataset pickle path
-    model_config_path = os.path.join(output_path, MODEL_CONFIG_FILENAME)
-    if not os.path.exists(model_config_path):
-        raise FileNotFoundError(f"Model config file not found: {model_config_path}")
-    logging.debug(f"Loading model config from {model_config_path}")
-    with open(model_config_path, "r") as f:
-        model_config = yaml.safe_load(f)
+    # first let's read the method yaml to get the dataset pickle path
+    method_config_path = os.path.join(output_path, METHOD_CONFIG_FILENAME)
+    if not os.path.exists(method_config_path):
+        raise FileNotFoundError(f"method config file not found: {method_config_path}")
+    logging.debug(f"Loading method config from {method_config_path}")
+    with open(method_config_path, "r") as f:
+        method_config = yaml.safe_load(f)
 
-    dataset_pkl_path = model_config.get("dataset_pkl_path", None)
+    dataset_pkl_path = method_config.get("dataset_pkl_path", None)
     if not os.path.exists(dataset_pkl_path):
         raise FileNotFoundError(f"Dataset pickle not found: {dataset_pkl_path}")
 
@@ -61,7 +61,7 @@ def load_test_dataset(output_path):
     Load the test dataset from the pickled dataset file in output_path.
 
     Args:
-        output_path: Path to the model output directory
+        output_path: Path to the method output directory
 
     Returns:
         The test AnnData object from the dataset
@@ -83,10 +83,10 @@ def load_test_dataset(output_path):
 
 def load_output_file(output_path, required_output: RequiredOutputFiles):
     """
-    Load a model output file from output_path.
+    Load a method output file from output_path.
 
     Args:
-        output_path: Path to the model output directory
+        output_path: Path to the method output directory
         required_output: RequiredOutputFiles enum value specifying which file to load
 
     Returns:

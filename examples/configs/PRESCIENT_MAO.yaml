@@ -22,7 +22,7 @@ datasets:
     filters:
       - name: TimeSplitDatasetFilter
         test_tps: [2,4,6,12,13,14]
-model:
+method:
   name: PRESCIENT
   train_and_test_script: ./models/PRESCIENT/train_and_test.sh
   metadata:

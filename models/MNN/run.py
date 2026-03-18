@@ -129,7 +129,7 @@ class CellMNNRunner(BaseMethod):
         cache_path = os.path.join(
             self.config["output_path"], "trained_CellMNN_model.pth"
         )
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         self.device = _resolve_device(metadata)
 

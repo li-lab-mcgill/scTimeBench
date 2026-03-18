@@ -4,8 +4,8 @@ Database manager using sqlite3.
 This module provides a simple interface to interact with an SQLite database,
 including the setup of tables for storing:
 1. Paths to processed datasets.
-2. Paths to model checkpoints.
-3. Paths to model predictions.
+2. Paths to method checkpoints.
+3. Paths to method predictions.
 4. Metric results.
 """
 
@@ -14,7 +14,7 @@ from scTimeBench.config import Config
 from pathlib import Path
 import csv
 
-from scTimeBench.metrics.model_manager import ModelManager
+from scTimeBench.metrics.model_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
     DATASET_FILTER_REGISTRY,
@@ -29,7 +29,7 @@ class DatabaseManager:
         self.conn = sqlite3.connect(config.database_path)
         self._create_tables()
         self.table_names = [
-            "model_outputs",
+            "method_outputs",
             "datasets",
             "metrics",
             "evals",
@@ -40,7 +40,7 @@ class DatabaseManager:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS model_outputs (
+            CREATE TABLE IF NOT EXISTS method_outputs (
                 id INTEGER PRIMARY KEY,
                 name TEXT,
                 dataset_id INTEGER,
@@ -74,12 +74,12 @@ class DatabaseManager:
             )
         """
         )
-        # does not need to be unique, can have multiple evals for same model_output and metric
+        # does not need to be unique, can have multiple evals for same method_output and metric
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS evals (
                 id INTEGER PRIMARY KEY,
-                model_output_id INTEGER,
+                method_output_id INTEGER,
                 metric_id INTEGER,
                 result TEXT
             )
@@ -99,7 +99,7 @@ class DatabaseManager:
         )
         self.conn.commit()
 
-    def get_dataset_id(self, model: ModelManager):
+    def get_dataset_id(self, method: MethodManager):
         cursor = self.conn.cursor()
         cursor.execute(
             """
@@ -107,9 +107,9 @@ class DatabaseManager:
             WHERE name = ? AND dataset_dict = ? AND dataset_filters = ?
         """,
             (
-                model.dataset.get_name(),
-                model.dataset.encode_dataset_dict(),
-                model.dataset.encode_filters(),
+                method.dataset.get_name(),
+                method.dataset.encode_dataset_dict(),
+                method.dataset.encode_filters(),
             ),
         )
         result = cursor.fetchone()
@@ -132,34 +132,34 @@ class DatabaseManager:
         )
         self.conn.commit()
 
-    def insert_model_output(self, model: ModelManager, output_path: str):
+    def insert_method_output(self, method: MethodManager, output_path: str):
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            INSERT INTO model_outputs (name, dataset_id, metadata, path)
+            INSERT INTO method_outputs (name, dataset_id, metadata, path)
             VALUES (?, ?, ?, ?)
         """,
             (
-                model._get_name(),
-                self.get_dataset_id(model),
-                model._encode_metadata(),
+                method._get_name(),
+                self.get_dataset_id(method),
+                method._encode_metadata(),
                 output_path,
             ),
         )
         self.conn.commit()
 
-    def get_model_output_path(self, model: ModelManager):
+    def get_method_output_path(self, method: MethodManager):
         cursor = self.conn.cursor()
 
         cursor.execute(
             """
-            SELECT path FROM model_outputs
+            SELECT path FROM method_outputs
             WHERE name = ? AND dataset_id = ? AND metadata = ?
         """,
             (
-                model._get_name(),
-                self.get_dataset_id(model),
-                model._encode_metadata(),
+                method._get_name(),
+                self.get_dataset_id(method),
+                method._encode_metadata(),
             ),
         )
         result = cursor.fetchone()
@@ -255,14 +255,14 @@ class DatabaseManager:
             print("-" * 100)
             print(f"Contents of table: {table}")
             if table == "evals":
-                # add the model name, dataset name, and metric name for easier reading
+                # add the method name, dataset name, and metric name for easier reading
                 cursor.execute(
                     """
-                    SELECT model_outputs.name, datasets.id, metrics.name, evals.result
+                    SELECT method_outputs.name, datasets.id, metrics.name, evals.result
                     FROM evals
-                    JOIN model_outputs ON evals.model_output_id = model_outputs.id
+                    JOIN method_outputs ON evals.method_output_id = method_outputs.id
                     JOIN metrics ON evals.metric_id = metrics.id
-                    JOIN datasets ON model_outputs.dataset_id = datasets.id
+                    JOIN datasets ON method_outputs.dataset_id = datasets.id
                 """
                 )
             else:
@@ -277,9 +277,9 @@ class DatabaseManager:
                     print(f"({dataset_id}, {dataset_tag})")
                 elif table == "evals":
                     # now print out evals as normal except do the dataset tag instead
-                    model_name, dataset_id, metric_name, result = row
+                    method_name, dataset_id, metric_name, result = row
                     dataset_tag = self.get_dataset_tag_from_id(dataset_id)
-                    print(f"({model_name}, {metric_name}, {dataset_tag}, {result})")
+                    print(f"({method_name}, {metric_name}, {dataset_tag}, {result})")
                 else:
                     print(row)
         self.conn.commit()
@@ -300,11 +300,11 @@ class DatabaseManager:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT metrics.name, model_outputs.name, datasets.id, datasets.name, evals.result
+            SELECT metrics.name, method_outputs.name, datasets.id, datasets.name, evals.result
             FROM evals
             JOIN metrics ON evals.metric_id = metrics.id
-            JOIN model_outputs ON evals.model_output_id = model_outputs.id
-            JOIN datasets ON model_outputs.dataset_id = datasets.id
+            JOIN method_outputs ON evals.method_output_id = method_outputs.id
+            JOIN datasets ON method_outputs.dataset_id = datasets.id
             WHERE metrics.name IN ('GraphClassificationReport', 'JaccardSimilarity')
         """
         )
@@ -412,26 +412,26 @@ class DatabaseManager:
 
     # ** EVAL RELATED FUNCTIONS **
     def has_eval(
-        self, model: ModelManager, metric_name: str, metric_params: str
+        self, method: MethodManager, metric_name: str, metric_params: str
     ) -> bool:
         cursor = self.conn.cursor()
 
-        # first we get the model id
+        # first we get the method id
         cursor.execute(
             """
-            SELECT id FROM model_outputs
+            SELECT id FROM method_outputs
             WHERE name = ? AND dataset_id = ? AND metadata = ?
         """,
             (
-                model._get_name(),
-                self.get_dataset_id(model),
-                model._encode_metadata(),
+                method._get_name(),
+                self.get_dataset_id(method),
+                method._encode_metadata(),
             ),
         )
-        model_output_row = cursor.fetchone()
-        if model_output_row is None:
+        method_output_row = cursor.fetchone()
+        if method_output_row is None:
             return False
-        model_output_id = model_output_row[0]
+        method_output_id = method_output_row[0]
 
         # then we get the metric id
         cursor.execute(
@@ -450,34 +450,34 @@ class DatabaseManager:
         cursor.execute(
             """
             SELECT id FROM evals
-            WHERE model_output_id = ? AND metric_id = ?
+            WHERE method_output_id = ? AND metric_id = ?
         """,
-            (model_output_id, metric_id),
+            (method_output_id, metric_id),
         )
         eval_row = cursor.fetchone()
         return eval_row is not None
 
     def insert_eval(
-        self, model: ModelManager, metric_name: str, metric_params: str, result
+        self, method: MethodManager, metric_name: str, metric_params: str, result
     ):
         cursor = self.conn.cursor()
 
-        # first we get the model id
+        # first we get the method id
         cursor.execute(
             """
-            SELECT id FROM model_outputs
+            SELECT id FROM method_outputs
             WHERE name = ? AND dataset_id = ? AND metadata = ?
         """,
             (
-                model._get_name(),
-                self.get_dataset_id(model),
-                model._encode_metadata(),
+                method._get_name(),
+                self.get_dataset_id(method),
+                method._encode_metadata(),
             ),
         )
-        model_output_row = cursor.fetchone()
-        if model_output_row is None:
-            raise ValueError("Model output not found in database.")
-        model_output_id = model_output_row[0]
+        method_output_row = cursor.fetchone()
+        if method_output_row is None:
+            raise ValueError("Method output not found in database.")
+        method_output_id = method_output_row[0]
 
         # then we get the metric id
         cursor.execute(
@@ -495,10 +495,10 @@ class DatabaseManager:
         # finally we insert the eval
         cursor.execute(
             """
-            INSERT INTO evals (model_output_id, metric_id, result)
+            INSERT INTO evals (method_output_id, metric_id, result)
             VALUES (?, ?, ?)
         """,
-            (model_output_id, metric_id, result),
+            (method_output_id, metric_id, result),
         )
         self.conn.commit()
 
@@ -520,7 +520,7 @@ class DatabaseManager:
         # finally we get the evals
         cursor.execute(
             """
-            SELECT model_output_id, result FROM evals
+            SELECT method_output_id, result FROM evals
             WHERE metric_id = ?
         """,
             (metric_id,),
@@ -528,64 +528,64 @@ class DatabaseManager:
         results = cursor.fetchall()
 
         outputs = []
-        # then, let's fetch all the models and their parameters as well
+        # then, let's fetch all the methods and their parameters as well
         # so we can nicely print this out
         for row in results:
-            model_id = row[0]
+            method_id = row[0]
             cursor.execute(
                 """
-                SELECT name, datasets.name, datasets.dataset_dict, datasets.dataset_filters, metadata FROM model_outputs
-                JOIN datasets ON model_outputs.dataset_id = datasets.id
-                WHERE model_outputs.id = ?
+                SELECT name, datasets.name, datasets.dataset_dict, datasets.dataset_filters, metadata FROM method_outputs
+                JOIN datasets ON method_outputs.dataset_id = datasets.id
+                WHERE method_outputs.id = ?
             """,
-                (model_id,),
+                (method_id,),
             )
-            model_row = cursor.fetchone()
+            method_row = cursor.fetchone()
 
             outputs.append(
                 {
-                    "model_name": model_row[0],
-                    "dataset_name": model_row[1],
-                    "dataset_dict": json.loads(model_row[2]),
-                    "dataset_filters": json.loads(model_row[3]),
-                    "metadata": json.loads(model_row[4]),
+                    "method_name": method_row[0],
+                    "dataset_name": method_row[1],
+                    "dataset_dict": json.loads(method_row[2]),
+                    "dataset_filters": json.loads(method_row[3]),
+                    "metadata": json.loads(method_row[4]),
                     "result": row[1],
                 }
             )
 
         return outputs
 
-    def get_evals_per_model(self, model: ModelManager):
+    def get_evals_per_method(self, method: MethodManager):
         cursor = self.conn.cursor()
 
         cursor.execute(
             """
-            SELECT id FROM model_outputs
+            SELECT id FROM method_outputs
             WHERE name = ? AND dataset_id = ? AND metadata = ?
         """,
             (
-                model._get_name(),
-                self.get_dataset_id(model),
-                model._encode_metadata(),
+                method._get_name(),
+                self.get_dataset_id(method),
+                method._encode_metadata(),
             ),
         )
-        model_output_row = cursor.fetchone()
-        if model_output_row is None:
-            raise ValueError("Model output not found in database.")
-        model_output_id = model_output_row[0]
+        method_output_row = cursor.fetchone()
+        if method_output_row is None:
+            raise ValueError("method output not found in database.")
+        method_output_id = method_output_row[0]
 
         # finally we get the evals
         cursor.execute(
             """
             SELECT metric_id, result FROM evals
-            WHERE model_output_id = ?
+            WHERE method_output_id = ?
         """,
-            (model_output_id,),
+            (method_output_id,),
         )
         results = cursor.fetchall()
 
         outputs = []
-        # then, let's fetch all the models and their parameters as well
+        # then, let's fetch all the methods and their parameters as well
         # so we can nicely print this out
         for row in results:
             metric_id = row[0]

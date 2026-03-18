@@ -73,7 +73,7 @@ class Correlation(BaseMethod):
         time_col = ObservationColumns.TIMEPOINT.value
         obs = test_ann_data.obs
         graph_pred = np.zeros((len(cell_types), len(cell_types)))
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         corr_method = CorrelationMethod(metadata.get("correlation_method", "spearmanr"))
         # also get the averaging method of either the maximum, average, or non-negative average
         avg_method = AveragingMethod(metadata.get("averaging_method", "average"))

@@ -15,7 +15,7 @@ class CopySplitFilter(BaseDatasetFilter):
     def filter(self, ann_data, **kwargs):
         """
         Give two copies of the dataset as train and test sets.
-        Useful for models that do not require train/test splits,
+        Useful for metrics that do not require train/test splits,
         and for datasets that are small.
         """
         train_data = ann_data.copy()

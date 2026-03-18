@@ -7,9 +7,9 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 
-class BaseOTModel(BaseMethod):
+class BaseOTMethod(BaseMethod):
     """
-    Base class for OT-based models.
+    Base class for OT-based methods.
     """
 
     def __init__(self, yaml_config):

@@ -176,7 +176,7 @@ class scIMF(BaseMethod):
         Training logic for scIMF.
         """
         cache_path = os.path.join(self.config["output_path"], "trained_scIMF_model.pth")
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         self.device = self._resolve_device(metadata)
 

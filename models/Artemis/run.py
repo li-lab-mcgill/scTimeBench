@@ -332,7 +332,7 @@ class Artemis(BaseMethod):
         trainer.training_setup.state = (key, params)
         trainer.vae_params = vae_params
         disable_birth_death = bool(
-            self.config.get("model", {})
+            self.config.get("method", {})
             .get("metadata", {})
             .get("disable_birth_death", False)
         )
@@ -370,7 +370,7 @@ class Artemis(BaseMethod):
 
     def train(self, ann_data, all_tps: Optional[List] = None):
         cache_path = os.path.join(self.config["output_path"], "trained_artemis.pkl")
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         disable_birth_death = bool(metadata.get("disable_birth_death", False))
 
         if self._load_cache(cache_path):
@@ -431,7 +431,7 @@ class Artemis(BaseMethod):
         self,
         rng: np.random.Generator,
     ):
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         disable_birth_death = bool(metadata.get("disable_birth_death", False))
         fallback_to_train_latent = bool(
             metadata.get("fallback_to_train_latent_on_nan", False)
@@ -460,7 +460,7 @@ class Artemis(BaseMethod):
             )
 
         max_cells = int(
-            self.config.get("model", {}).get("metadata", {}).get("max_sim_cells", 2000)
+            self.config.get("method", {}).get("metadata", {}).get("max_sim_cells", 2000)
         )
 
         (
@@ -581,7 +581,7 @@ class Artemis(BaseMethod):
     def generate(self, test_ann_data, expected_output_path):
         # check if disable_birth_death is set
         disable_birth_death = bool(
-            self.config.get("model", {})
+            self.config.get("method", {})
             .get("metadata", {})
             .get("disable_birth_death", False)
         )
@@ -609,7 +609,7 @@ class Artemis(BaseMethod):
 
         rng = np.random.default_rng(0)
         allow_resample = bool(
-            self.config.get("model", {})
+            self.config.get("method", {})
             .get("metadata", {})
             .get("allow_resample_candidates", False)
         )

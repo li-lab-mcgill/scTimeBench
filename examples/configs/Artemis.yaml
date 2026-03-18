@@ -3,7 +3,7 @@ datasets:
   - tag: defaultSuo
 
 
-model:
+method:
   name: Artemis
   train_and_test_script: ./models/Artemis/train_and_test.sh
   metadata:
@@ -31,7 +31,7 @@ model:
     death_importance_rate: 100
     mb_prior: 5.0
 
-    # model architecture
+    # method architecture
     hidden_dim: [64, 64]
     dec_hidden_dim: [64, 64, 1]
     ferryman_hidden_dim: [64]

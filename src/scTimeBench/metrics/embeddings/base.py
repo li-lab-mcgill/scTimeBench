@@ -33,20 +33,20 @@ class EmbeddingMetrics(BaseMetric):
         """The default parameters for ontology-based metrics."""
         return {}
 
-    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
+    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
         return {
             "output_path": output_path,
-            "model": model,
+            "method": method,
             "dataset": dataset,
         }
 
-    def _submetric_eval(self, output_path, model, dataset):
+    def _submetric_eval(self, output_path, method, dataset):
         """
         Wrapper function to call the graph similarity evaluation, and handle database
         logging.
         """
         self.db_manager.insert_eval(
-            model,
+            method,
             self.__class__.__name__,
             self._get_param_encoding(),
             self._embedding_eval(output_path, dataset),

@@ -113,13 +113,13 @@ class GraphClassificationReport(GraphSimMetric):
                 "auc_roc": get_threshold_roc(
                     graph_weighted_pred_adj,
                     graph_ref_adj,
-                    title=f"Threshold ROC Curve of {self.config.model['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
+                    title=f"Threshold ROC Curve of {self.config.method['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
                     output_file=self.traj_dir + f"/roc_curve_{criteria}.png",
                 ),
                 "auc_prc": get_threshold_prc(
                     graph_weighted_pred_adj,
                     graph_ref_adj,
-                    title=f"Threshold PRC Curve of {self.config.model['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
+                    title=f"Threshold PRC Curve of {self.config.method['name']} on {self.dataset_name}{'(All Paths)' if criteria == ThresholdCriteria.ALL_PATHS.value else ''}",
                     output_file=self.traj_dir + f"/prc_curve_{criteria}.png",
                 ),
             }

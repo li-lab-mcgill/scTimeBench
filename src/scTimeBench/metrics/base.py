@@ -6,7 +6,7 @@ depend on the dataset that they belong to.
 from typing import final
 
 from scTimeBench.config import Config, RunType
-from scTimeBench.metrics.model_manager import ModelManager
+from scTimeBench.metrics.model_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
     DATASET_REGISTRY,
@@ -15,7 +15,7 @@ from scTimeBench.shared.dataset.base import (
 from scTimeBench.shared.constants import (
     RequiredOutputFiles,
     PICKLED_DATASET_FILENAME,
-    MODEL_CONFIG_FILENAME,
+    METHOD_CONFIG_FILENAME,
 )
 from scTimeBench.shared.utils import load_test_dataset
 from scTimeBench.database import DatabaseManager
@@ -74,7 +74,7 @@ class BaseMetric:
         # now we call the setups that need to be defined by subclasses
         self._setup_trajectory_inference_model()
         self._setup_supported_datasets()
-        self._setup_model_output_requirements()
+        self._setup_method_output_requirements()
 
         # finally we setup the datasets and metrics db
         # insert the metric if it's not already in the database
@@ -92,10 +92,10 @@ class BaseMetric:
         # initialize the dataset splits dependent on the metric and initialize the model
         # with the dataset as its parameter, also create its preprocessing output path
         self._init_datasets()
-        self.models = []
+        self.methods = []
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
-            logging.info(f"Output path for model: {output_path}")
+            logging.info(f"Output path for method: {output_path}")
 
     def _setup_trajectory_inference_model(self):
         """By default do nothing"""
@@ -106,7 +106,7 @@ class BaseMetric:
     def _setup_supported_datasets(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def _setup_model_output_requirements(self):
+    def _setup_method_output_requirements(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
     def _defaults(self):
@@ -138,11 +138,11 @@ class BaseMetric:
         """
         Main evaluation function which calls all the submetrics if applicable.
 
-        This function will be called after the model has been trained and tested,
-        and the model outputs are available at output_path.
+        This function will be called after the method has been trained and tested,
+        and the method outputs are available at output_path.
 
         Subclasses should implement the method `_submetric_eval` to evaluate the metric
-        based on the model outputs and the dataset.
+        based on the method outputs and the dataset.
         """
         # skip the metric if it's in the skip registry, unless it's force rerun
         if (
@@ -164,41 +164,41 @@ class BaseMetric:
         logging.info(f"Evaluating metric {self.__class__.__name__}")
 
         # assert that the preprocessing was done correctly
-        # we assume that each model corresponds to a dataset
-        assert len(self.models) == len(
+        # we assume that each method corresponds to a dataset
+        assert len(self.methods) == len(
             self.datasets
-        ), "Number of models and datasets must be the same."
+        ), "Number of methods and datasets must be the same."
 
-        for model, dataset in zip(self.models, self.datasets):
+        for method, dataset in zip(self.methods, self.datasets):
             # first we skip if we already have the evaluation in the database
             if (
                 self.db_manager.has_eval(
-                    model,
+                    method,
                     self.__class__.__name__,
                     self._get_param_encoding(),
                 )
                 and not self.config.force_rerun
             ):
                 logging.info(
-                    f"Evaluation for metric {self.__class__.__name__} with params {self.params} already exists for model {model}. Skipping evaluation."
+                    f"Evaluation for metric {self.__class__.__name__} with params {self.params} already exists for method {method}. Skipping evaluation."
                 )
                 continue
 
             # this preprocessing step already happens during creation, skip this here!
-            output_path = self.db_manager.get_model_output_path(model)
+            output_path = self.db_manager.get_method_output_path(method)
 
             if self.config.run_type == RunType.PREPROCESS:
                 logging.debug(
-                    "Run type is PREPROCESS. Skipping model training and metric evaluation."
+                    "Run type is PREPROCESS. Skipping method training and metric evaluation."
                 )
             elif (
                 self.config.run_type == RunType.AUTO_TRAIN_TEST
                 or self.config.run_type == RunType.TRAIN_ONLY
             ):
                 # ** Note: we always rerun if some list is not complete this because of issue: https://github.com/ehuan2/scTimeBench/issues/53 **
-                # ** This will not necessarily re-run the model, and the only time that is not saved is the activation of the venv **
+                # ** This will not necessarily re-run the method, and the only time that is not saved is the activation of the venv **
                 # ** But this should be okay because that time is negligible, and this ensures that **
-                # ** The model outputs give what are expected. The model outputs should still be cached however. **
+                # ** The method outputs give what are expected. The method outputs should still be cached however. **
                 if all(
                     isinstance(outputs_list, list)
                     for outputs_list in self.required_outputs
@@ -223,24 +223,24 @@ class BaseMetric:
                     # requires caching, and if so, then we run to cache ahead of time
                     # We do this because some filters (e.g., psupertime)
                     # require the dataset to be preprocessed with a certain module
-                    # which may not exist in other models.
+                    # which may not exist in other methods.
                     if dataset.requires_caching():
                         logging.info(
-                            f"Dataset {dataset} requires caching. Caching now before training and testing the model."
+                            f"Dataset {dataset} requires caching. Caching now before training and testing the method."
                         )
                         # we still load the test dataset for a couple of reasons:
-                        # 1. we want to store this into cache so the model can load it
+                        # 1. we want to store this into cache so the method can load it
                         # 2. we still want the requires_caching however to avoid the extra load
                         # before training, unless required. This also helps us avoid
                         # creating an extra cache that is not necessary.
                         _ = load_test_dataset(output_path)
 
-                    model.train_and_test(
-                        os.path.join(output_path, MODEL_CONFIG_FILENAME)
+                    method.train_and_test(
+                        os.path.join(output_path, METHOD_CONFIG_FILENAME)
                     )
                 else:
                     logging.info(
-                        f"Model output already exists at {output_path}. Skipping training and generation."
+                        f"Method output already exists at {output_path}. Skipping training and generation."
                     )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
@@ -266,15 +266,17 @@ class BaseMetric:
 
                 assert (
                     outputs_valid
-                ), f"Required model output files not found in: {output_path}"
+                ), f"Required method output files not found in: {output_path}"
 
                 # finally, we evaluate on the test data (ground truth)
-                # and the predicted data from the model
+                # and the predicted data from the method
                 self._submetric_eval(
-                    **self._prep_kwargs_for_submetric_eval(output_path, dataset, model)
+                    **self._prep_kwargs_for_submetric_eval(output_path, dataset, method)
                 )
 
-    def _prep_kwargs_for_submetric_eval(self, output_path, dataset: BaseDataset, model):
+    def _prep_kwargs_for_submetric_eval(
+        self, output_path, dataset: BaseDataset, method
+    ):
         """
         Prepares the keyword arguments required for submetric evaluation.
 
@@ -294,27 +296,27 @@ class BaseMetric:
         Preprocessing steps required before evaluating the metric.
         """
         # 1) we check that the subclasses have defined the required feature specs
-        model = ModelManager(self.config, dataset)
-        self.models.append(model)
+        method = MethodManager(self.config, dataset)
+        self.methods.append(method)
 
         # ** NOTE **
         # because it doesn't cost much (as it did before with the dataset preprocessing)
-        # we'll simply always preprocess the model output directory (here used to be caching)
+        # we'll simply always preprocess the method output directory (here used to be caching)
         # but we still should save it to the database for future reference
 
-        # 2) create the output directory for this model that is parametrized by
-        # this dataset. So that if we run the same model on the same dataset
+        # 2) create the output directory for this method that is parametrized by
+        # this dataset. So that if we run the same method on the same dataset
         # with the same filters, we will get the same output directory
         # Each output directory can contain multiple files required by different metrics
         # (e.g., embedding.pkl, graph_sim.pkl, etc.)
-        # we will first insert a yaml config file that the model can use to
+        # we will first insert a yaml config file that the method can use to
         # train and test on this dataset
-        output_path = os.path.join(self.config.output_dir, model._encode_output_path())
+        output_path = os.path.join(self.config.output_dir, method._encode_output_path())
         os.makedirs(output_path, exist_ok=True)
 
         # to make our lives easier, we will also pickle our current dataset object
         # and store this in the output directory as well
-        # so that the model can load this dataset object directly for training and testing
+        # so that the method can load this dataset object directly for training and testing
         assert hasattr(
             self, "required_outputs"
         ), "Subclasses must define required_outputs attribute."
@@ -348,27 +350,27 @@ class BaseMetric:
             "dataset_pkl_path": os.path.join(
                 dataset.get_dataset_dir(), PICKLED_DATASET_FILENAME
             ),
-            "model": self.config.model_yaml_data,
+            "method": self.config.method_yaml_data,
             "required_outputs": required_outputs_serialized,
             "datasets": dataset.encode_dataset_dict(),
             "filters": dataset.encode_filters(),
         }
 
-        # write out the yaml config file for the model
-        yaml_config_path = os.path.join(output_path, MODEL_CONFIG_FILENAME)
+        # write out the yaml config file for the method
+        yaml_config_path = os.path.join(output_path, METHOD_CONFIG_FILENAME)
         with open(yaml_config_path, "w") as f:
             yaml.safe_dump(yaml_config, f)
 
         # now let's save this hash output dir to the database as well, only if it doesn't exist
-        if self.db_manager.get_model_output_path(model) is None:
-            self.db_manager.insert_model_output(model, output_path)
+        if self.db_manager.get_method_output_path(method) is None:
+            self.db_manager.insert_method_output(method, output_path)
         else:
             # make sure that they are in fact the same, or else raise an error
             # to alert the user that there will be some inconsistency -- they either
             # need to create a new database/clear the existing one or fix their path
-            existing_output_path = self.db_manager.get_model_output_path(model)
+            existing_output_path = self.db_manager.get_method_output_path(method)
             assert existing_output_path == output_path, (
-                f"Output path for model {model} already exists in database with a different path. "
+                f"Output path for method {method} already exists in database with a different path. "
                 f"Existing path: {existing_output_path}, New path: {output_path}. "
                 f"Please resolve this inconsistency by either clearing the database or fixing the output directory."
             )
@@ -383,7 +385,7 @@ class BaseMetric:
         Basically it happens as follows:
         1. If there are submetrics defined, we create an instance of each submetric
         2. We call the _eval function of each submetric. This ensures that each submetric
-           can handle its own evaluation logic, datasets that it chooses, and models that it runs on.
+           can handle its own evaluation logic, datasets that it chooses, and methods that it runs on.
         3. From this _eval function, we further call the _submetric_eval function that each subclass
            must implement to handle the actual evaluation logic.
         """
@@ -569,7 +571,7 @@ class BaseMetric:
             dataset.create_dataset_dir()
             # TODO: in this dataset directory, we can then store the base metrics we have
             # such as the base visualization, etc.
-            # for now, let's just store the dataset object itself, and the model can load this for its own use
+            # for now, let's just store the dataset object itself, and the method can load this for its own use
             pickled_dataset_path = os.path.join(
                 dataset.get_dataset_dir(), PICKLED_DATASET_FILENAME
             )

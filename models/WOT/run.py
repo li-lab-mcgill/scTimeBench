@@ -10,16 +10,16 @@ import os
 import numpy as np
 
 from scTimeBench.model_utils.model_runner import main
-from scTimeBench.model_utils.ot_model_runner import BaseOTModel
+from scTimeBench.model_utils.ot_model_runner import BaseOTMethod
 from scTimeBench.shared.constants import ObservationColumns
 
 import anndata
 import wot
 
 
-class WOT(BaseOTModel):
+class WOT(BaseOTMethod):
     def _prepare_generate(self, test_ann_data):
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         epsilon = metadata.get("epsilon", 0.05)
         lambda1 = metadata.get("lambda1", 1.0)
         lambda2 = metadata.get("lambda2", 50.0)

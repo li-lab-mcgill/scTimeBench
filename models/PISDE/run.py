@@ -195,7 +195,7 @@ class PISDE(BaseMethod):
         Training logic for PI-SDE.
         """
         cache_path = os.path.join(self.config["output_path"], "trained_pisde_model.pt")
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
             print("Trained PI-SDE model cache found, loading from file.")
@@ -357,8 +357,6 @@ class PISDE(BaseMethod):
     def _simulate_tp_series(self, test_ann_data):
         if hasattr(self, "_cached_sim_tp"):
             return self._cached_sim_tp, self._cached_tp_idx
-
-        metadata = self.config.get("model", {}).get("metadata", {})
 
         config_pt = os.path.join(self.config_dir, "config.pt")
         config_dict = torch.load(config_pt, weights_only=False)

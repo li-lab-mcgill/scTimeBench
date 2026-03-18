@@ -1,4 +1,4 @@
-model:
+method:
   name: Moscot
   train_and_test_script: ./models/moscot/train_and_test.sh
 

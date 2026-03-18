@@ -39,20 +39,20 @@ class GexPredictionMetrics(BaseMetric):
         """The default parameters for gene expression prediction metrics."""
         return {}
 
-    def _setup_model_output_requirements(self):
+    def _setup_method_output_requirements(self):
         """Skip this, as it's a higher level class."""
         self.required_outputs = (
             f"See requirements of submetrics: {self.__class__.submetrics}"
         )
 
-    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, model):
+    def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
         return {
             "output_path": output_path,
             "dataset": dataset,
-            "model": model,
+            "method": method,
         }
 
-    def _submetric_eval(self, output_path, dataset, model):
+    def _submetric_eval(self, output_path, dataset, method):
         """
         Wrapper function to call the gene-expression metric evaluation, and handle database
         logging.
@@ -63,7 +63,7 @@ class GexPredictionMetrics(BaseMetric):
             aggregate = result.get("All")
 
         self.db_manager.insert_eval(
-            model,
+            method,
             self.__class__.__name__,
             self._get_param_encoding(),
             aggregate,
@@ -83,10 +83,10 @@ class GexPredictionMetrics(BaseMetric):
                         self.__class__.__name__, tp_params_json
                     )
                 if not self.db_manager.has_eval(
-                    model, self.__class__.__name__, tp_params_json
+                    method, self.__class__.__name__, tp_params_json
                 ):
                     self.db_manager.insert_eval(
-                        model,
+                        method,
                         self.__class__.__name__,
                         tp_params_json,
                         float(score),

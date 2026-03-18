@@ -1,5 +1,5 @@
 """
-Model Base Class.
+Method Base Class.
 """
 import json
 import hashlib
@@ -8,14 +8,14 @@ import logging
 from scTimeBench.shared.dataset.base import BaseDataset
 
 
-class ModelManager:
+class MethodManager:
     def __init__(self, config, dataset: BaseDataset):
         self.config = config
 
-        # the model should be parametrized by a dataset
+        # the method should be parametrized by a dataset
         assert isinstance(
             dataset, BaseDataset
-        ), "Model must be initialized with a BaseDataset instance"
+        ), "Method must be initialized with a BaseDataset instance"
         self.dataset = dataset
 
     def train_and_test(self, yaml_config_path):
@@ -23,7 +23,7 @@ class ModelManager:
         Runs the train and test script provided in the config.
         """
         # start a subprocess to run the script and wait for it to finish
-        script_path = self.config.model["train_and_test_script"]
+        script_path = self.config.method["train_and_test_script"]
         process = subprocess.Popen(
             ["bash", script_path, yaml_config_path],
             stdout=subprocess.PIPE,
@@ -47,17 +47,17 @@ class ModelManager:
 
     def _get_name(self) -> str:
         """
-        Get the name of the model from the configuration.
+        Get the name of the method from the configuration.
         """
-        return self.config.model["name"]
+        return self.config.method["name"]
 
     def _encode_metadata(self) -> str:
         """
-        Generate a string representation of the model metadata.
+        Generate a string representation of the method metadata.
 
-        This can be used to cache model outputs.
+        This can be used to cache method outputs.
         """
-        return json.dumps(self.config.model.get("metadata", {}), sort_keys=True)
+        return json.dumps(self.config.method.get("metadata", {}), sort_keys=True)
 
     def _encode_output_path(self) -> str:
         """

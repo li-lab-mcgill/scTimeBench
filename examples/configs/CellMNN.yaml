@@ -1,4 +1,4 @@
-model:
+method:
   name: CellMNN
   train_and_test_script: ./models/MNN/train_and_test.sh
   metadata:
@@ -11,7 +11,7 @@ model:
     inverse_weight: 1.0
     learning_rate: 0.0002
     weight_decay: 0.00001
-    # model
+    # method
     latent_dim: 5
     # device
     use_cuda: true

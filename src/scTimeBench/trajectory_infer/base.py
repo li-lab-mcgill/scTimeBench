@@ -47,6 +47,7 @@ class BaseTrajectoryInferMethod:
 
         # we shift the paradigm slightly -- model classifier MUST use embeddings because
         # otherwise it's equivalent to the dataset classifier which is trained on gex
+        # TODO: change this to be embedding_classifier instead!
         self.model_classifier = self.traj_config.get("model_classifier", False)
 
         # we want this to run either that the method support gene expression

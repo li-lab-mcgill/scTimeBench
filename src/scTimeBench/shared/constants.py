@@ -1,5 +1,5 @@
 """
-Definitions to be shared by the benchmark and the model implementations.
+Definitions to be shared by the benchmark and the method implementations.
 """
 from enum import Enum
 
@@ -23,4 +23,4 @@ class RequiredOutputFiles(Enum):
 
 DATASET_DIR = "datasets"
 PICKLED_DATASET_FILENAME = "dataset.pkl"
-MODEL_CONFIG_FILENAME = "model_config.yaml"
+METHOD_CONFIG_FILENAME = "method_config.yaml"

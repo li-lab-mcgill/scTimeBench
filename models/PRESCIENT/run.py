@@ -264,7 +264,7 @@ class PRESCIENT(BaseMethod):
         cache_path = os.path.join(
             self.config["output_path"], "trained_prescient_model.pth"
         )
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
             print("Trained PRESCIENT model found, loading from file.")
@@ -382,7 +382,7 @@ class PRESCIENT(BaseMethod):
                 self._cached_tp_idx,
             )
 
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         time_col = ObservationColumns.TIMEPOINT.value
         cell_tps = test_ann_data.obs[time_col].to_numpy()

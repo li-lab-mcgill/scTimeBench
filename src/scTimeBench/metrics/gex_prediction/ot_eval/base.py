@@ -19,7 +19,7 @@ class OTLossMetric(GexPredictionMetrics):
             "aggregate": "mean",
         }
 
-    def _setup_model_output_requirements(self):
+    def _setup_method_output_requirements(self):
         self.required_outputs = [
             RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
         ]
@@ -55,7 +55,7 @@ class OTLossMetric(GexPredictionMetrics):
         """
         Construct an AnnData object of predicted next-timepoint gene expression.
 
-        Supports two model output conventions for NEXT_TIMEPOINT_GENE_EXPRESSION:
+        Supports two method output conventions for NEXT_TIMEPOINT_GENE_EXPRESSION:
         1) one row per test cell (rows for terminal timepoints may be NaN),
         2) one row per non-terminal test cell.
         """

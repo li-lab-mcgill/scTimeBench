@@ -14,7 +14,7 @@ if False:
     scTimeBench.shared.dataset  # to avoid unused import warning
 
 from scTimeBench.metrics.base import METRIC_REGISTRY, BaseMetric
-from scTimeBench.metrics.model_manager import ModelManager
+from scTimeBench.metrics.model_manager import MethodManager
 from scTimeBench.shared.dataset.base import DATASET_REGISTRY
 
 from pprint import pprint
@@ -24,7 +24,7 @@ import scTimeBench.database as database
 
 def print_available(config: Config):
     """
-    Print available models, datasets, and metrics.
+    Print available datasets and metrics.
     """
     print("\nAvailable Datasets:")
     for dataset_name in DATASET_REGISTRY.keys():
@@ -60,9 +60,9 @@ def run_metrics(config: Config):
     db_manager.close()
 
 
-def view_evals_by_model(config: Config):
+def view_evals_by_method(config: Config):
     """
-    View evaluations grouped by model.
+    View evaluations grouped by method.
     """
     db_manager = database.DatabaseManager(config)
 
@@ -79,16 +79,16 @@ def view_evals_by_model(config: Config):
 
     # now instead of evaluating, we will just view the evals:
     for dataset in metric_instance.datasets:
-        model = ModelManager(config, dataset)
+        method = MethodManager(config, dataset)
         print(
             f"""
 ----------------------------------------------------------------------------------------------------
-Evals for Model: {model._get_name()}
-Dataset: {model.dataset.get_name()}, {model.dataset.encode_dataset_dict()}, {model.dataset.encode_filters()}
-Metadata: {model._encode_metadata()}"""
+Evals for method: {method._get_name()}
+Dataset: {method.dataset.get_name()}, {method.dataset.encode_dataset_dict()}, {method.dataset.encode_filters()}
+Metadata: {method._encode_metadata()}"""
         )
 
-        evals = db_manager.get_evals_per_model(model)
+        evals = db_manager.get_evals_per_method(method)
         print(f" Metric: {metric_name} with params {metric_instance.params}")
         for eval in evals:
             pprint(eval)
@@ -144,8 +144,8 @@ def main():
         db_manager.close()
         exit()
 
-    if config.view_evals_by_model:
-        view_evals_by_model(config)
+    if config.view_evals_by_method:
+        view_evals_by_method(config)
         exit()
 
     if config.view_evals_by_metric:

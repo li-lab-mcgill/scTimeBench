@@ -354,7 +354,7 @@ class Squidiff(BaseMethod):
         cache_path = os.path.join(
             self.config["output_path"], "trained_squidiff_model.pt"
         )
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
             print("Trained Squidiff model found, loading from file.")

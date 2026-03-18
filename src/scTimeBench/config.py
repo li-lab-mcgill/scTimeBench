@@ -14,7 +14,7 @@ from enum import Enum
 
 
 # enum for the different run types, primarily:
-# 1) auto_train_test: automatically run training and testing for models that support it,
+# 1) auto_train_test: automatically run training and testing for methods that support it,
 # by running the training and testing script specified.
 # 2) preprocess: we preprocess the data and then save out a yaml file specifying requirements.
 # The user handles training and testing outside of this framework.
@@ -55,7 +55,7 @@ class Config:
         parser.add_argument(
             "--available",
             action="store_true",
-            help="Show available models, datasets, and metrics",
+            help="Show available methods, datasets, and metrics",
         )
 
         parser.add_argument(
@@ -84,27 +84,21 @@ class Config:
         )
 
         parser.add_argument(
-            "--view_evals_by_model",
+            "--view_evals_by_method",
             action="store_true",
-            help="View existing evaluations of all metrics in the database per model set in the configuration",
+            help="View existing evaluations of all metrics in the database per method set in the configuration",
         )
 
         parser.add_argument(
             "--view_evals_by_metric",
             action="store_true",
-            help="View existing evaluations of all models in the database per metric set in the configuration",
+            help="View existing evaluations of all methods in the database per metric set in the configuration",
         )
 
         parser.add_argument(
             "--database_path",
             type=str,
             help="Path to the SQLite database file for storing results",
-        )
-
-        parser.add_argument(
-            "--model_features_path",
-            type=str,
-            help="Path to the YAML file defining model features",
         )
 
         parser.add_argument(
@@ -142,7 +136,7 @@ class Config:
         parser.add_argument(
             "--force_rerun",
             action="store_true",
-            help="Usually duplicate model evaluations are skipped. This flag forces re-running even if evaluations already exist.",
+            help="Usually duplicate method evaluations are skipped. This flag forces re-running even if evaluations already exist.",
         )
 
         parser.add_argument(
@@ -171,7 +165,7 @@ class Config:
         config_keys = list(args.__dict__.keys())
 
         # other keys to add from the yaml file
-        config_keys.extend(["model", "datasets"])
+        config_keys.extend(["method", "datasets"])
 
         # First read the config file if provided
         assert (
@@ -197,7 +191,6 @@ class Config:
         defaults = {
             "database_path": "scTimeBench.db",
             "run_type": RunType.PREPROCESS.value,
-            "model_features_path": "model_utils/features.yaml",
             "output_dir": "outputs/",
             "datasets": [],
             "log_level": "INFO",
@@ -224,7 +217,7 @@ class Config:
         )
 
         # Validate required fields
-        required_fields = ["model", "metrics"]
+        required_fields = ["method", "metrics"]
         for field in required_fields:
             assert (
                 hasattr(self, field) and getattr(self, field) is not None
@@ -271,22 +264,21 @@ class Config:
                         f"Unknown field '{field}' found in dataset config. Allowed fields are {dataset_required_fields} or '{dataset_alternate_field}'."
                     )
 
-        # ** MODEL **
-        model_required_fields = ["name"]
+        # ** METHOD **
+        method_required_fields = ["name"]
 
-        for field in model_required_fields:
+        for field in method_required_fields:
             assert (
-                field in self.model
-            ), f"Required model field '{field}' must be specified in config file"
+                field in self.method
+            ), f"Required method field '{field}' must be specified in config file"
 
         # Validate paths exist
         dataset_path_keys = [
             "data_path",
             "cell_lineage_file",
             "cell_equivalence_file",
-            "model_features_path",
         ]
-        model_path_keys = [
+        method_path_keys = [
             "train_and_test_script",
         ]
         paths = {
@@ -296,7 +288,7 @@ class Config:
                 for key, value in dataset.items()
                 if key in dataset_path_keys
             },
-            *{value for key, value in self.model.items() if key in model_path_keys},
+            *{value for key, value in self.method.items() if key in method_path_keys},
         }
 
         for path in paths:
@@ -308,12 +300,12 @@ class Config:
         # verify that the train and test script is specified if auto_train_test is set
         if self.run_type == RunType.AUTO_TRAIN_TEST:
             assert (
-                "train_and_test_script" in self.model
-            ), "Model must specify 'train_and_test_script' to use --auto_train_test"
+                "train_and_test_script" in self.method
+            ), "Method must specify 'train_and_test_script' to use --auto_train_test"
 
         # finally, to be used later for saving the original config
-        # into the model output yaml config:
-        self.model_yaml_data = data["model"]
+        # into the method output yaml config:
+        self.method_yaml_data = data["method"]
 
         # then let's also add in the metric skip list
         self.metrics_skiplist = data.get("metrics_skiplist", [])

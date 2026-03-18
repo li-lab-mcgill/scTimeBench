@@ -144,7 +144,7 @@ class MIOFlow(BaseMethod):
             self.config["output_path"], "trained_mioflow_model.pth"
         )
 
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         pca_dims = metadata.get("pca_dims", 50)
         seed = metadata.get("seed", 0)
         use_gae = metadata.get("use_gae", False)

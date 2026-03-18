@@ -10,7 +10,7 @@ datasets:
   - tag: HardZebrafish
 
 
-model:
+method:
   name: PISDE
   train_and_test_script: ./models/PISDE/train_and_test.sh
   metadata:

@@ -12,13 +12,13 @@ import os
 import anndata
 
 from scTimeBench.model_utils.model_runner import main
-from scTimeBench.model_utils.ot_model_runner import BaseOTModel
+from scTimeBench.model_utils.ot_model_runner import BaseOTMethod
 from scTimeBench.shared.constants import ObservationColumns
 
 from moscot.problems.time import TemporalProblem
 
 
-class Moscot(BaseOTModel):
+class Moscot(BaseOTMethod):
     def __init__(self, yaml_config):
         super().__init__(yaml_config)
         self.train_ann_data = None
@@ -70,7 +70,7 @@ class Moscot(BaseOTModel):
         subset_data = ann_data[mask].copy()
 
         # Set up and solve
-        metadata = self.config.get("model", {}).get("metadata", {})
+        metadata = self.config.get("method", {}).get("metadata", {})
         epsilon = metadata.get("epsilon", 1e-3)
         scale_cost = metadata.get("scale_cost", "mean")
         max_iterations = metadata.get("max_iterations", int(1e7))
