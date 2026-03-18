@@ -17,7 +17,7 @@ import csv
 from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
-    DATASET_FILTER_REGISTRY,
+    DATASET_PREPROCESSOR_REGISTRY,
     DATASET_REGISTRY,
 )
 import json
@@ -57,9 +57,9 @@ class DatabaseManager:
                 id INTEGER PRIMARY KEY,
                 name TEXT,
                 dataset_dict TEXT,
-                dataset_filters TEXT,
+                dataset_preprocessors TEXT,
                 path TEXT,
-                UNIQUE(name, dataset_dict, dataset_filters)
+                UNIQUE(name, dataset_dict, dataset_preprocessors)
             )
         """
         )
@@ -104,12 +104,12 @@ class DatabaseManager:
         cursor.execute(
             """
             SELECT id FROM datasets
-            WHERE name = ? AND dataset_dict = ? AND dataset_filters = ?
+            WHERE name = ? AND dataset_dict = ? AND dataset_preprocessors = ?
         """,
             (
                 method.dataset.get_name(),
                 method.dataset.encode_dataset_dict(),
-                method.dataset.encode_filters(),
+                method.dataset.encode_preprocessors(),
             ),
         )
         result = cursor.fetchone()
@@ -120,13 +120,13 @@ class DatabaseManager:
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            INSERT OR IGNORE INTO datasets (name, dataset_dict, dataset_filters, path)
+            INSERT OR IGNORE INTO datasets (name, dataset_dict, dataset_preprocessors, path)
             VALUES (?, ?, ?, ?)
         """,
             (
                 dataset.get_name(),
                 dataset.encode_dataset_dict(),
-                dataset.encode_filters(),
+                dataset.encode_preprocessors(),
                 dataset.get_dataset_dir(),
             ),
         )
@@ -173,30 +173,33 @@ class DatabaseManager:
         if dataset_name not in DATASET_REGISTRY:
             return None, None
 
-        filters = dataset_config.get("filters", [])
+        preprocessors = dataset_config.get("data_preprocessing_steps", [])
         try:
-            dataset_filter_instances = [
-                DATASET_FILTER_REGISTRY[dataset_filter["name"]](
+            dataset_preprocessor_instances = [
+                DATASET_PREPROCESSOR_REGISTRY[dataset_preprocessor["name"]](
                     dataset_config,
-                    **{k: v for k, v in dataset_filter.items() if k != "name"},
+                    **{k: v for k, v in dataset_preprocessor.items() if k != "name"},
                 )
-                for dataset_filter in filters
+                for dataset_preprocessor in preprocessors
             ]
         except KeyError:
             return None, None
 
         dataset_instance: BaseDataset = DATASET_REGISTRY[dataset_name](
             dataset_config,
-            dataset_filter_instances,
+            dataset_preprocessor_instances,
             "",
         )
-        return dataset_instance.encode_dataset_dict(), dataset_instance.encode_filters()
+        return (
+            dataset_instance.encode_dataset_dict(),
+            dataset_instance.encode_preprocessors(),
+        )
 
     def get_dataset_tag_from_id(self, dataset_id):
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT name, dataset_dict, dataset_filters FROM datasets
+            SELECT name, dataset_dict, dataset_preprocessors FROM datasets
             WHERE id = ?
         """,
             (dataset_id,),
@@ -206,9 +209,9 @@ class DatabaseManager:
             return None
 
         # now let's look for the dataset tag
-        name, dataset_dict, dataset_filters = result
+        name, dataset_dict, dataset_preprocessors = result
 
-        shared_path = Path(__file__).resolve().parent / "metrics" / "shared"
+        shared_path = Path(__file__).resolve().parent / "shared" / "dataset"
         dataset_files = [
             shared_path / "default_datasets.yaml",
             shared_path / "optional_datasets.yaml",
@@ -224,30 +227,33 @@ class DatabaseManager:
             for dataset in config.get("datasets", []):
                 (
                     encoded_dataset_dict,
-                    encoded_dataset_filters,
+                    encoded_dataset_preprocessors,
                 ) = self._encode_dataset_from_config(dataset)
 
-                if encoded_dataset_dict is None or encoded_dataset_filters is None:
+                if (
+                    encoded_dataset_dict is None
+                    or encoded_dataset_preprocessors is None
+                ):
                     continue
 
                 if (
                     dataset.get("name") == name
                     and encoded_dataset_dict == dataset_dict
-                    and encoded_dataset_filters == dataset_filters
+                    and encoded_dataset_preprocessors == dataset_preprocessors
                 ):
                     return dataset.get("tag")
 
-        parsed_filters = json.loads(dataset_filters)
-        filter_names = [
-            filter_item.get("name")
-            for filter_item in parsed_filters
-            if isinstance(filter_item, dict) and filter_item.get("name")
+        parsed_preprocessors = json.loads(dataset_preprocessors)
+        preprocessor_names = [
+            preprocessor_item.get("name")
+            for preprocessor_item in parsed_preprocessors
+            if isinstance(preprocessor_item, dict) and preprocessor_item.get("name")
         ]
 
-        if len(filter_names) == 0:
+        if len(preprocessor_names) == 0:
             return name
 
-        return f"{name}-{'-'.join(filter_names)}"
+        return f"{name}-{'-'.join(preprocessor_names)}"
 
     def print_all(self):
         cursor = self.conn.cursor()
@@ -272,9 +278,16 @@ class DatabaseManager:
             for row in rows:
                 if table == "datasets":
                     # call get_dataset_tag_from_id to get the tag as well
-                    dataset_id = row[0]
+                    dataset_id, dataset_dict, dataset_preprocessors, path = (
+                        row[0],
+                        row[2],
+                        row[3],
+                        row[4],
+                    )
                     dataset_tag = self.get_dataset_tag_from_id(dataset_id)
-                    print(f"({dataset_id}, {dataset_tag})")
+                    print(
+                        f"({dataset_id}, {dataset_tag}, {dataset_dict}, {dataset_preprocessors}, {path})"
+                    )
                 elif table == "evals":
                     # now print out evals as normal except do the dataset tag instead
                     method_name, dataset_id, metric_name, result = row
@@ -534,7 +547,7 @@ class DatabaseManager:
             method_id = row[0]
             cursor.execute(
                 """
-                SELECT name, datasets.name, datasets.dataset_dict, datasets.dataset_filters, metadata FROM method_outputs
+                SELECT name, datasets.name, datasets.dataset_dict, datasets.dataset_preprocessors, metadata FROM method_outputs
                 JOIN datasets ON method_outputs.dataset_id = datasets.id
                 WHERE method_outputs.id = ?
             """,
@@ -547,7 +560,7 @@ class DatabaseManager:
                     "method_name": method_row[0],
                     "dataset_name": method_row[1],
                     "dataset_dict": json.loads(method_row[2]),
-                    "dataset_filters": json.loads(method_row[3]),
+                    "dataset_preprocessors": json.loads(method_row[3]),
                     "metadata": json.loads(method_row[4]),
                     "result": row[1],
                 }
@@ -631,12 +644,12 @@ class DatabaseManager:
         cursor.execute(
             """
             SELECT id FROM datasets
-            WHERE name = ? AND dataset_dict = ? AND dataset_filters = ?
+            WHERE name = ? AND dataset_dict = ? AND dataset_preprocessors = ?
         """,
             (
                 dataset.get_name(),
                 dataset.encode_dataset_dict(),
-                dataset.encode_filters(),
+                dataset.encode_preprocessors(),
             ),
         )
         dataset_row = cursor.fetchone()

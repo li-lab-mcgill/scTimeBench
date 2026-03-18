@@ -84,7 +84,7 @@ def view_evals_by_method(config: Config):
             f"""
 ----------------------------------------------------------------------------------------------------
 Evals for method: {method._get_name()}
-Dataset: {method.dataset.get_name()}, {method.dataset.encode_dataset_dict()}, {method.dataset.encode_filters()}
+Dataset: {method.dataset.get_name()}, {method.dataset.encode_dataset_dict()}, {method.dataset.encode_preprocessors()}
 Metadata: {method._encode_metadata()}"""
         )
 

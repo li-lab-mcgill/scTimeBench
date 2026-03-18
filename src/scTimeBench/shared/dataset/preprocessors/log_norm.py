@@ -1,10 +1,10 @@
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.utils import is_log_normalized_to_counts, is_raw
 import scanpy as sc
 import logging
 
 
-class LogNormFilter(BaseDatasetFilter):
+class LogNormPreprocessor(BaseDatasetPreprocessor):
     """
     Filter that normalizes all the raw counts to 10^4, then log norms it,
     and puts it into X.
@@ -21,7 +21,7 @@ class LogNormFilter(BaseDatasetFilter):
             "counts": 10_000,  # default is 10^4
         }
 
-    def filter(self, ann_data: sc.AnnData, **kwargs):
+    def preprocess(self, ann_data: sc.AnnData, **kwargs):
         """
         Filter the dataset to only include cells present in the lineage information.
         """

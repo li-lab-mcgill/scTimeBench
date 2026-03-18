@@ -1,9 +1,9 @@
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.constants import ObservationColumns
 import random
 
 
-class NaiveSplitDatasetFilter(BaseDatasetFilter):
+class PercentileSplitTrainTest(BaseDatasetPreprocessor):
     def __init__(self, config, train_pct):
         super().__init__(config)
         self.train_pct = train_pct
@@ -17,7 +17,7 @@ class NaiveSplitDatasetFilter(BaseDatasetFilter):
             "train_pct": self.train_pct,
         }
 
-    def filter(self, ann_data, **kwargs):
+    def preprocess(self, ann_data, **kwargs):
         """
         Filter the dataset to only include cells present in the lineage information.
         """

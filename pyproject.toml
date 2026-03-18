@@ -16,6 +16,12 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]  # Tells Python: "The actual code lives inside the src folder"
 
+[tool.setuptools.package-data]
+scTimeBench = [
+    "metrics/shared/*.yaml",
+    "metrics/shared/cell_lineages/**/*.txt",
+]
+
 [project.optional-dependencies]
 test = [
     "pytest",

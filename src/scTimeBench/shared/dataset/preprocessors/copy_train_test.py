@@ -1,18 +1,18 @@
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 
 
-class CopySplitFilter(BaseDatasetFilter):
+class CopyTrainTest(BaseDatasetPreprocessor):
     def __init__(self, config):
         super().__init__(config)
         self.splits = True
 
     def _parameters(self):
         """
-        Return filter-specific parameters.
+        Return preprocessor-specific parameters.
         """
         return {}
 
-    def filter(self, ann_data, **kwargs):
+    def preprocess(self, ann_data, **kwargs):
         """
         Give two copies of the dataset as train and test sets.
         Useful for metrics that do not require train/test splits,

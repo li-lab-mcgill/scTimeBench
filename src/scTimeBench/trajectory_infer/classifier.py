@@ -138,7 +138,7 @@ class CellTypist(BaseTrajectoryInferMethod):
         raise ValueError(
             "Data should either be log-normalized to 10_000 counts or be log-transformed but not normalized (due to predicted values). "
             "Please check the input data and ensure it is properly preprocessed for CellTypist performance. "
-            "Hint: You should be training and running with LogNormFilter for your particular dataset."
+            "Hint: You should be training and running with LogNormPreprocessor for your particular dataset."
         )
 
     def _subclass_train(self, X_train, y_train, traj_infer_path):

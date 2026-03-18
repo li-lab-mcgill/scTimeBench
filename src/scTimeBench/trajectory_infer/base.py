@@ -48,13 +48,13 @@ class BaseTrajectoryInferMethod:
         # we shift the paradigm slightly -- model classifier MUST use embeddings because
         # otherwise it's equivalent to the dataset classifier which is trained on gex
         # TODO: change this to be embedding_classifier instead!
-        self.model_classifier = self.traj_config.get("model_classifier", False)
+        self.embedding_classifier = self.traj_config.get("embedding_classifier", False)
 
         # we want this to run either that the method support gene expression
         # if we are using gene expression, or if we're not using gene expression,
         # then it doesn't error out
         assert (
-            self.supports_gex() or self.model_classifier
+            self.supports_gex() or self.embedding_classifier
         ), f"Trajectory inference method {self.__class__.__name__} does not support gene expression data."
 
         self.verbose = False
@@ -63,7 +63,7 @@ class BaseTrajectoryInferMethod:
         register_trajectory_inference_method(cls)
 
     def uses_gene_expr(self):
-        return not self.model_classifier
+        return not self.embedding_classifier
 
     def supports_gex(self):
         """
@@ -86,7 +86,7 @@ class BaseTrajectoryInferMethod:
         return {
             "test_size": self.traj_config.get("test_size", 0.2),
             "random_state": self.traj_config.get("random_state", 42),
-            "model_classifier": self.traj_config.get("model_classifier", False),
+            "embedding_classifier": self.traj_config.get("embedding_classifier", False),
             "from_tp_zero": self.traj_config.get("from_tp_zero", False),
             **self._subclass_parameters(),
         }
@@ -114,7 +114,7 @@ class BaseTrajectoryInferMethod:
 
     def _get_next_tp_tensors(self, output_path, test_ann_data):
         """
-        Based on the model_classifier property, get the proper tensors for trajectory inference.
+        Based on the embedding_classifier property, get the proper tensors for trajectory inference.
 
         We want to return:
         - Predicted gene expr/embedding at time t (for (1, last t))
@@ -146,7 +146,7 @@ class BaseTrajectoryInferMethod:
 
     def _get_cur_tp_tensors(self, output_path, test_ann_data):
         """
-        Based on the model_classifier property, get the proper tensors for trajectory inference.
+        Based on the embedding_classifier property, get the proper tensors for trajectory inference.
 
         We want to return:
         - Original gene expr/embedding at time t (for all t)
@@ -156,7 +156,7 @@ class BaseTrajectoryInferMethod:
             # because this should happen at the filter stage
             assert is_log_normalized_to_counts(test_ann_data), (
                 "Data is not log-normalized to counts as expected for gene expression-based trajectory inference. "
-                "Please use LogNormFilter to ensure that the data is properly normalized before running the trajectory inference model."
+                "Please use LogNormPreprocessor to ensure that the data is properly normalized before running the trajectory inference model."
             )
             return test_ann_data.X.toarray()
         else:
@@ -176,7 +176,7 @@ class BaseTrajectoryInferMethod:
         """
         traj_infer_path = os.path.join(output_path, INFERRED_TRAJ_DIR, self.encode())
         os.makedirs(traj_infer_path, exist_ok=True)
-        if self.model_classifier:
+        if self.embedding_classifier:
             return traj_infer_path, traj_infer_path
 
         dataset, _ = get_dataset(output_path)

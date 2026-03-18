@@ -2,4 +2,4 @@ Small-pre-B => Immature B
                Immature B => CD5-mature B
                              CD5-mature B => B1
                              CD5-mature B => Plasma B
-               Immature B => Cycling B 
+               Immature B => Cycling B

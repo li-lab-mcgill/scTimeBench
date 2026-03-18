@@ -4,229 +4,229 @@ datasets:
   - name: SuoDataset
     tag: defaultSuo
     data_path: ./data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
+    # note: these preprocessors need to be in order!
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: LogNormFilter
-      - name: CopySplitFilter
+        cell_lineage_file: ./cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./cell_lineages/b_cells/equal_names.txt
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
   - name: GarciaAlonsoDataset
     tag: defaultGarciaAlonso
     data_path: ./data/garcia-alonso/human_germ.h5ad
-    # these filters need to be in order!
-    filters:
+    # these preprocessors need to be in order!
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/germ/equal_names.txt
-      - name: RoundingFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
         min_cells_per_timepoint: 10
-      - name: LogNormFilter
-      - name: CopySplitFilter
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
   - name: MaDataset
     tag: defaultMa
     data_path: ./data/ma/ma.h5ad
-     # these filters need to be in order!
-    filters:
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/pancreas/trunk_lineage.txt
-      - name: LogNormFilter
-      - name: CopySplitFilter
+        cell_lineage_file: ./cell_lineages/pancreas/trunk_lineage.txt
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
   - name: GarciaAlonsoDataset
     tag: defaultGarciaAlonsoPseudotimeEvenCells
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
-    filters:
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/germ/cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/germ/equal_names.txt
-      - name: RoundingFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
         min_cells_per_timepoint: 10
-      - name: PseudotimeFilter
+      - name: Pseudotime
         preprocess_type: zheng_hvg
-      - name: RoundingFilter
+      - name: RoundCellsToTimepoint
         num_tps: 15
-      - name: LogNormFilter
-      - name: CopySplitFilter
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
   - name: SuoDataset
     tag: defaultSuoPseudotimeEvenCells
     data_path: ./data/suo/main.h5ad
     requires_caching: true
-    filters:
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
-        cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: RoundingFilter
+        cell_lineage_file: ./cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./cell_lineages/b_cells/equal_names.txt
+      - name: RoundCellsToTimepoint
         min_cells_per_timepoint: 10
-      - name: PseudotimeFilter
+      - name: Pseudotime
         preprocess_type: zheng_hvg
-      - name: RoundingFilter
+      - name: RoundCellsToTimepoint
         num_tps: 15
-      - name: LogNormFilter
-      - name: CopySplitFilter
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
   - name: MaDataset
     tag: defaultMaPseudotimeEvenCells
     data_path: ./data/ma/ma.h5ad
     requires_caching: true
-    filters:
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
-        cell_lineage_file: ./examples/cell_lineages/pancreas/trunk_lineage.txt
-      - name: PseudotimeFilter
+        cell_lineage_file: ./cell_lineages/pancreas/trunk_lineage.txt
+      - name: Pseudotime
         preprocess_type: zheng_hvg
-      - name: RoundingFilter
+      - name: RoundCellsToTimepoint
         num_tps: 10
-      - name: LogNormFilter
-      - name: CopySplitFilter
+      - name: LogNormPreprocessor
+      - name: CopyTrainTest
 
 
 ### Core Gene Expression Prediction Datasets ###
   - name: MaDataset
     tag: EasyMa
     data_path: ./data/ma/ma.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4]
 
   - name: MaDataset
     tag: MediumMa
     data_path: ./data/ma/ma.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [6,7]
 
   - name: MaDataset
     tag: HardMa
     data_path: ./data/ma/ma.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,7]
 
   - name: OlaniruDataset
     tag: EasyOlaniru
     data_path: ./data/olaniru/olaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4]
 
   - name: OlaniruDataset
     tag: MediumOlaniru
     data_path: ./data/olaniru/olaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [5,6]
 
   - name: OlaniruDataset
     tag: HardOlaniru
     data_path: ./data/olaniru/olaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [1,4,6]
 
   - name: MaOlaniruDataset
     tag: EasyMaOlaniru
     data_path: ./data/maolaniru/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,11]
 
   - name: MaOlaniruDataset
     tag: MediumMaOlaniru
     data_path: ./data/maolaniru/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [12,13,14]
 
   - name: MaOlaniruDataset
     tag: HardMaOlaniru
     data_path: ./data/maolaniru/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,12,13,14]
 
   - name: ZebrafishDataset
     tag: EasyZebrafish
     data_path: ./data/ZB/zebrafish.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,8]
 
   - name: ZebrafishDataset
     tag: MediumZebrafish
     data_path: ./data/ZB/zebrafish.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [10,11]
 
   - name: ZebrafishDataset
     tag: HardZebrafish
     data_path: ./data/ZB/zebrafish.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,10,11]
 
   - name: DrosophilaDataset
     tag: EasyDrosophila
     data_path: ./data/DR/drosophila.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,8]
 
   - name: DrosophilaDataset
     tag: MediumDrosophila
     data_path: ./data/DR/drosophila.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [9,10]
 
   - name: DrosophilaDataset
     tag: HardDrosophila
     data_path: ./data/DR/drosophila.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,9,10]
 
   - name: MEFDataset
     tag: EasyMEF
     data_path: ./data/MEF/mef.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [5,11,15]
 
   - name: MEFDataset
     tag: MediumMEF
     data_path: ./data/MEF/mef.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [16,17,18]
 
   - name: MEFDataset
     tag: HardMEF
     data_path: ./data/MEF/mef.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [5,7,11,16,17,18]
 
 #### Metric-specific Defaults ####

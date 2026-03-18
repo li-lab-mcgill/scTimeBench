@@ -1,0 +1,120 @@
+# this defines the optional datasets that can be used for ontology-based metrics
+datasets:
+  - name: SuoDataset
+    tag: defaultSuoPsupertime
+    data_path: ./data/suo/main.h5ad
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./cell_lineages/b_cells/equal_names.txt
+      - name: RoundCellsToTimepoint
+        round_to_k: 1
+      - name: Psupertime
+        preprocess_type: hvg
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoPsupertime
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        round_to_k: 1
+      - name: Psupertime
+        preprocess_type: hvg
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoSceptic
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Sceptic
+        preprocess_type: hvg
+      - name: RoundCellsToTimepoint
+        round_to_k: 1
+      - name: CopyTrainTest
+
+  - name: SuoDataset
+    tag: defaultSuoSceptic
+    data_path: ./data/suo/main.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/b_cells/b_cell_line.txt
+        cell_equivalence_file: ./cell_lineages/b_cells/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Sceptic
+        preprocess_type: pca
+      - name: RoundCellsToTimepoint
+        round_to_k: 1
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoSceptic
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Sceptic
+        preprocess_type: pca
+      - name: RoundCellsToTimepoint
+        round_to_k: 1
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoPseudotimeEvenTps
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+        even_cells_per_tp: false
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: defaultGarciaAlonsoPseudotimeMinCells
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 400
+      - name: CopyTrainTest
+
+  - name: GarciaAlonsoDataset
+    tag: EasyGarciaAlonso
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: TestTimepointSelection
+        test_tps: [1,3]
+        use_time_indices: true

@@ -2,12 +2,12 @@
 Filter based on only the cells existing in the lineage information.
 """
 
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.constants import ObservationColumns
 from scTimeBench.shared.helpers import parse_cell_lineage, parse_equivalence
 
 
-class LineageDatasetFilter(BaseDatasetFilter):
+class LineageDatasetFilter(BaseDatasetPreprocessor):
     def __init__(self, dataset_dict, cell_lineage_file, cell_equivalence_file=None):
         super().__init__(dataset_dict)
         self.cell_lineage_file = cell_lineage_file
@@ -15,14 +15,14 @@ class LineageDatasetFilter(BaseDatasetFilter):
 
     def _parameters(self):
         """
-        Return filter-specific parameters.
+        Return preprocessor-specific parameters.
         """
         return {
             "cell_lineage_file": self.cell_lineage_file,
             "cell_equivalence_file": self.cell_equivalence_file,
         }
 
-    def filter(self, ann_data, **kwargs):
+    def preprocess(self, ann_data, **kwargs):
         """
         Filter the dataset to only include cells present in the lineage information.
         """

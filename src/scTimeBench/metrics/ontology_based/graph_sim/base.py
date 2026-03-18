@@ -8,10 +8,10 @@ from scTimeBench.metrics.ontology_based.graph_sim.utils import (
 )
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.helpers import parse_cell_lineage
-from scTimeBench.shared.dataset.filters.lineage import LineageDatasetFilter
+from scTimeBench.shared.dataset.preprocessors.lineage import LineageDatasetFilter
 from scTimeBench.shared.dataset.base import BaseDataset
-from scTimeBench.shared.dataset.filters.pseudotime_filter import (
-    BasePseudotimeFilter,
+from scTimeBench.shared.dataset.preprocessors.pseudotime import (
+    BasePseudotimePreprocessor,
 )
 from enum import Enum
 from sklearn.metrics import roc_curve, precision_recall_curve
@@ -98,22 +98,22 @@ class GraphSimMetric(OntologyBasedMetrics):
         """
         Build the reference graph from the cell lineage tree.
         """
-        # iterate over the filters until you find the one that contains the lineage information
-        # we will assume there is only one such filter
+        # iterate over the preprocessors until you find the one that contains the lineage information
+        # we will assume there is only one such preprocessor
         cell_lineage = None
 
-        for filter in dataset.dataset_filters:
-            if isinstance(filter, LineageDatasetFilter):
+        for preprocessor in dataset.dataset_preprocessors:
+            if isinstance(preprocessor, LineageDatasetFilter):
                 if cell_lineage is not None:
                     raise ValueError(
-                        "Multiple LineageDatasetFilter found in dataset filters."
+                        "Multiple LineageDatasetFilter found in dataset preprocessors."
                     )
                 cell_lineage = parse_cell_lineage(
-                    filter.cell_lineage_file, filter.cell_equivalence_file
+                    preprocessor.cell_lineage_file, preprocessor.cell_equivalence_file
                 )
 
         if cell_lineage is None:
-            raise ValueError("No LineageDatasetFilter found in dataset filters.")
+            raise ValueError("No LineageDatasetFilter found in dataset preprocessors.")
 
         self.cell_lineage = cell_lineage
 
@@ -323,9 +323,9 @@ class GraphSimMetric(OntologyBasedMetrics):
         self.dataset_dir = dataset.get_dataset_dir()
         self.dataset_name = dataset.get_name()
         self.time_label = "Time"
-        for dataset_filter in dataset.dataset_filters:
-            if isinstance(dataset_filter, BasePseudotimeFilter):
-                self.time_label = dataset_filter.label()
+        for dataset_preprocessor in dataset.dataset_preprocessors:
+            if isinstance(dataset_preprocessor, BasePseudotimePreprocessor):
+                self.time_label = dataset_preprocessor.label()
                 break
 
         # first build the original reference and predicted graphs

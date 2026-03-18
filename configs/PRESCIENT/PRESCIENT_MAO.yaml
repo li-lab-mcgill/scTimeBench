@@ -2,25 +2,25 @@ datasets:
   - name: MaOlaniruDataset
     #tag: EasyMaOlaniru
     data_path: ./rtx_data/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,11]
 
   - name: MaOlaniruDataset
     #tag: MediumMaOlaniru
     data_path: ./rtx_data/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [12,13,14]
 
   - name: MaOlaniruDataset
     #tag: HardMaOlaniru
     data_path: ./rtx_data/maolaniru.h5ad
-     # these filters need to be in order!
-    filters:
-      - name: TimeSplitDatasetFilter
+     # these preprocessors need to be in order!
+    data_preprocessing_steps:
+      - name: TestTimepointSelection
         test_tps: [2,4,6,12,13,14]
 method:
   name: PRESCIENT

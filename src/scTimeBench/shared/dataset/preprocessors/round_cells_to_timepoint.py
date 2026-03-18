@@ -3,12 +3,12 @@ Filter that replaces the time column with rounded values
 to ensure that there are enough cells per timepoint.
 """
 
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.constants import ObservationColumns
 import logging
 
 
-class RoundingFilter(BaseDatasetFilter):
+class RoundCellsToTimepoint(BaseDatasetPreprocessor):
     def __init__(
         self,
         dataset_dict,
@@ -45,7 +45,7 @@ class RoundingFilter(BaseDatasetFilter):
             params["num_tps"] = 10
         return params
 
-    def filter(self, ann_data, **kwargs):
+    def preprocess(self, ann_data, **kwargs):
         """
         We round until there is a sufficient number of cells per timepoint
         (doing a simple linear approach) where we merge t_i with t_{i + 1}

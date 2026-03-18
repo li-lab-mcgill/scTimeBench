@@ -2,11 +2,11 @@
 Split anndata object into training and test sets based on timepoints.
 """
 
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.constants import ObservationColumns
 
 
-class TimeSplitDatasetFilter(BaseDatasetFilter):
+class TestTimepointSelection(BaseDatasetPreprocessor):
     def __init__(self, config, test_tps, **kwargs):
         super().__init__(config)
         self.test_tps = test_tps
@@ -21,7 +21,7 @@ class TimeSplitDatasetFilter(BaseDatasetFilter):
             "use_time_indices": self.dataset_dict.get("use_time_indices", False),
         }
 
-    def filter(self, ann_data, **kwargs):
+    def preprocess(self, ann_data, **kwargs):
         """
         Split the dataset based on the given test timepoints. Must add starting timepoint for proper behaviour.
         """

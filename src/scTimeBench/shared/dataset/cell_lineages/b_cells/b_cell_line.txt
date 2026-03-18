@@ -3,4 +3,3 @@ HSC ELP => Pre-pro-B => Pro-B => Late-pro-B => Large-pre-B => Small-pre-B => Imm
                                                                                            CD5-mature B => B1
                                                                                            CD5-mature B => Plasma B
                                                                              Immature B => Cycling B
-                                                            

@@ -8,8 +8,6 @@ from scTimeBench.shared.dataset.registry import (
     MaDataset,
 )
 
-import os
-
 
 class EmbeddingMetrics(BaseMetric):
     def _setup_supported_datasets(self):
@@ -23,11 +21,6 @@ class EmbeddingMetrics(BaseMetric):
         ]
 
         self.default_dataset_group = "embeddings"
-
-        # get the path to the shared default datasets config
-        self.default_datasets_path = os.path.join(
-            os.path.dirname(__file__), "..", "shared", "default_datasets.yaml"
-        )
 
     def _defaults(self):
         """The default parameters for ontology-based metrics."""

@@ -3,8 +3,8 @@ method:
   train_and_test_script: ./methods/scNODE/train_and_test.sh
 
 metrics:
-  - name: ClassifierMetrics
-  - name: ClassifierMetrics
+  - name: GraphSimMetric
     trajectory_infer_model:
       name: Classifier
-      model_classifier: True
+      embedding_classifier: True
+  - name: EmbeddingMetrics

@@ -10,7 +10,7 @@ from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
     DATASET_REGISTRY,
-    DATASET_FILTER_REGISTRY,
+    DATASET_PREPROCESSOR_REGISTRY,
 )
 from scTimeBench.shared.constants import (
     RequiredOutputFiles,
@@ -74,6 +74,23 @@ class BaseMetric:
         # now we call the setups that need to be defined by subclasses
         self._setup_trajectory_inference_model()
         self._setup_supported_datasets()
+        # all methods should be using the same default and optional datasets
+        # and only potentially define different groups:
+        self.default_datasets_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "shared",
+            "dataset",
+            "default_datasets.yaml",
+        )
+        self.optional_datasets_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "shared",
+            "dataset",
+            "optional_datasets.yaml",
+        )
+
         self._setup_method_output_requirements()
 
         # finally we setup the datasets and metrics db
@@ -221,7 +238,7 @@ class BaseMetric:
                 if not required_outputs_exist:
                     # before running to train and test, we check if the dataset
                     # requires caching, and if so, then we run to cache ahead of time
-                    # We do this because some filters (e.g., psupertime)
+                    # We do this because some preprocessors (e.g., psupertime)
                     # require the dataset to be preprocessed with a certain module
                     # which may not exist in other methods.
                     if dataset.requires_caching():
@@ -306,7 +323,7 @@ class BaseMetric:
 
         # 2) create the output directory for this method that is parametrized by
         # this dataset. So that if we run the same method on the same dataset
-        # with the same filters, we will get the same output directory
+        # with the same preprocessors, we will get the same output directory
         # Each output directory can contain multiple files required by different metrics
         # (e.g., embedding.pkl, graph_sim.pkl, etc.)
         # we will first insert a yaml config file that the method can use to
@@ -353,7 +370,7 @@ class BaseMetric:
             "method": self.config.method_yaml_data,
             "required_outputs": required_outputs_serialized,
             "datasets": dataset.encode_dataset_dict(),
-            "filters": dataset.encode_filters(),
+            "preprocessors": dataset.encode_preprocessors(),
         }
 
         # write out the yaml config file for the method
@@ -424,8 +441,8 @@ class BaseMetric:
 
         Then we do the following to all of the above cases:
             1. Checks if the datasets are supported by this metric.
-            2. Initializes the dataset filters per dataset based on the config.
-            3. Creates the dataset instances with the appropriate filters applied.
+            2. Initializes the dataset preprocessors per dataset based on the config.
+            3. Creates the dataset instances with the appropriate preprocessors applied.
         """
         # first we create default datasets to be used
         assert hasattr(
@@ -520,39 +537,41 @@ class BaseMetric:
         logging.debug(dataset_for_metric)
         logging.debug("-" * 100)
 
-        # 2) initialize the dataset and the dataset filters based on the config
+        # 2) initialize the dataset and the dataset preprocessors based on the config
         # for some reason, we need to create a wrapper function here, as lambdas don't work well...
         # searching it up, it's because of late binding
-        def dataset_filters_builder_wrapper(dataset_filter):
+        def dataset_preprocessors_builder_wrapper(dataset_preprocessor):
             def builder(dataset_dict):
-                return DATASET_FILTER_REGISTRY[dataset_filter["name"]](
+                return DATASET_PREPROCESSOR_REGISTRY[dataset_preprocessor["name"]](
                     dataset_dict,
-                    **{k: v for k, v in dataset_filter.items() if k != "name"},
+                    **{k: v for k, v in dataset_preprocessor.items() if k != "name"},
                 )
 
             return builder
 
-        # start with a list of list of dataset filter builders
-        # where each inner list corresponds to the filters for a dataset,
+        # start with a list of list of dataset preprocessor builders
+        # where each inner list corresponds to the preprocessors for a dataset,
         # and the outer list corresponds to the datasets
-        self.dataset_filters_builders_list = []
+        self.dataset_preprocessors_builders_list = []
 
         for dataset in dataset_for_metric:
             builders = []
-            for dataset_filter in dataset["filters"]:
-                builders.append(dataset_filters_builder_wrapper(dataset_filter))
-            self.dataset_filters_builders_list.append(builders)
+            for dataset_preprocessor in dataset["data_preprocessing_steps"]:
+                builders.append(
+                    dataset_preprocessors_builder_wrapper(dataset_preprocessor)
+                )
+            self.dataset_preprocessors_builders_list.append(builders)
 
-        assert len(self.dataset_filters_builders_list) == len(
+        assert len(self.dataset_preprocessors_builders_list) == len(
             dataset_for_metric
-        ), "Mismatch in number of datasets and dataset filter builders."
+        ), "Mismatch in number of datasets and dataset preprocessor builders."
 
-        # 3) finally, with the dataset filters built, we create all the filters that we need
+        # 3) finally, with the dataset preprocessors built, we create all the preprocessors that we need
         self.datasets: list[BaseDataset] = []
         for dataset, builders in zip(
-            dataset_for_metric, self.dataset_filters_builders_list
+            dataset_for_metric, self.dataset_preprocessors_builders_list
         ):
-            # now we create a dataset instance with the appropriate filters
+            # now we create a dataset instance with the appropriate preprocessors
             self.datasets.append(
                 DATASET_REGISTRY[dataset["name"]](
                     dataset,
@@ -585,12 +604,12 @@ class BaseMetric:
                 yaml.safe_dump(
                     {
                         "dataset_dict": dataset.dataset_dict,
-                        "dataset_filters": [
+                        "dataset_preprocessors": [
                             {
                                 "name": type(f).__name__,
                                 "parameters": f._parameters(),
                             }
-                            for f in dataset.dataset_filters
+                            for f in dataset.dataset_preprocessors
                         ],
                     },
                     f,

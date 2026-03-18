@@ -2,6 +2,36 @@
 Helper function for miscellaneous tasks.
 """
 
+from pathlib import Path
+
+
+def _resolve_shared_resource_path(file_path):
+    """
+    Resolve lineage/equivalence file paths in a package-safe way.
+
+    Resolution order:
+    1) keep absolute paths
+    2) keep existing cwd-relative paths
+    3) resolve relative to scTimeBench/shared/dataset
+    """
+    if file_path is None:
+        return None
+
+    raw_path = Path(file_path)
+    if raw_path.is_absolute() or raw_path.exists():
+        return str(raw_path)
+
+    package_root = Path(__file__).resolve().parent
+    shared_root = package_root / "dataset"
+
+    normalized_rel = str(file_path).lstrip("./")
+    rel_path = Path(normalized_rel)
+    candidate = shared_root / rel_path
+    if candidate.exists():
+        return str(candidate)
+
+    return str(raw_path)
+
 
 def parse_equivalence(file_path):
     """
@@ -19,6 +49,8 @@ def parse_equivalence(file_path):
     """
     if file_path is None:
         return {}
+
+    file_path = _resolve_shared_resource_path(file_path)
 
     with open(file_path, "r") as f:
         content = f.read().strip()
@@ -55,6 +87,8 @@ def parse_cell_lineage(file_path, equivalence_file_path=None):
     dict
         Dictionary mapping canonicalized cell types to their descendants
     """
+    file_path = _resolve_shared_resource_path(file_path)
+    equivalence_file_path = _resolve_shared_resource_path(equivalence_file_path)
     equivalence_dict = parse_equivalence(equivalence_file_path)
 
     with open(file_path, "r") as f:

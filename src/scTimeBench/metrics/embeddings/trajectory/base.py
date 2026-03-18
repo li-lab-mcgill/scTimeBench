@@ -39,7 +39,7 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
             TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
                 self.metric_config.get(
                     "trajectory_infer_model",
-                    {"name": Classifier.__name__, "model_classifier": True},
+                    {"name": Classifier.__name__, "embedding_classifier": True},
                 )
             )
         )

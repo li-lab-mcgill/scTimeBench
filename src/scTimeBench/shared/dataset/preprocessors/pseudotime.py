@@ -2,7 +2,7 @@
 Filter that replaces the time column with a psupertime.
 """
 
-from scTimeBench.shared.dataset.base import BaseDatasetFilter
+from scTimeBench.shared.dataset.base import BaseDatasetPreprocessor
 from scTimeBench.shared.constants import ObservationColumns
 import scanpy as sc
 from sklearn.decomposition import PCA
@@ -21,7 +21,7 @@ class PreprocessType(Enum):
     ZHENG_HVG = "zheng_hvg"
 
 
-class BasePseudotimeFilter(BaseDatasetFilter):
+class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
     def __init__(self, dataset_dict, preprocess_type, **kwargs):
         super().__init__(dataset_dict)
         self.PCA_FILE = "pca_model.pkl"
@@ -59,7 +59,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         """
         return True
 
-    def filter(self, ann_data, checkpoint_dir):
+    def preprocess(self, ann_data, checkpoint_dir):
         """
         Use some pseudotime estimation method (to be implemented by subclasses) to replace the time column with a pseudotime.
 
@@ -237,7 +237,7 @@ class BasePseudotimeFilter(BaseDatasetFilter):
         raise NotImplementedError("Subclasses should implement this method.")
 
 
-class PsupertimeFilter(BasePseudotimeFilter):
+class Psupertime(BasePseudotimePreprocessor):
     def label(self):
         return "Psupertime"
 
@@ -293,7 +293,7 @@ class PsupertimeFilter(BasePseudotimeFilter):
         return preprocessed_ann_data.obs["psupertime"]
 
 
-class ScepticFilter(BasePseudotimeFilter):
+class Sceptic(BasePseudotimePreprocessor):
     """
     Implementation of sceptic psuedotime filter. See more: https://github.com/Noble-Lab/Sceptic
     and the paper: https://link.springer.com/article/10.1186/s13059-025-03679-3
@@ -361,7 +361,7 @@ class ScepticFilter(BasePseudotimeFilter):
         return pseudotime
 
 
-class PseudotimeFilter(BasePseudotimeFilter):
+class Pseudotime(BasePseudotimePreprocessor):
     def label(self):
         return "Pseudotime"
 

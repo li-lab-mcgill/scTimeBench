@@ -63,7 +63,7 @@ class MethodManager:
         """
         Encode the output path based on:
         1) the dataset config
-        2) the dataset filters applied
+        2) the dataset preprocessors applied
         3) the output file name required by the metric
         and return the full output path as a hashed string.
         """
@@ -72,7 +72,7 @@ class MethodManager:
                 "name": self._get_name(),
                 "metadata": self._encode_metadata(),
                 "dataset_dict": self.dataset.encode_dataset_dict(),
-                "filters": self.dataset.encode_filters(),
+                "preprocessors": self.dataset.encode_preprocessors(),
             },
             sort_keys=True,
         )

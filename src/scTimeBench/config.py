@@ -105,7 +105,7 @@ class Config:
             "--run_type",
             type=str,
             choices=[rt.value for rt in RunType],
-            help="Type of run to perform: auto_train_test, preprocess, or eval_only. Defaults to preprocess.",
+            help="Type of run to perform: (default) auto_train_test, preprocess, eval_only, train_only. Defaults to auto_train_test.",
         )
 
         parser.add_argument(
@@ -190,7 +190,7 @@ class Config:
         # Set defaults for optional parameters
         defaults = {
             "database_path": "scTimeBench.db",
-            "run_type": RunType.PREPROCESS.value,
+            "run_type": RunType.AUTO_TRAIN_TEST.value,
             "output_dir": "outputs/",
             "datasets": [],
             "log_level": "INFO",
@@ -232,10 +232,10 @@ class Config:
                 )
 
         # validate the fields within each larger section
-        # N.B.: we don't need them to specify filters because it might already be preprocessed
+        # N.B.: we don't need them to specify preprocessors because it might already be preprocessed
         # ** DATASETS **
         dataset_required_fields = ["data_path", "name"]
-        dataset_optional_fields = ["filters"]
+        dataset_optional_fields = ["data_preprocessing_steps"]
         dataset_alternate_field = "tag"
 
         for dataset in self.datasets:

@@ -3,12 +3,12 @@ datasets:
   - tag: defaultSuo
   - name: SuoDataset
     data_path: ./data/suo/main.h5ad
-    # note: these filters need to be in order!
-    filters:
+    # note: these preprocessors need to be in order!
+    data_preprocessing_steps:
       - name: LineageDatasetFilter
         cell_lineage_file: ./examples/cell_lineages/b_cells/b_cell_line.txt
         cell_equivalence_file: ./examples/cell_lineages/b_cells/equal_names.txt
-      - name: NaiveSplitDatasetFilter
+      - name: PercentileSplitTrainTest
         train_pct: 0.8
 
 method:

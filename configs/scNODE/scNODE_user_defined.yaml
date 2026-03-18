@@ -1,6 +1,7 @@
 datasets:
   - tag: defaultGarciaAlonso
   - tag: EasyZebrafish
+  - tag: defaultGarciaAlonsoPseudotimeEvenCells
 
 method:
   name: scNODE
