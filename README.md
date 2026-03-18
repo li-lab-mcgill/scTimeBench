@@ -9,7 +9,7 @@
 If the external dependencies such as pypsupertime or sceptic are not used (which they are not used by default), you can install using pip as follows:
 
 ```
-pip install -e ".\[benchmark]"
+pip install -e ".[benchmark]"
 ```
 
 to run the benchmark. For your own method, simply install without the extra benchmarking requirements with
@@ -81,13 +81,13 @@ before running uv sync.
 Run either using the package itself with:
 
 ```
-scTimeBench --config examples/configs/scNODE\_user\_defined.yaml --run\_type auto\_train\_test
+scTimeBench --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
 ```
 
 or with:
 
 ```
-python src/scTimeBench/main.py --config examples/configs/scNODE\_user\_defined.yaml --run\_type auto\_train\_test
+python src/scTimeBench/main.py --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
 ```
 
 ## Contributing
@@ -95,7 +95,7 @@ python src/scTimeBench/main.py --config examples/configs/scNODE\_user\_defined.y
 If you want to contribute, please install both the test and the dev environments with:
 
 ```
-pip install -e ".\[test, dev, benchmark]"
+pip install -e ".[test, dev, benchmark]"
 ```
 
 Then for our autoformatting, please run:
