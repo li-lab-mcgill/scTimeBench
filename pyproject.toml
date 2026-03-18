@@ -23,11 +23,9 @@ scTimeBench = [
 ]
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-]
 dev = [
     "pre-commit",
+    "pytest",
 ]
 benchmark = [
     "networkx",

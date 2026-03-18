@@ -1,12 +1,17 @@
 # Testing Framework
 
+## Setup
+To ensure that this is setup correctly, make sure to add `--extra dev` when running `uv sync`.
+
 ## End-to-end testing
 When testing end-to-end we need to ensure that the following works:
-1. We create a new model output directory for each model type that we create, i.e. per dataset, and per dataset x filters as well.
-2. We need to test that we are getting the expected output from the run.py as well per model, and that each model being integrated works as expected.
-3. We need to test that the datasets, dataset filters, etc. are populated as expected.
-4. We need to ensure that running the higher level metrics work, so we can group these metrics together, and that they end up with the same caching location if needed.
-5.
+1. Database is populated correctly with its method outputs, evaluation counts, and metrics.
+2. The method outputs are also populated as expected depending on the method type.
+
+To run a specific config file for testing, run the following command by replacing the `scNODE.yaml`:
+```
+pytest "01_end_to_end/test_all_models.py::test_all_models_fast_end_to_end[scNODE.yaml]"
+```
 
 ## Trajectory Inference Module
 This requires its own separate testing to make sure that the implementations are working as expected.

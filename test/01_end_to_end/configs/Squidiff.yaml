@@ -1,0 +1,17 @@
+datasets:
+  - tag: defaultGarciaAlonso
+  - tag: EasyZebrafish
+
+method:
+  name: Squidiff
+  train_and_test_script: ./methods/Squidiff/train_and_test.sh
+  metadata:
+    log_interval: 1
+    save_interval: 1
+    lr_anneal_steps: 1
+    diffusion_steps: 10
+
+metrics:
+  - name: ARI
+  - name: JaccardSimilarity
+  - name: WassersteinOTLoss

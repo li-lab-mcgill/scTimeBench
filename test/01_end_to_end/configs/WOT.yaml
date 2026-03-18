@@ -1,0 +1,9 @@
+datasets:
+  - tag: defaultGarciaAlonso
+
+method:
+  name: WOT
+  train_and_test_script: ./methods/WOT/train_and_test.sh
+
+metrics:
+  - name: JaccardSimilarity

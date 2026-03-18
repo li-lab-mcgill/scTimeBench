@@ -6,7 +6,7 @@ import sys
 
 @pytest.fixture
 def run_bench():
-    def _run(config_path, run_type, workspace, log_name):
+    def _run(config_path, run_type, workspace, log_name, extra_args=None):
         project_root = Path(__file__).parent.parent
 
         # delete any previous log file
@@ -29,6 +29,9 @@ def run_bench():
             "--log_level",
             "DEBUG",
         ]
+
+        if extra_args:
+            cmd.extend(extra_args)
 
         # Use subprocess.Popen to stream logs in real-time
         process = subprocess.Popen(

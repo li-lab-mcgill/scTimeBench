@@ -1,0 +1,9 @@
+datasets:
+  - tag: defaultGarciaAlonso
+
+method:
+  name: Cooccurrence
+  train_and_test_script: ./methods/cooccurrence/train_and_test.sh
+
+metrics:
+  - name: JaccardSimilarity

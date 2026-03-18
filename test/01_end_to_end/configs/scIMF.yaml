@@ -3,11 +3,10 @@ datasets:
   - tag: EasyZebrafish
 
 method:
-  name: scNODE
-  train_and_test_script: ./methods/scNODE/train_and_test.sh
+  name: scIMF
+  train_and_test_script: ./methods/scIMF/train_and_test.sh
   metadata:
-    epochs: 0
-    pretrain_iters: 1
+    train_epochs: 1
 
 metrics:
   - name: ARI

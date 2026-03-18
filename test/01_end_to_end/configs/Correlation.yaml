@@ -1,0 +1,12 @@
+datasets:
+  - tag: defaultGarciaAlonso
+
+method:
+  name: Correlation
+  train_and_test_script: ./methods/correlation/train_and_test.sh
+  metadata:
+    correlation_method: pearsonr
+    averaging_method: average
+
+metrics:
+  - name: JaccardSimilarity
