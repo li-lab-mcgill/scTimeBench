@@ -10,9 +10,12 @@ from scTimeBench.shared.constants import RequiredOutputFiles
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TEST_E2E_CONFIG_ROOT = (
-    PROJECT_ROOT / "test" / "01_end_to_end" / "configs" / "all_models"
-)
+TEST_E2E_CONFIG_ROOT = PROJECT_ROOT / "test" / "01_end_to_end" / "configs"
+
+SCNODE_FASTEST_METADATA = {
+    "pretrain_iters": 1,
+    "epochs": 0,
+}
 
 # Explicit per-model fast configs (checked into test/01_end_to_end/configs/all_models).
 MODEL_TEMPLATE_PATHS = {
@@ -52,15 +55,28 @@ def load_yaml(path: Path):
 
 
 def build_method_config(
-    method_name: str, datasets: list[dict], metrics: list[dict]
+    method_name: str,
+    datasets: list[dict],
+    metrics: list[dict],
+    method_metadata_overrides: dict | None = None,
 ) -> dict:
     template = load_yaml(MODEL_TEMPLATE_PATHS[method_name])
     method = template["method"]
 
+    metadata = deepcopy(method.get("metadata", {}))
+
+    # Always force the known fastest scNODE settings for tests.
+    if method_name == "scNODE":
+        metadata.update(SCNODE_FASTEST_METADATA)
+
+    # Optional per-call overrides for specific suites.
+    if method_metadata_overrides:
+        metadata.update(method_metadata_overrides)
+
     method_payload = {
         "name": method["name"],
         "train_and_test_script": method["train_and_test_script"],
-        "metadata": deepcopy(method.get("metadata", {})),
+        "metadata": metadata,
     }
 
     if not method_payload["metadata"]:

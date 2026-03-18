@@ -15,8 +15,22 @@ pytest "01_end_to_end/test_all_models.py::test_all_models_fast_end_to_end[scNODE
 
 ## Trajectory Inference Module
 This requires its own separate testing to make sure that the implementations are working as expected.
-1. Create your own 2D data that is easy to reason about.
-2. Run it through the trajectory inference module and make sure that it works.
+
+
 
 ## Metrics
-We need to test each metric that we create and ensure that they work as expected.
+We need to test each metric that we create and ensure that they work as expected. In particular, we are testing that BaseMetric will populate the evaluation table with something given all the leaf metrics.
+
+Test with
+```
+pytest 03_metrics
+```
+This should run within ~20 minutes, so this is a long test.
+
+## Datasets
+We test that all the datasets work with scNODE (which paired with the end to end should mean that everything works as expected).
+
+Test with
+```
+pytest 04_datasets
+```
