@@ -265,7 +265,7 @@ class StackedBarPlot(GraphSimMetric):
         plot_stacked_bar(
             target_df,
             target_plot_path,
-            f'Predicted Target Cell Type Proportions Over {self.time_label} for {self.config.model["name"]} on {self.dataset_name} '
+            f'Predicted Target Cell Type Proportions Over {self.time_label} for {self.config.method["name"]} on {self.dataset_name} '
             f'{"using GEX" if self.trajectory_infer_model.uses_gene_expr() else "using embeddings"}'
             f'{"" if not self.params["from_tp_zero"] else " (From Zero to End GEX)"}',
         )

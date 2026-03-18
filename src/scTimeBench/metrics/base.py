@@ -6,7 +6,7 @@ depend on the dataset that they belong to.
 from typing import final
 
 from scTimeBench.config import Config, RunType
-from scTimeBench.metrics.model_manager import MethodManager
+from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
     DATASET_REGISTRY,

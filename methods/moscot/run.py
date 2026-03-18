@@ -11,8 +11,8 @@ import os
 
 import anndata
 
-from scTimeBench.model_utils.model_runner import main
-from scTimeBench.model_utils.ot_model_runner import BaseOTMethod
+from scTimeBench.method_utils.method_runner import main
+from scTimeBench.method_utils.ot_method_runner import BaseOTMethod
 from scTimeBench.shared.constants import ObservationColumns
 
 from moscot.problems.time import TemporalProblem

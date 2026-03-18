@@ -14,7 +14,7 @@ from scTimeBench.config import Config
 from pathlib import Path
 import csv
 
-from scTimeBench.metrics.model_manager import MethodManager
+from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import (
     BaseDataset,
     DATASET_FILTER_REGISTRY,

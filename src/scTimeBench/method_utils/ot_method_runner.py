@@ -1,4 +1,4 @@
-from scTimeBench.model_utils.model_runner import BaseMethod
+from scTimeBench.method_utils.method_runner import BaseMethod
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.constants import ObservationColumns
 from scipy.sparse import issparse

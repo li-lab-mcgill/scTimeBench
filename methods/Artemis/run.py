@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import jax
 
-from scTimeBench.model_utils.model_runner import main, BaseMethod
+from scTimeBench.method_utils.method_runner import main, BaseMethod
 from scTimeBench.shared.constants import ObservationColumns, RequiredOutputColumns
 
 

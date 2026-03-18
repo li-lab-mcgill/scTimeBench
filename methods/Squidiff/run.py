@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 
-from scTimeBench.model_utils.model_runner import main, BaseMethod
+from scTimeBench.method_utils.method_runner import main, BaseMethod
 from scTimeBench.shared.constants import ObservationColumns
 
 

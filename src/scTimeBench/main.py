@@ -14,7 +14,7 @@ if False:
     scTimeBench.shared.dataset  # to avoid unused import warning
 
 from scTimeBench.metrics.base import METRIC_REGISTRY, BaseMetric
-from scTimeBench.metrics.model_manager import MethodManager
+from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import DATASET_REGISTRY
 
 from pprint import pprint

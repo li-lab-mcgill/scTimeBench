@@ -7,7 +7,7 @@ on the correlation of cell types at adjacent time points.
 import numpy as np
 from scipy.sparse import issparse
 from scipy.stats import rankdata
-from scTimeBench.model_utils.model_runner import main, BaseMethod
+from scTimeBench.method_utils.method_runner import main, BaseMethod
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.constants import ObservationColumns
 from enum import Enum

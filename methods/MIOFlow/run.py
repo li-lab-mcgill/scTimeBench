@@ -16,7 +16,7 @@ import scipy.sparse as sp
 import torch
 from sklearn.decomposition import PCA
 
-from scTimeBench.model_utils.model_runner import main, BaseMethod
+from scTimeBench.method_utils.method_runner import main, BaseMethod
 from scTimeBench.shared.constants import ObservationColumns
 
 from MIOFlow.utils import set_seeds, config_criterion
