@@ -173,7 +173,7 @@ class DatabaseManager:
         if dataset_name not in DATASET_REGISTRY:
             return None, None
 
-        preprocessors = dataset_config.get("preprocessors", [])
+        preprocessors = dataset_config.get("data_preprocessing_steps", [])
         try:
             dataset_preprocessor_instances = [
                 DATASET_PREPROCESSOR_REGISTRY[dataset_preprocessor["name"]](
@@ -211,7 +211,7 @@ class DatabaseManager:
         # now let's look for the dataset tag
         name, dataset_dict, dataset_preprocessors = result
 
-        shared_path = Path(__file__).resolve().parent / "metrics" / "shared"
+        shared_path = Path(__file__).resolve().parent / "shared" / "dataset"
         dataset_files = [
             shared_path / "default_datasets.yaml",
             shared_path / "optional_datasets.yaml",
@@ -278,9 +278,16 @@ class DatabaseManager:
             for row in rows:
                 if table == "datasets":
                     # call get_dataset_tag_from_id to get the tag as well
-                    dataset_id = row[0]
+                    dataset_id, dataset_dict, dataset_preprocessors, path = (
+                        row[0],
+                        row[2],
+                        row[3],
+                        row[4],
+                    )
                     dataset_tag = self.get_dataset_tag_from_id(dataset_id)
-                    print(f"({dataset_id}, {dataset_tag})")
+                    print(
+                        f"({dataset_id}, {dataset_tag}, {dataset_dict}, {dataset_preprocessors}, {path})"
+                    )
                 elif table == "evals":
                     # now print out evals as normal except do the dataset tag instead
                     method_name, dataset_id, metric_name, result = row
