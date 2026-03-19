@@ -1,129 +1,118 @@
-# scTimeBench
+# <img src="assets/logo.png" alt="VLM-Lens Logo" height="100" style="vertical-align:middle; margin-right:20px;"/> scTimeBench
+
+[![python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&style=flat-square)](https://www.python.org/downloads/release/python-31012/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/license/mit)
+[![bioRXiv](https://img.shields.io/badge/bioRXiv-10.64898/2026.03.16.712069v1-red.svg?style=flat-square)](https://www.biorxiv.org/content/10.64898/2026.03.16.712069v1)
+
+<!-- TODO: -->
+<!-- [![Documentation](https://img.shields.io/badge/Documentation-Online-green.svg?style=flat-square)]() -->
+[![Google Colab](https://img.shields.io/badge/Google-Colab-orange?logo=googlecolab&style=flat-square)](https://colab.research.google.com/drive/1J-yNXu_FcSnhrCwTDQKjWCBSHsmdbohJ?usp=sharing)
+
 
 ![scTimeBench Overview](./assets/scTimeBench.png)
 
+## Table of Contents
+- [Environment Setup](#environment-setup)
+  - [Suggested UV Installation](#suggested-uv-installation)
+  - [Standard Pip](#standard-pip)
+- [Benchmark Architecture](#benchmark-architecture)
+  - [Detailed Layout of File Structure](#detailed-layout-of-file-structure)
+  - [Command-Line Interface Details](#command-line-interface-details)
+  - [Example Run](#example-run)
+- [Contributing to scTimeBench](#contributing-to-sctimebench)
+- [Citation](#citation)
 
+## Environment Setup
+scTimeBench was tested and supported using Python 3.10. If any other version that is 3.10+ does not work when using the benchmark, please submit an issue to this GitHub.
 
-## Setup
+Important Note: this setup is needed twice. Once for the user to run the benchmark metrics, and the second time for the method itself needing to read from `scTimeBench.method_utils.method_runner` and other important shared constants. In short, this means we need to install scTimeBench into two separate virtual environments:
+1. Your normal pip installation where you'll be running the benchmark from. This will require the extra "\[benchmark\]" group installation (pip) or the extra group installation `--extra benchmark` (uv).
+2. For each method's virtual environment, you need to install the scTimeBench.
 
-If the external dependencies such as pypsupertime or sceptic are not used (which they are not used by default), you can install using pip as follows:
-
-```
-pip install -e ".[benchmark]"
-```
-
-to run the benchmark. For your own method, simply install without the extra benchmarking requirements with
-
-```
-pip install -e .
-```
-
-There are extra dependencies that can be found under `pyproject.toml`.
-
-## Setup: UV
+### Suggested UV Installation
 Due to external dependencies and a more complex setup, we have decided to package everything under `uv` (see: https://github.com/astral-sh/uv). To start with, you need to get all the necessary extern dependencies, which can be done either by running:
 ```
 git submodule update --init extern/
 ```
-or if you want to do it for the other methods as well,
+If you wish to benchmark across all methods, feel free to clone the submodules for all the methods as well with:
 ```
 git submodule update --init
 ```
-
 Then, install `uv` and run the following:
+```
+uv sync --extra benchmark
+```
+If you're using uv under a method's virtual environment, either the pip installation or the following will suffice:
 ```
 uv sync
 ```
 
-This allows you to create model run files that use the necessary constants and model runners under the scTimeBench packages.
-
-Note: for the other models, we don't need all the dependencies so for example, if you're setting up the moscot environment,
-
+### Standard Pip
+If the external dependencies such as pypsupertime or sceptic are not used (which they are not used by default), you can install using pip as follows:
 ```
-uv sync --no-dev
+pip install -e ".[benchmark]"
 ```
-
-is enough.
-
-For other packages depending on the metrics used, it would be useful to install them with:
-
+to run the benchmark. For your own method, simply install without the extra benchmarking requirements with
 ```
-uv sync --extra <dependency-group>
+pip install -e .
 ```
+There are extra dependencies that can be found under `pyproject.toml`.
 
-e.g.:
+## Benchmark Architecture
+![Benchmark Architecture](./assets/architecture.png)
+scTimeBench is controlled by a central configuration file which determines which datasets, methods, and metrics to run. An example of this can be found under `configs/scNODE/gex.yaml`.
 
+### Detailed Layout of File Structure
+* `configs/`: possible yaml config files to use as a starting point
+* `extern/`: external packages that required edits for compatability such as pyPsupertime and Sceptic.
+* `methods/`: the different methods that are possible to use, including defined submodules. Add your own methodology here.
+* `src/`: where the scTimeBench package lies. See `src/ReadMe.md` for more documentation on the modules that exist there.
+* `test/`: unit tests for each method, dataset, metric, and other important modules.
+
+### Command-Line Interface Details
+The entrypoint for the benchmark is defined as `scTimeBench`. Run `scTimeBench --help` for more details, or refer to `src/scTimeBench/config.py` and the documentation.
+
+### Example Run
+Run the package with:
 ```
-uv sync --extra test --extra dev --extra benchmark
-```
-
-or simply
-
-```
-uv sync --all-extras
-```
-
-## Python Version
-
-We also set the Python version to be 3.10. This will likely cause issues in other python versions, so do try to use:
-
-```
-uv python install 3.10
-uv python pin 3.10
+scTimeBench --config configs/scNODE/gex.yaml
 ```
 
-before running uv sync.
+For a full running example using scNODE, refer to our example [Jupyter Notebook](https://colab.research.google.com/drive/1J-yNXu_FcSnhrCwTDQKjWCBSHsmdbohJ?usp=sharing).
 
-## Detailed Layout of File Structure
-
-* `examples/` defines the examples
-
-  * `configs/` possible yaml config files to use as a starting point
-* `models/` defines the different models that are possible to use, including defined submodules. Add your own methodology here.
-* `src/` where the scTimeBench package lies. See `src/ReadMe.md` for more documentation on the modules that exist there.
-* `test/` unit tests for each model, each metric, and other important modules.
-
-## Example Run
-
-Run either using the package itself with:
-
+## Contributing to scTimeBench
+If you want to contribute, please install the dev environments with:
 ```
-scTimeBench --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
+uv sync --extra dev --extra benchmark
+```
+or
+```
+pip install -e ".[dev, benchmark]"
 ```
 
-or with:
-
-```
-python src/scTimeBench/main.py --config examples/configs/scNODE_user_defined.yaml --run_type auto_train_test
-```
-
-## Contributing
-
-If you want to contribute, please install both the test and the dev environments with:
-
-```
-pip install -e ".[test, dev, benchmark]"
-```
-
-Then for our autoformatting, please run:
-
+To enable the autoformatting, please run:
 ```
 pre-commit install
 ```
+before committing.
 
-## Testing
+Follow our example tutorials on adding new methods, datasets, and metrics in our documentation here: TODO-ADD-THIS.
 
-To run a test simply run:
+### Testing
+If your change heavily modifies the architecture, please run the necessary tests under the `test/` environment using pytest. Read more on the different available tests under `test/ReadMe.md`. See more information on the pytest documentation: https://docs.pytest.org/en/stable/. A useful flag is `-s` to view the entire output of the test.
 
+## Citation
+```bibtex
+@article {scTimeBench,
+	author = {Osakwe, Adrien and Huang, Eric Haoran and Li, Yue},
+	title = {scTimeBench: A streamlined benchmarking platform for single-cell time-series analysis},
+	elocation-id = {2026.03.16.712069},
+	year = {2026},
+	doi = {10.64898/2026.03.16.712069},
+	publisher = {Cold Spring Harbor Laboratory},
+	abstract = {Temporal modelling of single-cell gene expression is essential for capturing dynamic cellular processes, yet a systematic framework for evaluating time-aware trajectory inference methods has not yet been established. Here, we present a modular and scalable benchmark designed to assess methods across three critical tasks: forecast accuracy (temporal cell alignment) for projecting cells to unseen time points, embedding coherence between original and projected data, and cell-type lineage fidelity. We evaluated nine state-of-the-art methods, which are broadly categorized into 7 forecasting-based and 2 optimal transport (OT)-based methods across eight diverse datasets spanning four species. Our results show that while several methods achieve high forecast accuracy, they often fail to preserve biological signals, both in their latent spaces and in cell lineage reconstruction. Notably, most methods confer low lineage fidelity and often underperform compared to a correlation baseline. We further demonstrate that integrating pseudotime can effectively denoise trajectories by aligning the data snapshots with the intrinsic biological clock in each cell. Finally, to streamline benchmarking for temporal single-cell analysis, we built one of the first self-contained Python packages for the research community: https://github.com/li-lab-mcgill/scTimeBench.Competing Interest StatementThe authors have declared no competing interest.Natural Sciences and Engineering Research Council, https://ror.org/01h531d29, RGPIN-2016-05174Canadian Institutes of Health Research, https://ror.org/01gavpb45, PJT-540722Canada Research Chairs, https://ror.org/0517h6h17, CRC-2021-00547},
+	URL = {https://www.biorxiv.org/content/early/2026/03/18/2026.03.16.712069},
+	eprint = {https://www.biorxiv.org/content/early/2026/03/18/2026.03.16.712069.full.pdf},
+	journal = {bioRxiv}
+}
 ```
-pytest test
-```
-
-under the root directory or move to `test` and run:
-
-```
-pytest
-```
-
-See more information on the pytest documentation: https://docs.pytest.org/en/stable/. A useful flag is `-s` to view the entire output of the test.
-

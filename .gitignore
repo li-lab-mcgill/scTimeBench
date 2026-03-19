@@ -3,6 +3,9 @@ csv_results/
 *.png
 *.svg
 
+# Undo any assets image gitignores
+!/assets/*
+
 # Virtual environment directory
 venv/
 venv
