@@ -83,18 +83,3 @@ pytest
 ```
 
 See more information on the pytest documentation: https://docs.pytest.org/en/stable/. A useful flag is `-s` to view the entire output of the test.
-
-## Current Supported Models
-The following models are ones that are implemented and pass our internal `pytest`:
-* scNODE
-* Cooccurrence
-* Correlation
-* Moscot
-* WOT
-* Artemis
-* MIOFlow
-* CellMNN
-* PISDE
-* PRESCIENT
-* scIMF
-* Squidiff
