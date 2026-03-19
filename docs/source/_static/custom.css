@@ -1,0 +1,7 @@
+/* Reduce the size of the logo shown in the Sphinx RTD header/sidebar */
+.wy-side-nav-search img.logo,
+.wy-side-nav-search a img {
+  max-width: 120px;
+  width: 50%;
+  height: auto;
+}
