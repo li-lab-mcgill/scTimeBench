@@ -1,5 +1,6 @@
+<!-- for this to work on Pypi, we need to point to the absolute path -->
 <h1>
-	<img src="assets/logo.png" alt="VLM-Lens Logo" height="150" align="absmiddle" /> scTimeBench
+	<img src="https://raw.githubusercontent.com/li-lab-mcgill/scTimeBench/refs/heads/main/assets/logo.png" alt="scTimeBench-Logo" height="150" align="absmiddle" /> scTimeBench
 </h1>
 
 [![python](https://img.shields.io/badge/Python-3.10%2B-blue.svg?logo=python&style=flat-square)](https://www.python.org/downloads/release/python-31012/)
@@ -9,7 +10,7 @@
 <!-- TODO: --> <!-- [![Documentation](https://img.shields.io/badge/Documentation-Online-green.svg?style=flat-square)]() -->
 
 
-![scTimeBench Overview](./assets/scTimeBench.png)
+![scTimeBench Overview](http://raw.githubusercontent.com/li-lab-mcgill/scTimeBench/refs/heads/main/assets/scTimeBench.png)
 
 ## Table of Contents
 - [Environment Setup](#environment-setup)
@@ -59,7 +60,7 @@ pip install -e .
 There are extra dependencies that can be found under `pyproject.toml`.
 
 ## Benchmark Architecture
-![Benchmark Architecture](./assets/architecture.png)
+![Benchmark Architecture](https://raw.githubusercontent.com/li-lab-mcgill/scTimeBench/refs/heads/main/assets/architecture.png)
 scTimeBench is controlled by a central configuration file which determines which datasets, methods, and metrics to run. An example of this can be found under `configs/scNODE/gex.yaml`.
 
 ### Detailed Layout of File Structure

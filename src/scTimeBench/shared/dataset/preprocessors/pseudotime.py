@@ -238,6 +238,13 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
 
 
 class Psupertime(BasePseudotimePreprocessor):
+    """
+    @DEPRECATION: This is a deprecated filter and will break if used. See the setup at commit history:
+    c501310953af8391ddfdaa2b73af324f73fdd9c3
+    for a reference on how to set things up.
+    """
+        
+
     def label(self):
         return "Psupertime"
 
@@ -295,6 +302,10 @@ class Psupertime(BasePseudotimePreprocessor):
 
 class Sceptic(BasePseudotimePreprocessor):
     """
+    @DEPRECATION: This is a deprecated filter and will break if used. See the setup at commit history:
+    c501310953af8391ddfdaa2b73af324f73fdd9c3
+    for a reference on how to set things up.
+
     Implementation of sceptic psuedotime filter. See more: https://github.com/Noble-Lab/Sceptic
     and the paper: https://link.springer.com/article/10.1186/s13059-025-03679-3
 
