@@ -4,15 +4,34 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scTimeBench"  # This is the name you use for 'pip install'
-version = "0.1"
+version = "0.1.0"
 dependencies = [
     "PyYAML",
     "scanpy",
-    "scikit_learn",
-    "fastparquet==2025.12.0",
-    "pyarrow",
+    "scikit-learn",
+    "fastparquet<2026.3.0",
 ]
 requires-python = ">=3.10"
+authors = [
+    { name="Eric Haoran Huang", email="eric.h.huang@mail.mcgill.ca" },
+    { name="Adrien Osakwe", email="adrien.osakwe@mail.mcgill.ca" },
+    { name="Yue Li", email="yueli@cs.mcgill.ca" },
+]
+description = "A streamlined benchmarking platform for single-cell time-series analysis"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3.10",
+]
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/li-lab-mcgill/scTimeBench"
+Issues = "https://github.com/li-lab-mcgill/scTimeBench/issues"
+# TODO: have documentation here!
 
 [tool.setuptools.packages.find]
 where = ["src"]  # Tells Python: "The actual code lives inside the src folder"
@@ -37,19 +56,6 @@ benchmark = [
     "graphviz",
     "celltypist"
 ]
-pypsupertime = [ "pypsupertime" ]
-sceptic = [ "sceptic" ]
 
 [project.scripts]
 scTimeBench = "scTimeBench.main:main"
-
-# --- UV SPECIFIC CONFIGURATION ---
-
-[tool.uv]
-# This tells uv that psupertime is part of your development 'workspace'
-workspace = { members = ["extern/psupertime", "extern/sceptic"] }
-
-[tool.uv.sources]
-# This ensures uv looks in your submodule folder and treats it as an editable install.
-pypsupertime = { editable = true, workspace = true }
-sceptic = { editable = true, workspace = true }
