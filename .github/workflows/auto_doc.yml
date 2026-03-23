@@ -2,7 +2,10 @@ name: Build and Deploy Sphinx Docs
 
 on:
   push:
-    branches: [gh-pages]
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'src/**'
   workflow_dispatch:
 
 permissions:
@@ -21,8 +24,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: gh-pages
+
 
 
       - name: Set up Python
@@ -34,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install sphinx sphinx-rtd-theme
-          pip install -e ".[dev, benchmark]"
+          pip install -e ".[benchmark]"
 
       - name: Build Sphinx HTML
         run: |
