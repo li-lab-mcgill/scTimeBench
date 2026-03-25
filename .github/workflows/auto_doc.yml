@@ -39,14 +39,14 @@ jobs:
 
       - name: Copy CSV files to docs static
         run: |
-          mkdir -p docs/source/_static/leaderboard
-          rm -f docs/source/_static/leaderboard/*.csv
+          mkdir -p docs/source/_static/leaderboard/csv/
+          rm -f docs/source/_static/leaderboard/csv/*.csv
           shopt -s nullglob
           csv_files=(assets/csv_results/*.csv)
           if [ ${#csv_files[@]} -eq 0 ]; then
             echo "No CSV files found in assets/csv_results/."
           else
-            cp "${csv_files[@]}" docs/source/_static/leaderboard/
+            cp "${csv_files[@]}" docs/source/_static/leaderboard/csv/
           fi
 
       - name: Regenerate plots from CSV
