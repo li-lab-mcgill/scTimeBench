@@ -499,6 +499,78 @@ class DatabaseManager:
         csvfile.close()
         print(f"Embedding results saved to {output_csv_path}")
 
+    def gex_pred_to_csv(self, output_csv_path, append=False):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT metrics.name, method_outputs.name, datasets.name, datasets.id, evals.result, metrics.parameters
+            FROM evals
+            JOIN metrics ON evals.metric_id = metrics.id
+            JOIN method_outputs ON evals.method_output_id = method_outputs.id
+            JOIN datasets ON method_outputs.dataset_id = datasets.id
+            WHERE metrics.name IN ('HausdorffLoss', 'MMDLoss', 'WassersteinOTLoss', 'EnergyDistanceLoss')
+        """
+        )
+        rows = cursor.fetchall()
+
+        output_path = Path(output_csv_path)
+        write_mode = "a" if append else "w"
+
+        csvfile = open(output_csv_path, write_mode, newline="")
+        writer = csv.writer(csvfile)
+
+        if (
+            (not append)
+            or (not output_path.exists())
+            or output_path.stat().st_size == 0
+        ):
+            writer.writerow(
+                [
+                    "method",
+                    "dataset",
+                    "interpolation_type",
+                    "metric",
+                    "timepoint",
+                    "result",
+                ]
+            )
+
+        for (
+            metric_name,
+            method_name,
+            dataset_name,
+            dataset_id,
+            result_json,
+            metric_params,
+        ) in rows:
+            dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+            parsed_result = json.loads(result_json)
+            # load the metric parameters as well to get the timepoint
+            parsed_metric_params = json.loads(metric_params)
+            timepoint = parsed_metric_params.get("timepoint", "avg")
+
+            interpolation_type = ""
+            if "Easy" in dataset_tag:
+                interpolation_type = "easy"
+            elif "Medium" in dataset_tag:
+                interpolation_type = "med"
+            elif "Hard" in dataset_tag:
+                interpolation_type = "hard"
+
+            writer.writerow(
+                [
+                    method_name,
+                    dataset_name,
+                    interpolation_type,
+                    metric_name,
+                    timepoint,
+                    parsed_result,
+                ]
+            )
+
+        csvfile.close()
+        print(f"Embedding results saved to {output_csv_path}")
+
     # ** METRIC RELATED FUNCTIONS **
     def has_metric(self, name: str, parameters: str) -> bool:
         cursor = self.conn.cursor()

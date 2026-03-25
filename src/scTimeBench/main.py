@@ -147,22 +147,22 @@ def main():
         db_stem = Path(config.database_path).stem
         merge_mode = config.csv_write_mode == CsvWriteMode.MERGE
 
-        if merge_mode:
-            graph_sim_output = os.path.join(config.output_csv_path, "graph_sim.csv")
-            embedding_output = os.path.join(config.output_csv_path, "embedding.csv")
-        else:
-            graph_sim_output = os.path.join(
-                config.output_csv_path, f"{db_stem}_graph_sim.csv"
-            )
-            embedding_output = os.path.join(
-                config.output_csv_path, f"{db_stem}_embedding.csv"
-            )
+        for csv_type in config.to_csv:
+            if merge_mode:
+                output_file = os.path.join(
+                    config.output_csv_path, f"{csv_type.value}.csv"
+                )
+            else:
+                output_file = os.path.join(
+                    config.output_csv_path, f"{db_stem}_{csv_type.value}.csv"
+                )
 
-        if CsvExportType.GRAPH_SIM in config.to_csv:
-            db_manager.graph_sim_to_csv(graph_sim_output, append=merge_mode)
-
-        if CsvExportType.EMBEDDING in config.to_csv:
-            db_manager.embedding_to_csv(embedding_output, append=merge_mode)
+            if csv_type == CsvExportType.GRAPH_SIM:
+                db_manager.graph_sim_to_csv(output_file, append=merge_mode)
+            if csv_type == CsvExportType.EMBEDDING:
+                db_manager.embedding_to_csv(output_file, append=merge_mode)
+            if csv_type == CsvExportType.GEX_PRED:
+                db_manager.gex_pred_to_csv(output_file, append=merge_mode)
 
         db_manager.close()
         exit()

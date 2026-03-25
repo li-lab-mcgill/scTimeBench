@@ -29,6 +29,7 @@ class RunType(Enum):
 class CsvExportType(Enum):
     GRAPH_SIM = "graph_sim"
     EMBEDDING = "embedding"
+    GEX_PRED = "gex_pred"
 
 
 class CsvWriteMode(Enum):
@@ -78,7 +79,7 @@ class Config:
             "--to_csv",
             nargs="*",
             choices=[csv_type.value for csv_type in CsvExportType],
-            help="Export results to CSV. Use '--to_csv' with no values to export both graph_sim and embedding, or provide one/both values explicitly.",
+            help="Export results to CSV. Use '--to_csv' with no values to export all csvs, or provide any number of values explicitly.",
         )
 
         parser.add_argument(
@@ -225,7 +226,9 @@ class Config:
                 setattr(self, key, value)
 
         # Normalize csv export selections to enum values for consistent downstream use.
-        if hasattr(self, "to_csv") and self.to_csv is not None:
+        if not hasattr(self, "to_csv"):
+            self.to_csv = None
+        elif self.to_csv is not None:
             self.to_csv = [
                 item if isinstance(item, CsvExportType) else CsvExportType(item)
                 for item in self.to_csv
