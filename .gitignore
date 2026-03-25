@@ -1,5 +1,7 @@
-##Sphinx Files
+# Sphinx Files
 docs/_build/
+docs/source/_static/leaderboard
+
 # Misc. artifacts
 csv_results/
 *.png
@@ -33,6 +35,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 misc/
+misc
 
 # C extensions
 *.so

@@ -1,0 +1,13 @@
+method,dataset,metric,embedding_type,result
+scNODE,SuoDataset,ARI,ground_truth,0.42161769681384487
+scNODE,SuoDataset,ARI,projected,0.562659962688898
+scNODE,GarciaAlonsoDataset,ARI,ground_truth,0.15982044853599053
+scNODE,GarciaAlonsoDataset,ARI,projected,0.23547715334986358
+scNODE,MaDataset,ARI,ground_truth,0.11890654120121995
+scNODE,MaDataset,ARI,projected,0.1619752065803076
+scNODE,SuoDataset,ClassificationEntropy,ground_truth,0.28387368798690993
+scNODE,SuoDataset,ClassificationEntropy,projected,0.28591219746809104
+scNODE,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.4316054806800264
+scNODE,GarciaAlonsoDataset,ClassificationEntropy,projected,0.47041463041787707
+scNODE,MaDataset,ClassificationEntropy,ground_truth,0.29575561327104105
+scNODE,MaDataset,ClassificationEntropy,projected,0.3984318875512625

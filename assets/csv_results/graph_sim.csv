@@ -1,0 +1,1001 @@
+method,dataset,step_setting,metric,time_type,result,threshold_type
+scNODE,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+scNODE,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+scNODE,SuoDataset,multi_step,AUC_PRC,Real Time,0.5399566042554607,prc
+scNODE,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+scNODE,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+scNODE,SuoDataset,multi_step,AUC_ROC,Real Time,0.5166757791142701,prc
+scNODE,SuoDataset,single_step,threshold,Real Time,0.0,prc
+scNODE,SuoDataset,single_step,F1,Real Time,0.16666666666666666,prc
+scNODE,SuoDataset,single_step,AUC_PRC,Real Time,0.14862756887835255,prc
+scNODE,SuoDataset,single_step,PRECISION,Real Time,0.09090909090909091,prc
+scNODE,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+scNODE,SuoDataset,single_step,AUC_ROC,Real Time,0.6126126126126126,prc
+scNODE,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.0,prc
+scNODE,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+scNODE,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4478395061728395,prc
+scNODE,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+scNODE,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+scNODE,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.22839506172839508,prc
+scNODE,GarciaAlonsoDataset,single_step,threshold,Real Time,0.0,prc
+scNODE,GarciaAlonsoDataset,single_step,F1,Real Time,0.2857142857142857,prc
+scNODE,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.14555555555555555,prc
+scNODE,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.16666666666666666,prc
+scNODE,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+scNODE,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.4709677419354838,prc
+scNODE,MaDataset,multi_step,threshold,Real Time,0.0,prc
+scNODE,MaDataset,multi_step,F1,Real Time,0.72,prc
+scNODE,MaDataset,multi_step,AUC_PRC,Real Time,0.5305555555555557,prc
+scNODE,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+scNODE,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+scNODE,MaDataset,multi_step,AUC_ROC,Real Time,0.36507936507936506,prc
+scNODE,MaDataset,single_step,threshold,Real Time,0.0,prc
+scNODE,MaDataset,single_step,F1,Real Time,0.4,prc
+scNODE,MaDataset,single_step,AUC_PRC,Real Time,0.3402777777777778,prc
+scNODE,MaDataset,single_step,PRECISION,Real Time,0.25,prc
+scNODE,MaDataset,single_step,RECALL,Real Time,1.0,prc
+scNODE,MaDataset,single_step,AUC_ROC,Real Time,0.641025641025641,prc
+scNODE,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.0,prc
+scNODE,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+scNODE,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4357193732193732,prc
+scNODE,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+scNODE,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scNODE,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.3487654320987654,prc
+scNODE,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.0,prc
+scNODE,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.2857142857142857,prc
+scNODE,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.18504273504273505,prc
+scNODE,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.16666666666666666,prc
+scNODE,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+scNODE,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.5806451612903225,prc
+scNODE,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+scNODE,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+scNODE,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5984675333018853,prc
+scNODE,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+scNODE,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scNODE,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5984144341170038,prc
+scNODE,SuoDataset,single_step,threshold,Pseudotime,0.9596586,prc
+scNODE,SuoDataset,single_step,F1,Pseudotime,0.18181818181818182,prc
+scNODE,SuoDataset,single_step,AUC_PRC,Pseudotime,0.18978845708936537,prc
+scNODE,SuoDataset,single_step,PRECISION,Pseudotime,1.0,prc
+scNODE,SuoDataset,single_step,RECALL,Pseudotime,0.1,prc
+scNODE,SuoDataset,single_step,AUC_ROC,Pseudotime,0.5612612612612613,prc
+scNODE,MaDataset,multi_step,threshold,Pseudotime,0.0,prc
+scNODE,MaDataset,multi_step,F1,Pseudotime,0.72,prc
+scNODE,MaDataset,multi_step,AUC_PRC,Pseudotime,0.480489417989418,prc
+scNODE,MaDataset,multi_step,PRECISION,Pseudotime,0.5625,prc
+scNODE,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scNODE,MaDataset,multi_step,AUC_ROC,Pseudotime,0.3253968253968254,prc
+scNODE,MaDataset,single_step,threshold,Pseudotime,0.0,prc
+scNODE,MaDataset,single_step,F1,Pseudotime,0.4,prc
+scNODE,MaDataset,single_step,AUC_PRC,Pseudotime,0.2569444444444444,prc
+scNODE,MaDataset,single_step,PRECISION,Pseudotime,0.25,prc
+scNODE,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+scNODE,MaDataset,single_step,AUC_ROC,Pseudotime,0.5769230769230769,prc
+scNODE,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+scNODE,SuoDataset,single_step,JaccardSimilarity,Real Time,0.09090909090909091,prc
+scNODE,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+scNODE,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.16666666666666666,prc
+scNODE,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5625,prc
+scNODE,MaDataset,single_step,JaccardSimilarity,Real Time,0.25,prc
+scNODE,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5,prc
+scNODE,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.16666666666666666,prc
+scNODE,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+scNODE,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.1,prc
+scNODE,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.5625,prc
+scNODE,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.25,prc
+Cooccurrence,SuoDataset,multi_step,threshold,Real Time,0.0010641285576363,prc
+Cooccurrence,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+Cooccurrence,SuoDataset,multi_step,AUC_PRC,Real Time,0.4801838680945384,prc
+Cooccurrence,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+Cooccurrence,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+Cooccurrence,SuoDataset,multi_step,AUC_ROC,Real Time,0.3687807545106616,prc
+Cooccurrence,SuoDataset,single_step,threshold,Real Time,0.0009098932140329,prc
+Cooccurrence,SuoDataset,single_step,F1,Real Time,0.1785714285714285,prc
+Cooccurrence,SuoDataset,single_step,AUC_PRC,Real Time,0.1721732311805841,prc
+Cooccurrence,SuoDataset,single_step,PRECISION,Real Time,0.0980392156862745,prc
+Cooccurrence,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+Cooccurrence,SuoDataset,single_step,AUC_ROC,Real Time,0.6513513513513515,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.0961249338673634,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.3610286595737949,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.1080246913580247,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,threshold,Real Time,0.0346126656661468,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,F1,Real Time,0.2941176470588235,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.1805697151424287,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1724137931034483,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.4580645161290322,prc
+Cooccurrence,MaDataset,multi_step,threshold,Real Time,0.0816771415725086,prc
+Cooccurrence,MaDataset,multi_step,F1,Real Time,0.72,prc
+Cooccurrence,MaDataset,multi_step,AUC_PRC,Real Time,0.470959595959596,prc
+Cooccurrence,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+Cooccurrence,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+Cooccurrence,MaDataset,multi_step,AUC_ROC,Real Time,0.1746031746031746,prc
+Cooccurrence,MaDataset,single_step,threshold,Real Time,0.0816771415725086,prc
+Cooccurrence,MaDataset,single_step,F1,Real Time,0.5454545454545454,prc
+Cooccurrence,MaDataset,single_step,AUC_PRC,Real Time,0.4027777777777778,prc
+Cooccurrence,MaDataset,single_step,PRECISION,Real Time,0.375,prc
+Cooccurrence,MaDataset,single_step,RECALL,Real Time,1.0,prc
+Cooccurrence,MaDataset,single_step,AUC_ROC,Real Time,0.7435897435897436,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.1261204251745392,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4623482909881377,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.6666666666666666,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.3549382716049383,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.1261204251745392,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5882352941176471,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.371031746031746,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.4166666666666667,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8451612903225807,prc
+Cooccurrence,SuoDataset,multi_step,threshold,Pseudotime,0.0036303935097467,prc
+Cooccurrence,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+Cooccurrence,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5365429106021217,prc
+Cooccurrence,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+Cooccurrence,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.4535265172225259,prc
+Cooccurrence,SuoDataset,single_step,threshold,Pseudotime,0.0004699676050885,prc
+Cooccurrence,SuoDataset,single_step,F1,Pseudotime,0.1666666666666666,prc
+Cooccurrence,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1866663283801699,prc
+Cooccurrence,SuoDataset,single_step,PRECISION,Pseudotime,0.0909090909090909,prc
+Cooccurrence,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6423423423423423,prc
+Cooccurrence,MaDataset,multi_step,threshold,Pseudotime,0.2204481297722816,prc
+Cooccurrence,MaDataset,multi_step,F1,Pseudotime,0.8571428571428571,prc
+Cooccurrence,MaDataset,multi_step,AUC_PRC,Pseudotime,0.549074074074074,prc
+Cooccurrence,MaDataset,multi_step,PRECISION,Pseudotime,0.75,prc
+Cooccurrence,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,MaDataset,multi_step,AUC_ROC,Pseudotime,0.238095238095238,prc
+Cooccurrence,MaDataset,single_step,threshold,Pseudotime,0.0714637143644974,prc
+Cooccurrence,MaDataset,single_step,F1,Pseudotime,0.4615384615384615,prc
+Cooccurrence,MaDataset,single_step,AUC_PRC,Pseudotime,0.6,prc
+Cooccurrence,MaDataset,single_step,PRECISION,Pseudotime,0.3,prc
+Cooccurrence,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+Cooccurrence,MaDataset,single_step,AUC_ROC,Pseudotime,0.7692307692307692,prc
+Cooccurrence,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+Cooccurrence,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0980392156862745,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1724137931034483,prc
+Cooccurrence,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5625,prc
+Cooccurrence,MaDataset,single_step,JaccardSimilarity,Real Time,0.375,prc
+Cooccurrence,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.6666666666666666,prc
+Cooccurrence,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.4166666666666667,prc
+Cooccurrence,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+Cooccurrence,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.0909090909090909,prc
+Cooccurrence,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.75,prc
+Cooccurrence,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.3,prc
+Cooccurrence,SuoDataset,multi_step,threshold,Real Time,0.1608471246874481,False
+Cooccurrence,SuoDataset,multi_step,F1,Real Time,0.5494505494505495,False
+Cooccurrence,SuoDataset,multi_step,AUC_PRC,Real Time,0.4801838680945384,False
+Cooccurrence,SuoDataset,multi_step,PRECISION,Real Time,0.8620689655172413,False
+Cooccurrence,SuoDataset,multi_step,RECALL,Real Time,0.4032258064516129,False
+Cooccurrence,SuoDataset,multi_step,AUC_ROC,Real Time,0.3687807545106616,False
+Cooccurrence,SuoDataset,single_step,threshold,Real Time,0.1639422620602786,False
+Cooccurrence,SuoDataset,single_step,F1,Real Time,0.3636363636363636,False
+Cooccurrence,SuoDataset,single_step,AUC_PRC,Real Time,0.1721732311805841,False
+Cooccurrence,SuoDataset,single_step,PRECISION,Real Time,0.3333333333333333,False
+Cooccurrence,SuoDataset,single_step,RECALL,Real Time,0.4,False
+Cooccurrence,SuoDataset,single_step,AUC_ROC,Real Time,0.6513513513513515,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.0989963667551628,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6938775510204082,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.3610286595737949,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5483870967741935,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,RECALL,Real Time,0.9444444444444444,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.1080246913580247,False
+Cooccurrence,GarciaAlonsoDataset,single_step,threshold,Real Time,0.3340147460791137,False
+Cooccurrence,GarciaAlonsoDataset,single_step,F1,Real Time,0.25,False
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.1805697151424287,False
+Cooccurrence,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.3333333333333333,False
+Cooccurrence,GarciaAlonsoDataset,single_step,RECALL,Real Time,0.2,False
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.4580645161290322,False
+Cooccurrence,MaDataset,multi_step,threshold,Real Time,0.2913894527326705,False
+Cooccurrence,MaDataset,multi_step,F1,Real Time,0.6666666666666666,False
+Cooccurrence,MaDataset,multi_step,AUC_PRC,Real Time,0.470959595959596,False
+Cooccurrence,MaDataset,multi_step,PRECISION,Real Time,0.8333333333333334,False
+Cooccurrence,MaDataset,multi_step,RECALL,Real Time,0.5555555555555556,False
+Cooccurrence,MaDataset,multi_step,AUC_ROC,Real Time,0.1746031746031746,False
+Cooccurrence,MaDataset,single_step,threshold,Real Time,0.0816771415725086,False
+Cooccurrence,MaDataset,single_step,F1,Real Time,0.5454545454545454,False
+Cooccurrence,MaDataset,single_step,AUC_PRC,Real Time,0.4027777777777778,False
+Cooccurrence,MaDataset,single_step,PRECISION,Real Time,0.375,False
+Cooccurrence,MaDataset,single_step,RECALL,Real Time,1.0,False
+Cooccurrence,MaDataset,single_step,AUC_ROC,Real Time,0.7435897435897436,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.1261204251745392,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4623482909881377,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.6666666666666666,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.3549382716049383,False
+Cooccurrence,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.1261204251745392,False
+Cooccurrence,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5882352941176471,False
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.371031746031746,False
+Cooccurrence,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.4166666666666667,False
+Cooccurrence,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,False
+Cooccurrence,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8451612903225807,False
+Cooccurrence,SuoDataset,multi_step,threshold,Pseudotime,0.1860135567147769,False
+Cooccurrence,SuoDataset,multi_step,F1,Pseudotime,0.5684210526315789,False
+Cooccurrence,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5365429106021217,False
+Cooccurrence,SuoDataset,multi_step,PRECISION,Pseudotime,0.8181818181818182,False
+Cooccurrence,SuoDataset,multi_step,RECALL,Pseudotime,0.4354838709677419,False
+Cooccurrence,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.4535265172225259,False
+Cooccurrence,SuoDataset,single_step,threshold,Pseudotime,0.1257910371023809,False
+Cooccurrence,SuoDataset,single_step,F1,Pseudotime,0.238095238095238,False
+Cooccurrence,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1866663283801699,False
+Cooccurrence,SuoDataset,single_step,PRECISION,Pseudotime,0.15625,False
+Cooccurrence,SuoDataset,single_step,RECALL,Pseudotime,0.5,False
+Cooccurrence,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6423423423423423,False
+Cooccurrence,MaDataset,multi_step,threshold,Pseudotime,0.2204481297722816,False
+Cooccurrence,MaDataset,multi_step,F1,Pseudotime,0.8571428571428571,False
+Cooccurrence,MaDataset,multi_step,AUC_PRC,Pseudotime,0.549074074074074,False
+Cooccurrence,MaDataset,multi_step,PRECISION,Pseudotime,0.75,False
+Cooccurrence,MaDataset,multi_step,RECALL,Pseudotime,1.0,False
+Cooccurrence,MaDataset,multi_step,AUC_ROC,Pseudotime,0.238095238095238,False
+Cooccurrence,MaDataset,single_step,threshold,Pseudotime,0.2248134310300052,False
+Cooccurrence,MaDataset,single_step,F1,Pseudotime,0.5714285714285714,False
+Cooccurrence,MaDataset,single_step,AUC_PRC,Pseudotime,0.6,False
+Cooccurrence,MaDataset,single_step,PRECISION,Pseudotime,0.5,False
+Cooccurrence,MaDataset,single_step,RECALL,Pseudotime,0.6666666666666666,False
+Cooccurrence,MaDataset,single_step,AUC_ROC,Pseudotime,0.7692307692307692,False
+Cooccurrence,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.3787878787878788,False
+Cooccurrence,SuoDataset,single_step,JaccardSimilarity,Real Time,0.2222222222222222,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.53125,False
+Cooccurrence,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1428571428571428,False
+Cooccurrence,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5,False
+Cooccurrence,MaDataset,single_step,JaccardSimilarity,Real Time,0.375,False
+Cooccurrence,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.6666666666666666,False
+Cooccurrence,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.4166666666666667,False
+Cooccurrence,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.3970588235294117,False
+Cooccurrence,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.1351351351351351,False
+Cooccurrence,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.75,False
+Cooccurrence,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.4,False
+Moscot,SuoDataset,multi_step,threshold,Real Time,0.072408535,False
+Moscot,SuoDataset,multi_step,F1,Real Time,0.7522935779816514,False
+Moscot,SuoDataset,multi_step,AUC_PRC,Real Time,0.5853197277539466,False
+Moscot,SuoDataset,multi_step,PRECISION,Real Time,0.8723404255319149,False
+Moscot,SuoDataset,multi_step,RECALL,Real Time,0.6612903225806451,False
+Moscot,SuoDataset,multi_step,AUC_ROC,Real Time,0.5537178786221979,False
+Moscot,SuoDataset,single_step,threshold,Real Time,0.028251829,False
+Moscot,SuoDataset,single_step,F1,Real Time,0.3111111111111111,False
+Moscot,SuoDataset,single_step,AUC_PRC,Real Time,0.27140132290892,False
+Moscot,SuoDataset,single_step,PRECISION,Real Time,0.2,False
+Moscot,SuoDataset,single_step,RECALL,Real Time,0.7,False
+Moscot,SuoDataset,single_step,AUC_ROC,Real Time,0.6765765765765765,False
+Moscot,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.32776618,False
+Moscot,GarciaAlonsoDataset,multi_step,F1,Real Time,0.56,False
+Moscot,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4646894187395995,False
+Moscot,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,1.0,False
+Moscot,GarciaAlonsoDataset,multi_step,RECALL,Real Time,0.3888888888888889,False
+Moscot,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.2993827160493827,False
+Moscot,GarciaAlonsoDataset,single_step,threshold,Real Time,0.030271398,False
+Moscot,GarciaAlonsoDataset,single_step,F1,Real Time,0.3448275862068966,False
+Moscot,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.3670475659606094,False
+Moscot,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.2083333333333333,False
+Moscot,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,False
+Moscot,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.6451612903225806,False
+Moscot,MaDataset,multi_step,threshold,Real Time,0.1369748,False
+Moscot,MaDataset,multi_step,F1,Real Time,0.875,False
+Moscot,MaDataset,multi_step,AUC_PRC,Real Time,0.6438271604938273,False
+Moscot,MaDataset,multi_step,PRECISION,Real Time,1.0,False
+Moscot,MaDataset,multi_step,RECALL,Real Time,0.7777777777777778,False
+Moscot,MaDataset,multi_step,AUC_ROC,Real Time,0.4285714285714285,False
+Moscot,MaDataset,single_step,threshold,Real Time,0.1369748,False
+Moscot,MaDataset,single_step,F1,Real Time,0.8,False
+Moscot,MaDataset,single_step,AUC_PRC,Real Time,0.7777777777777777,False
+Moscot,MaDataset,single_step,PRECISION,Real Time,1.0,False
+Moscot,MaDataset,single_step,RECALL,Real Time,0.6666666666666666,False
+Moscot,MaDataset,single_step,AUC_ROC,Real Time,0.8461538461538461,False
+Moscot,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.07638191,False
+Moscot,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8372093023255814,False
+Moscot,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.5222879991720571,False
+Moscot,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.72,False
+Moscot,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,False
+Moscot,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.4444444444444444,False
+Moscot,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.066715725,False
+Moscot,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5882352941176471,False
+Moscot,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.5360606060606061,False
+Moscot,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.4166666666666667,False
+Moscot,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,False
+Moscot,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8709677419354839,False
+Moscot,SuoDataset,multi_step,threshold,Pseudotime,0.030846484,False
+Moscot,SuoDataset,multi_step,F1,Pseudotime,0.7424242424242424,False
+Moscot,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5891701860410762,False
+Moscot,SuoDataset,multi_step,PRECISION,Pseudotime,0.7,False
+Moscot,SuoDataset,multi_step,RECALL,Pseudotime,0.7903225806451613,False
+Moscot,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5680699835975942,False
+Moscot,SuoDataset,single_step,threshold,Pseudotime,0.07499062,False
+Moscot,SuoDataset,single_step,F1,Pseudotime,0.3870967741935484,False
+Moscot,SuoDataset,single_step,AUC_PRC,Pseudotime,0.2234360859658959,False
+Moscot,SuoDataset,single_step,PRECISION,Pseudotime,0.2857142857142857,False
+Moscot,SuoDataset,single_step,RECALL,Pseudotime,0.6,False
+Moscot,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6833333333333333,False
+Moscot,MaDataset,multi_step,threshold,Pseudotime,0.112059474,False
+Moscot,MaDataset,multi_step,F1,Pseudotime,0.9473684210526316,False
+Moscot,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5987654320987654,False
+Moscot,MaDataset,multi_step,PRECISION,Pseudotime,0.9,False
+Moscot,MaDataset,multi_step,RECALL,Pseudotime,1.0,False
+Moscot,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5079365079365079,False
+Moscot,MaDataset,single_step,threshold,Pseudotime,0.09785203,False
+Moscot,MaDataset,single_step,F1,Pseudotime,0.8571428571428571,False
+Moscot,MaDataset,single_step,AUC_PRC,Pseudotime,0.6388888888888888,False
+Moscot,MaDataset,single_step,PRECISION,Pseudotime,0.75,False
+Moscot,MaDataset,single_step,RECALL,Pseudotime,1.0,False
+Moscot,MaDataset,single_step,AUC_ROC,Pseudotime,0.9230769230769232,False
+Moscot,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.6029411764705882,False
+Moscot,SuoDataset,single_step,JaccardSimilarity,Real Time,0.1842105263157894,False
+Moscot,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.3888888888888889,False
+Moscot,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.2083333333333333,False
+Moscot,MaDataset,multi_step,JaccardSimilarity,Real Time,0.7777777777777778,False
+Moscot,MaDataset,single_step,JaccardSimilarity,Real Time,0.6666666666666666,False
+Moscot,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.72,False
+Moscot,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.4166666666666667,False
+Moscot,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5903614457831325,False
+Moscot,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.24,False
+Moscot,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.9,False
+Moscot,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.75,False
+Moscot,SuoDataset,multi_step,threshold,Real Time,0.062115148,prc
+Moscot,SuoDataset,multi_step,F1,Real Time,0.7692307692307693,prc
+Moscot,SuoDataset,multi_step,AUC_PRC,Real Time,0.5853197277539466,prc
+Moscot,SuoDataset,multi_step,PRECISION,Real Time,0.8181818181818182,prc
+Moscot,SuoDataset,multi_step,RECALL,Real Time,0.7258064516129032,prc
+Moscot,SuoDataset,multi_step,AUC_ROC,Real Time,0.5537178786221979,prc
+Moscot,SuoDataset,single_step,threshold,Real Time,0.0,prc
+Moscot,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+Moscot,SuoDataset,single_step,AUC_PRC,Real Time,0.27140132290892,prc
+Moscot,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+Moscot,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+Moscot,SuoDataset,single_step,AUC_ROC,Real Time,0.6765765765765765,prc
+Moscot,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.08138889,prc
+Moscot,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+Moscot,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4646894187395995,prc
+Moscot,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+Moscot,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+Moscot,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.2993827160493827,prc
+Moscot,GarciaAlonsoDataset,single_step,threshold,Real Time,0.030271398,prc
+Moscot,GarciaAlonsoDataset,single_step,F1,Real Time,0.3448275862068966,prc
+Moscot,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.3670475659606094,prc
+Moscot,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.2083333333333333,prc
+Moscot,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+Moscot,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.6451612903225806,prc
+Moscot,MaDataset,multi_step,threshold,Real Time,0.1369748,prc
+Moscot,MaDataset,multi_step,F1,Real Time,0.875,prc
+Moscot,MaDataset,multi_step,AUC_PRC,Real Time,0.6438271604938273,prc
+Moscot,MaDataset,multi_step,PRECISION,Real Time,1.0,prc
+Moscot,MaDataset,multi_step,RECALL,Real Time,0.7777777777777778,prc
+Moscot,MaDataset,multi_step,AUC_ROC,Real Time,0.4285714285714285,prc
+Moscot,MaDataset,single_step,threshold,Real Time,0.03009027,prc
+Moscot,MaDataset,single_step,F1,Real Time,0.5,prc
+Moscot,MaDataset,single_step,AUC_PRC,Real Time,0.7777777777777777,prc
+Moscot,MaDataset,single_step,PRECISION,Real Time,0.3333333333333333,prc
+Moscot,MaDataset,single_step,RECALL,Real Time,1.0,prc
+Moscot,MaDataset,single_step,AUC_ROC,Real Time,0.8461538461538461,prc
+Moscot,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.07638191,prc
+Moscot,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8372093023255814,prc
+Moscot,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.5222879991720571,prc
+Moscot,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.72,prc
+Moscot,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Moscot,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.4444444444444444,prc
+Moscot,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.066715725,prc
+Moscot,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5882352941176471,prc
+Moscot,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.5360606060606061,prc
+Moscot,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.4166666666666667,prc
+Moscot,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Moscot,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8709677419354839,prc
+Moscot,SuoDataset,multi_step,threshold,Pseudotime,0.026381668,prc
+Moscot,SuoDataset,multi_step,F1,Pseudotime,0.7482014388489209,prc
+Moscot,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5891701860410762,prc
+Moscot,SuoDataset,multi_step,PRECISION,Pseudotime,0.6753246753246753,prc
+Moscot,SuoDataset,multi_step,RECALL,Pseudotime,0.8387096774193549,prc
+Moscot,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5680699835975942,prc
+Moscot,SuoDataset,single_step,threshold,Pseudotime,0.00012528973,prc
+Moscot,SuoDataset,single_step,F1,Pseudotime,0.1904761904761904,prc
+Moscot,SuoDataset,single_step,AUC_PRC,Pseudotime,0.2234360859658959,prc
+Moscot,SuoDataset,single_step,PRECISION,Pseudotime,0.1052631578947368,prc
+Moscot,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Moscot,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6833333333333333,prc
+Moscot,MaDataset,multi_step,threshold,Pseudotime,0.112059474,prc
+Moscot,MaDataset,multi_step,F1,Pseudotime,0.9473684210526316,prc
+Moscot,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5987654320987654,prc
+Moscot,MaDataset,multi_step,PRECISION,Pseudotime,0.9,prc
+Moscot,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Moscot,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5079365079365079,prc
+Moscot,MaDataset,single_step,threshold,Pseudotime,0.09785203,prc
+Moscot,MaDataset,single_step,F1,Pseudotime,0.8571428571428571,prc
+Moscot,MaDataset,single_step,AUC_PRC,Pseudotime,0.6388888888888888,prc
+Moscot,MaDataset,single_step,PRECISION,Pseudotime,0.75,prc
+Moscot,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+Moscot,MaDataset,single_step,AUC_ROC,Pseudotime,0.9230769230769232,prc
+Moscot,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.625,prc
+Moscot,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0909090909090909,prc
+Moscot,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+Moscot,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.2083333333333333,prc
+Moscot,MaDataset,multi_step,JaccardSimilarity,Real Time,0.7777777777777778,prc
+Moscot,MaDataset,single_step,JaccardSimilarity,Real Time,0.3333333333333333,prc
+Moscot,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.72,prc
+Moscot,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.4166666666666667,prc
+Moscot,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5977011494252874,prc
+Moscot,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.1052631578947368,prc
+Moscot,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.9,prc
+Moscot,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.75,prc
+WOT,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.46137786,False
+WOT,GarciaAlonsoDataset,multi_step,F1,Real Time,0.56,False
+WOT,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4397515845452294,False
+WOT,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,1.0,False
+WOT,GarciaAlonsoDataset,multi_step,RECALL,Real Time,0.3888888888888889,False
+WOT,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.2407407407407407,False
+WOT,GarciaAlonsoDataset,single_step,threshold,Real Time,0.022727273,False
+WOT,GarciaAlonsoDataset,single_step,F1,Real Time,0.3703703703703703,False
+WOT,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.3698989898989899,False
+WOT,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.2272727272727272,False
+WOT,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,False
+WOT,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.6645161290322581,False
+WOT,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.07437186,False
+WOT,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8372093023255814,False
+WOT,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.5486217888391801,False
+WOT,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.72,False
+WOT,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,False
+WOT,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.4645061728395062,False
+WOT,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.033357862,False
+WOT,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5555555555555556,False
+WOT,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.5759706959706961,False
+WOT,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.3846153846153846,False
+WOT,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,False
+WOT,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8774193548387097,False
+WOT,MaDataset,multi_step,threshold,Real Time,0.086834736,False
+WOT,MaDataset,multi_step,F1,Real Time,0.875,False
+WOT,MaDataset,multi_step,AUC_PRC,Real Time,0.7268518518518519,False
+WOT,MaDataset,multi_step,PRECISION,Real Time,1.0,False
+WOT,MaDataset,multi_step,RECALL,Real Time,0.7777777777777778,False
+WOT,MaDataset,multi_step,AUC_ROC,Real Time,0.6031746031746031,False
+WOT,MaDataset,single_step,threshold,Real Time,0.007021063,False
+WOT,MaDataset,single_step,F1,Real Time,0.6666666666666666,False
+WOT,MaDataset,single_step,AUC_PRC,Real Time,0.8333333333333333,False
+WOT,MaDataset,single_step,PRECISION,Real Time,0.5,False
+WOT,MaDataset,single_step,RECALL,Real Time,1.0,False
+WOT,MaDataset,single_step,AUC_ROC,Real Time,0.9230769230769232,False
+WOT,MaDataset,multi_step,threshold,Pseudotime,0.09471366,False
+WOT,MaDataset,multi_step,F1,Pseudotime,0.9473684210526316,False
+WOT,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5987654320987654,False
+WOT,MaDataset,multi_step,PRECISION,Pseudotime,0.9,False
+WOT,MaDataset,multi_step,RECALL,Pseudotime,1.0,False
+WOT,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5079365079365079,False
+WOT,MaDataset,single_step,threshold,Pseudotime,0.09471366,False
+WOT,MaDataset,single_step,F1,Pseudotime,0.8571428571428571,False
+WOT,MaDataset,single_step,AUC_PRC,Pseudotime,0.6388888888888888,False
+WOT,MaDataset,single_step,PRECISION,Pseudotime,0.75,False
+WOT,MaDataset,single_step,RECALL,Pseudotime,1.0,False
+WOT,MaDataset,single_step,AUC_ROC,Pseudotime,0.9230769230769232,False
+WOT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.3888888888888889,False
+WOT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.2272727272727272,False
+WOT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.72,False
+WOT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.3846153846153846,False
+WOT,MaDataset,multi_step,JaccardSimilarity,Real Time,0.7777777777777778,False
+WOT,MaDataset,single_step,JaccardSimilarity,Real Time,0.5,False
+WOT,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.9,False
+WOT,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.75,False
+WOT,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.06251576,prc
+WOT,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+WOT,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4397515845452294,prc
+WOT,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+WOT,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+WOT,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.2407407407407407,prc
+WOT,GarciaAlonsoDataset,single_step,threshold,Real Time,0.022727273,prc
+WOT,GarciaAlonsoDataset,single_step,F1,Real Time,0.3703703703703703,prc
+WOT,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.3698989898989899,prc
+WOT,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.2272727272727272,prc
+WOT,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+WOT,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.6645161290322581,prc
+WOT,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.07437186,prc
+WOT,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8372093023255814,prc
+WOT,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.5486217888391801,prc
+WOT,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.72,prc
+WOT,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+WOT,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.4645061728395062,prc
+WOT,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.033357862,prc
+WOT,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.5555555555555556,prc
+WOT,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.5759706959706961,prc
+WOT,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.3846153846153846,prc
+WOT,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+WOT,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.8774193548387097,prc
+WOT,MaDataset,multi_step,threshold,Real Time,0.086834736,prc
+WOT,MaDataset,multi_step,F1,Real Time,0.875,prc
+WOT,MaDataset,multi_step,AUC_PRC,Real Time,0.7268518518518519,prc
+WOT,MaDataset,multi_step,PRECISION,Real Time,1.0,prc
+WOT,MaDataset,multi_step,RECALL,Real Time,0.7777777777777778,prc
+WOT,MaDataset,multi_step,AUC_ROC,Real Time,0.6031746031746031,prc
+WOT,MaDataset,single_step,threshold,Real Time,0.007021063,prc
+WOT,MaDataset,single_step,F1,Real Time,0.6666666666666666,prc
+WOT,MaDataset,single_step,AUC_PRC,Real Time,0.8333333333333333,prc
+WOT,MaDataset,single_step,PRECISION,Real Time,0.5,prc
+WOT,MaDataset,single_step,RECALL,Real Time,1.0,prc
+WOT,MaDataset,single_step,AUC_ROC,Real Time,0.9230769230769232,prc
+WOT,MaDataset,multi_step,threshold,Pseudotime,0.09471366,prc
+WOT,MaDataset,multi_step,F1,Pseudotime,0.9473684210526316,prc
+WOT,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5987654320987654,prc
+WOT,MaDataset,multi_step,PRECISION,Pseudotime,0.9,prc
+WOT,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+WOT,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5079365079365079,prc
+WOT,MaDataset,single_step,threshold,Pseudotime,0.09471366,prc
+WOT,MaDataset,single_step,F1,Pseudotime,0.8571428571428571,prc
+WOT,MaDataset,single_step,AUC_PRC,Pseudotime,0.6388888888888888,prc
+WOT,MaDataset,single_step,PRECISION,Pseudotime,0.75,prc
+WOT,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+WOT,MaDataset,single_step,AUC_ROC,Pseudotime,0.9230769230769232,prc
+WOT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+WOT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.2272727272727272,prc
+WOT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.72,prc
+WOT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.3846153846153846,prc
+WOT,MaDataset,multi_step,JaccardSimilarity,Real Time,0.7777777777777778,prc
+WOT,MaDataset,single_step,JaccardSimilarity,Real Time,0.5,prc
+WOT,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.9,prc
+WOT,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.75,prc
+scIMF,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+scIMF,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+scIMF,SuoDataset,multi_step,AUC_PRC,Real Time,0.5088446855931978,prc
+scIMF,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+scIMF,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+scIMF,SuoDataset,multi_step,AUC_ROC,Real Time,0.411563696008748,prc
+scIMF,SuoDataset,single_step,threshold,Real Time,0.0,prc
+scIMF,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+scIMF,SuoDataset,single_step,AUC_PRC,Real Time,0.1216638176120419,prc
+scIMF,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+scIMF,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+scIMF,SuoDataset,single_step,AUC_ROC,Real Time,0.6076576576576577,prc
+scIMF,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.06284658,prc
+scIMF,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+scIMF,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.3887165537765296,prc
+scIMF,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+scIMF,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+scIMF,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.1820987654320987,prc
+scIMF,GarciaAlonsoDataset,single_step,threshold,Real Time,0.042349383,prc
+scIMF,GarciaAlonsoDataset,single_step,F1,Real Time,0.303030303030303,prc
+scIMF,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.1974576787236633,prc
+scIMF,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1785714285714285,prc
+scIMF,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+scIMF,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.535483870967742,prc
+MIOFlow,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+MIOFlow,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+MIOFlow,SuoDataset,multi_step,AUC_PRC,Real Time,0.5836538430314756,prc
+MIOFlow,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+MIOFlow,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+MIOFlow,SuoDataset,multi_step,AUC_ROC,Real Time,0.5060142154182614,prc
+MIOFlow,SuoDataset,single_step,threshold,Real Time,0.0,prc
+MIOFlow,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+MIOFlow,SuoDataset,single_step,AUC_PRC,Real Time,0.212826073448083,prc
+MIOFlow,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+MIOFlow,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+MIOFlow,SuoDataset,single_step,AUC_ROC,Real Time,0.5986486486486486,prc
+scIMF,MaDataset,multi_step,threshold,Real Time,0.07321966,prc
+scIMF,MaDataset,multi_step,F1,Real Time,0.72,prc
+scIMF,MaDataset,multi_step,AUC_PRC,Real Time,0.4282828282828282,prc
+scIMF,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+scIMF,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+scIMF,MaDataset,multi_step,AUC_ROC,Real Time,0.126984126984127,prc
+scIMF,MaDataset,single_step,threshold,Real Time,0.063189566,prc
+scIMF,MaDataset,single_step,F1,Real Time,0.4615384615384615,prc
+scIMF,MaDataset,single_step,AUC_PRC,Real Time,0.2388888888888889,prc
+scIMF,MaDataset,single_step,PRECISION,Real Time,0.3,prc
+scIMF,MaDataset,single_step,RECALL,Real Time,1.0,prc
+scIMF,MaDataset,single_step,AUC_ROC,Real Time,0.5384615384615384,prc
+CellMNN,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+CellMNN,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+CellMNN,SuoDataset,multi_step,AUC_PRC,Real Time,0.5509758744348956,prc
+CellMNN,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+CellMNN,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+CellMNN,SuoDataset,multi_step,AUC_ROC,Real Time,0.5117550574084199,prc
+CellMNN,SuoDataset,single_step,threshold,Real Time,0.0,prc
+CellMNN,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+CellMNN,SuoDataset,single_step,AUC_PRC,Real Time,0.1562274614170984,prc
+CellMNN,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+CellMNN,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+CellMNN,SuoDataset,single_step,AUC_ROC,Real Time,0.6698198198198198,prc
+scIMF,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.08484006,prc
+scIMF,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+scIMF,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.3999629296412922,prc
+scIMF,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+scIMF,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scIMF,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.2716049382716049,prc
+scIMF,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.08484006,prc
+scIMF,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.4761904761904761,prc
+scIMF,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.2736111111111111,prc
+scIMF,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.3125,prc
+scIMF,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+scIMF,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.7612903225806451,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.035149384,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.3754397851708878,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.1975308641975308,prc
+MIOFlow,GarciaAlonsoDataset,single_step,threshold,Real Time,0.014368541,prc
+MIOFlow,GarciaAlonsoDataset,single_step,F1,Real Time,0.303030303030303,prc
+MIOFlow,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.1587445887445887,prc
+MIOFlow,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1785714285714285,prc
+MIOFlow,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+MIOFlow,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.5096774193548387,prc
+MIOFlow,MaDataset,multi_step,threshold,Real Time,0.083333336,prc
+MIOFlow,MaDataset,multi_step,F1,Real Time,0.72,prc
+MIOFlow,MaDataset,multi_step,AUC_PRC,Real Time,0.456060606060606,prc
+MIOFlow,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+MIOFlow,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+MIOFlow,MaDataset,multi_step,AUC_ROC,Real Time,0.2063492063492064,prc
+MIOFlow,MaDataset,single_step,threshold,Real Time,0.033099297,prc
+MIOFlow,MaDataset,single_step,F1,Real Time,0.4285714285714285,prc
+MIOFlow,MaDataset,single_step,AUC_PRC,Real Time,0.3131313131313131,prc
+MIOFlow,MaDataset,single_step,PRECISION,Real Time,0.2727272727272727,prc
+MIOFlow,MaDataset,single_step,RECALL,Real Time,1.0,prc
+MIOFlow,MaDataset,single_step,AUC_ROC,Real Time,0.641025641025641,prc
+CellMNN,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.003024956,prc
+CellMNN,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+CellMNN,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4362938596491229,prc
+CellMNN,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+CellMNN,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+CellMNN,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.2808641975308641,prc
+CellMNN,GarciaAlonsoDataset,single_step,threshold,Real Time,0.0,prc
+CellMNN,GarciaAlonsoDataset,single_step,F1,Real Time,0.2857142857142857,prc
+CellMNN,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.2265497076023392,prc
+CellMNN,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1666666666666666,prc
+CellMNN,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+CellMNN,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.6322580645161291,prc
+PRESCIENT,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+PRESCIENT,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+PRESCIENT,SuoDataset,multi_step,AUC_PRC,Real Time,0.5392814469283593,prc
+PRESCIENT,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+PRESCIENT,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+PRESCIENT,SuoDataset,multi_step,AUC_ROC,Real Time,0.4592673592126845,prc
+PRESCIENT,SuoDataset,single_step,threshold,Real Time,0.0,prc
+PRESCIENT,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+PRESCIENT,SuoDataset,single_step,AUC_PRC,Real Time,0.1112802966787303,prc
+PRESCIENT,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+PRESCIENT,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+PRESCIENT,SuoDataset,single_step,AUC_ROC,Real Time,0.5662162162162162,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.0020100502,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4319515179809297,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+MIOFlow,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.3209876543209876,prc
+MIOFlow,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.0020100502,prc
+MIOFlow,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.4,prc
+MIOFlow,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.2870588235294117,prc
+MIOFlow,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.25,prc
+MIOFlow,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+MIOFlow,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.7354838709677419,prc
+CellMNN,MaDataset,multi_step,threshold,Real Time,0.029411765,prc
+CellMNN,MaDataset,multi_step,F1,Real Time,0.8181818181818182,prc
+CellMNN,MaDataset,multi_step,AUC_PRC,Real Time,0.5107142857142857,prc
+CellMNN,MaDataset,multi_step,PRECISION,Real Time,0.6923076923076923,prc
+CellMNN,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+CellMNN,MaDataset,multi_step,AUC_ROC,Real Time,0.4444444444444444,prc
+CellMNN,MaDataset,single_step,threshold,Real Time,0.029411765,prc
+CellMNN,MaDataset,single_step,F1,Real Time,0.6666666666666666,prc
+CellMNN,MaDataset,single_step,AUC_PRC,Real Time,0.3833333333333333,prc
+CellMNN,MaDataset,single_step,PRECISION,Real Time,0.5,prc
+CellMNN,MaDataset,single_step,RECALL,Real Time,1.0,prc
+CellMNN,MaDataset,single_step,AUC_ROC,Real Time,0.7692307692307693,prc
+scIMF,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+scIMF,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+scIMF,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5528599105859078,prc
+scIMF,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+scIMF,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scIMF,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.462547840349918,prc
+scIMF,SuoDataset,single_step,threshold,Pseudotime,0.0,prc
+scIMF,SuoDataset,single_step,F1,Pseudotime,0.1666666666666666,prc
+scIMF,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1500423439228368,prc
+scIMF,SuoDataset,single_step,PRECISION,Pseudotime,0.0909090909090909,prc
+scIMF,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+scIMF,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6666666666666667,prc
+scIMF,MaDataset,multi_step,threshold,Pseudotime,0.17648679,prc
+scIMF,MaDataset,multi_step,F1,Pseudotime,0.8181818181818182,prc
+scIMF,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5043209876543211,prc
+scIMF,MaDataset,multi_step,PRECISION,Pseudotime,0.6923076923076923,prc
+scIMF,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+scIMF,MaDataset,multi_step,AUC_ROC,Pseudotime,0.3968253968253968,prc
+scIMF,MaDataset,single_step,threshold,Pseudotime,0.17648679,prc
+scIMF,MaDataset,single_step,F1,Pseudotime,0.6666666666666666,prc
+scIMF,MaDataset,single_step,AUC_PRC,Pseudotime,0.4111111111111111,prc
+scIMF,MaDataset,single_step,PRECISION,Pseudotime,0.5,prc
+scIMF,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+scIMF,MaDataset,single_step,AUC_ROC,Pseudotime,0.7948717948717949,prc
+CellMNN,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.0046602893,prc
+CellMNN,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+CellMNN,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4193160597572362,prc
+CellMNN,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+CellMNN,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+CellMNN,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.2901234567901234,prc
+CellMNN,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.0,prc
+CellMNN,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.2857142857142857,prc
+CellMNN,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.2163888888888888,prc
+CellMNN,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.1666666666666666,prc
+CellMNN,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+CellMNN,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.6193548387096774,prc
+scIMF,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+scIMF,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0909090909090909,prc
+scIMF,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+scIMF,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1785714285714285,prc
+scIMF,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5625,prc
+scIMF,MaDataset,single_step,JaccardSimilarity,Real Time,0.3,prc
+scIMF,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5,prc
+scIMF,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.3125,prc
+scIMF,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+scIMF,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.0909090909090909,prc
+scIMF,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.6923076923076923,prc
+scIMF,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.5,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.00027777778,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4264140180806848,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.337962962962963,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,threshold,Real Time,0.0,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,F1,Real Time,0.2857142857142857,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.19,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1666666666666666,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.535483870967742,prc
+CellMNN,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+CellMNN,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+CellMNN,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5568371725655404,prc
+CellMNN,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+CellMNN,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+CellMNN,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5306178239475123,prc
+CellMNN,SuoDataset,single_step,threshold,Pseudotime,0.0,prc
+CellMNN,SuoDataset,single_step,F1,Pseudotime,0.1666666666666666,prc
+CellMNN,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1434310009504735,prc
+CellMNN,SuoDataset,single_step,PRECISION,Pseudotime,0.0909090909090909,prc
+CellMNN,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+CellMNN,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6657657657657658,prc
+PRESCIENT,MaDataset,multi_step,threshold,Real Time,0.13039118,prc
+PRESCIENT,MaDataset,multi_step,F1,Real Time,0.8181818181818182,prc
+PRESCIENT,MaDataset,multi_step,AUC_PRC,Real Time,0.6514550264550265,prc
+PRESCIENT,MaDataset,multi_step,PRECISION,Real Time,0.6923076923076923,prc
+PRESCIENT,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+PRESCIENT,MaDataset,multi_step,AUC_ROC,Real Time,0.4603174603174603,prc
+PRESCIENT,MaDataset,single_step,threshold,Real Time,0.13039118,prc
+PRESCIENT,MaDataset,single_step,F1,Real Time,0.5454545454545454,prc
+PRESCIENT,MaDataset,single_step,AUC_PRC,Real Time,0.6805555555555556,prc
+PRESCIENT,MaDataset,single_step,PRECISION,Real Time,0.375,prc
+PRESCIENT,MaDataset,single_step,RECALL,Real Time,1.0,prc
+PRESCIENT,MaDataset,single_step,AUC_ROC,Real Time,0.8461538461538461,prc
+CellMNN,MaDataset,multi_step,threshold,Pseudotime,0.030011013,prc
+CellMNN,MaDataset,multi_step,F1,Pseudotime,0.8181818181818182,prc
+CellMNN,MaDataset,multi_step,AUC_PRC,Pseudotime,0.6051587301587302,prc
+CellMNN,MaDataset,multi_step,PRECISION,Pseudotime,0.6923076923076923,prc
+CellMNN,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+CellMNN,MaDataset,multi_step,AUC_ROC,Pseudotime,0.4761904761904762,prc
+CellMNN,MaDataset,single_step,threshold,Pseudotime,0.030011013,prc
+CellMNN,MaDataset,single_step,F1,Pseudotime,0.6666666666666666,prc
+CellMNN,MaDataset,single_step,AUC_PRC,Pseudotime,0.6666666666666667,prc
+CellMNN,MaDataset,single_step,PRECISION,Pseudotime,0.5,prc
+CellMNN,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+CellMNN,MaDataset,single_step,AUC_ROC,Pseudotime,0.8717948717948718,prc
+CellMNN,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+CellMNN,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0909090909090909,prc
+CellMNN,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+CellMNN,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1666666666666666,prc
+CellMNN,MaDataset,multi_step,JaccardSimilarity,Real Time,0.6923076923076923,prc
+CellMNN,MaDataset,single_step,JaccardSimilarity,Real Time,0.5,prc
+CellMNN,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5,prc
+CellMNN,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.1666666666666666,prc
+CellMNN,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+CellMNN,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.0909090909090909,prc
+CellMNN,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.6923076923076923,prc
+CellMNN,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.5,prc
+PISDE,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+PISDE,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+PISDE,SuoDataset,multi_step,AUC_PRC,Real Time,0.512396694214876,prc
+PISDE,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+PISDE,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+PISDE,SuoDataset,multi_step,AUC_ROC,Real Time,0.4152542372881356,prc
+PISDE,SuoDataset,single_step,threshold,Real Time,0.0,prc
+PISDE,SuoDataset,single_step,F1,Real Time,0.1666666666666666,prc
+PISDE,SuoDataset,single_step,AUC_PRC,Real Time,0.0826446280991735,prc
+PISDE,SuoDataset,single_step,PRECISION,Real Time,0.0909090909090909,prc
+PISDE,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+PISDE,SuoDataset,single_step,AUC_ROC,Real Time,0.4549549549549549,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.045088567,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.8372093023255814,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.6488044363044364,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.72,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.5462962962962963,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.041697327,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.4761904761904761,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.4240384615384616,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.3125,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.7741935483870968,prc
+PRESCIENT,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+PRESCIENT,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+PRESCIENT,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5904480369249115,prc
+PRESCIENT,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+PRESCIENT,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5442864953526517,prc
+PRESCIENT,SuoDataset,single_step,threshold,Pseudotime,0.0,prc
+PRESCIENT,SuoDataset,single_step,F1,Pseudotime,0.1666666666666666,prc
+PRESCIENT,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1690527634917221,prc
+PRESCIENT,SuoDataset,single_step,PRECISION,Pseudotime,0.0909090909090909,prc
+PRESCIENT,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6162162162162161,prc
+PRESCIENT,MaDataset,multi_step,threshold,Pseudotime,0.122797355,prc
+PRESCIENT,MaDataset,multi_step,F1,Pseudotime,0.8181818181818182,prc
+PRESCIENT,MaDataset,multi_step,AUC_PRC,Pseudotime,0.6212962962962963,prc
+PRESCIENT,MaDataset,multi_step,PRECISION,Pseudotime,0.6923076923076923,prc
+PRESCIENT,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5396825396825398,prc
+PRESCIENT,MaDataset,single_step,threshold,Pseudotime,0.122797355,prc
+PRESCIENT,MaDataset,single_step,F1,Pseudotime,0.5454545454545454,prc
+PRESCIENT,MaDataset,single_step,AUC_PRC,Pseudotime,0.4583333333333332,prc
+PRESCIENT,MaDataset,single_step,PRECISION,Pseudotime,0.375,prc
+PRESCIENT,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+PRESCIENT,MaDataset,single_step,AUC_ROC,Pseudotime,0.7948717948717949,prc
+PRESCIENT,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+PRESCIENT,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0909090909090909,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1666666666666666,prc
+PRESCIENT,MaDataset,multi_step,JaccardSimilarity,Real Time,0.6923076923076923,prc
+PRESCIENT,MaDataset,single_step,JaccardSimilarity,Real Time,0.375,prc
+PRESCIENT,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.72,prc
+PRESCIENT,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.3125,prc
+PRESCIENT,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+PRESCIENT,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.0909090909090909,prc
+PRESCIENT,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.6923076923076923,prc
+PRESCIENT,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.375,prc
+PISDE,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.0,prc
+PISDE,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+PISDE,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.4833333333333333,prc
+PISDE,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+PISDE,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+PISDE,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.4166666666666666,prc
+PISDE,GarciaAlonsoDataset,single_step,threshold,Real Time,0.0,prc
+PISDE,GarciaAlonsoDataset,single_step,F1,Real Time,0.2857142857142857,prc
+PISDE,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.1511111111111111,prc
+PISDE,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.1666666666666666,prc
+PISDE,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+PISDE,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.535483870967742,prc
+PISDE,MaDataset,multi_step,threshold,Real Time,0.0,prc
+PISDE,MaDataset,multi_step,F1,Real Time,0.72,prc
+PISDE,MaDataset,multi_step,AUC_PRC,Real Time,0.5856481481481481,prc
+PISDE,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+PISDE,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+PISDE,MaDataset,multi_step,AUC_ROC,Real Time,0.5396825396825398,prc
+PISDE,MaDataset,single_step,threshold,Real Time,0.0,prc
+PISDE,MaDataset,single_step,F1,Real Time,0.4,prc
+PISDE,MaDataset,single_step,AUC_PRC,Real Time,0.2361111111111111,prc
+PISDE,MaDataset,single_step,PRECISION,Real Time,0.25,prc
+PISDE,MaDataset,single_step,RECALL,Real Time,1.0,prc
+PISDE,MaDataset,single_step,AUC_ROC,Real Time,0.5897435897435898,prc
+PISDE,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.0,prc
+PISDE,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+PISDE,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4833333333333333,prc
+PISDE,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+PISDE,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PISDE,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.4104938271604938,prc
+PISDE,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.0,prc
+PISDE,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.2857142857142857,prc
+PISDE,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.1511111111111111,prc
+PISDE,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.1666666666666666,prc
+PISDE,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+PISDE,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.5225806451612903,prc
+PISDE,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+PISDE,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+PISDE,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.510940280399587,prc
+PISDE,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+PISDE,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PISDE,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.4231820667031164,prc
+PISDE,SuoDataset,single_step,threshold,Pseudotime,0.0,prc
+PISDE,SuoDataset,single_step,F1,Pseudotime,0.1666666666666666,prc
+PISDE,SuoDataset,single_step,AUC_PRC,Pseudotime,0.1036654920831818,prc
+PISDE,SuoDataset,single_step,PRECISION,Pseudotime,0.0909090909090909,prc
+PISDE,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+PISDE,SuoDataset,single_step,AUC_ROC,Pseudotime,0.5373873873873873,prc
+PISDE,MaDataset,multi_step,threshold,Pseudotime,0.0013766519,prc
+PISDE,MaDataset,multi_step,F1,Pseudotime,0.9,prc
+PISDE,MaDataset,multi_step,AUC_PRC,Pseudotime,0.6071428571428572,prc
+PISDE,MaDataset,multi_step,PRECISION,Pseudotime,0.8181818181818182,prc
+PISDE,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+PISDE,MaDataset,multi_step,AUC_ROC,Pseudotime,0.5873015873015873,prc
+PISDE,MaDataset,single_step,threshold,Pseudotime,0.00079554494,prc
+PISDE,MaDataset,single_step,F1,Pseudotime,0.6,prc
+PISDE,MaDataset,single_step,AUC_PRC,Pseudotime,0.4206349206349206,prc
+PISDE,MaDataset,single_step,PRECISION,Pseudotime,0.4285714285714285,prc
+PISDE,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+PISDE,MaDataset,single_step,AUC_ROC,Pseudotime,0.782051282051282,prc
+PISDE,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+PISDE,SuoDataset,single_step,JaccardSimilarity,Real Time,0.0909090909090909,prc
+PISDE,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+PISDE,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.1666666666666666,prc
+PISDE,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5625,prc
+PISDE,MaDataset,single_step,JaccardSimilarity,Real Time,0.25,prc
+PISDE,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5,prc
+PISDE,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.1666666666666666,prc
+PISDE,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+PISDE,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.0909090909090909,prc
+PISDE,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.8181818181818182,prc
+PISDE,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.4285714285714285,prc
+Correlation,SuoDataset,multi_step,threshold,Real Time,0.0,prc
+Correlation,SuoDataset,multi_step,F1,Real Time,0.6775956284153005,prc
+Correlation,SuoDataset,multi_step,AUC_PRC,Real Time,0.5755441440810573,prc
+Correlation,SuoDataset,multi_step,PRECISION,Real Time,0.512396694214876,prc
+Correlation,SuoDataset,multi_step,RECALL,Real Time,1.0,prc
+Correlation,SuoDataset,multi_step,AUC_ROC,Real Time,0.5172225259704757,prc
+Correlation,SuoDataset,single_step,threshold,Real Time,0.0,prc
+Correlation,SuoDataset,single_step,F1,Real Time,0.16666666666666666,prc
+Correlation,SuoDataset,single_step,AUC_PRC,Real Time,0.2695352627170809,prc
+Correlation,SuoDataset,single_step,PRECISION,Real Time,0.09090909090909091,prc
+Correlation,SuoDataset,single_step,RECALL,Real Time,1.0,prc
+Correlation,SuoDataset,single_step,AUC_ROC,Real Time,0.6792792792792792,prc
+Correlation,GarciaAlonsoDataset,multi_step,threshold,Real Time,0.008822788001008318,prc
+Correlation,GarciaAlonsoDataset,multi_step,F1,Real Time,0.6666666666666666,prc
+Correlation,GarciaAlonsoDataset,multi_step,AUC_PRC,Real Time,0.40107889024555693,prc
+Correlation,GarciaAlonsoDataset,multi_step,PRECISION,Real Time,0.5,prc
+Correlation,GarciaAlonsoDataset,multi_step,RECALL,Real Time,1.0,prc
+Correlation,GarciaAlonsoDataset,multi_step,AUC_ROC,Real Time,0.1728395061728395,prc
+Correlation,GarciaAlonsoDataset,single_step,threshold,Real Time,0.008822788001008318,prc
+Correlation,GarciaAlonsoDataset,single_step,F1,Real Time,0.38461538461538464,prc
+Correlation,GarciaAlonsoDataset,single_step,AUC_PRC,Real Time,0.26202686202686204,prc
+Correlation,GarciaAlonsoDataset,single_step,PRECISION,Real Time,0.23809523809523808,prc
+Correlation,GarciaAlonsoDataset,single_step,RECALL,Real Time,1.0,prc
+Correlation,GarciaAlonsoDataset,single_step,AUC_ROC,Real Time,0.7096774193548387,prc
+Correlation,MaDataset,multi_step,threshold,Real Time,0.0,prc
+Correlation,MaDataset,multi_step,F1,Real Time,0.72,prc
+Correlation,MaDataset,multi_step,AUC_PRC,Real Time,0.6268518518518519,prc
+Correlation,MaDataset,multi_step,PRECISION,Real Time,0.5625,prc
+Correlation,MaDataset,multi_step,RECALL,Real Time,1.0,prc
+Correlation,MaDataset,multi_step,AUC_ROC,Real Time,0.42857142857142855,prc
+Correlation,MaDataset,single_step,threshold,Real Time,0.0,prc
+Correlation,MaDataset,single_step,F1,Real Time,0.4,prc
+Correlation,MaDataset,single_step,AUC_PRC,Real Time,0.5291666666666667,prc
+Correlation,MaDataset,single_step,PRECISION,Real Time,0.25,prc
+Correlation,MaDataset,single_step,RECALL,Real Time,1.0,prc
+Correlation,MaDataset,single_step,AUC_ROC,Real Time,0.6923076923076923,prc
+Correlation,GarciaAlonsoDataset,multi_step,threshold,Pseudotime,0.024120603015075376,prc
+Correlation,GarciaAlonsoDataset,multi_step,F1,Pseudotime,0.6666666666666666,prc
+Correlation,GarciaAlonsoDataset,multi_step,AUC_PRC,Pseudotime,0.4081022132173027,prc
+Correlation,GarciaAlonsoDataset,multi_step,PRECISION,Pseudotime,0.5,prc
+Correlation,GarciaAlonsoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Correlation,GarciaAlonsoDataset,multi_step,AUC_ROC,Pseudotime,0.25462962962962965,prc
+Correlation,GarciaAlonsoDataset,single_step,threshold,Pseudotime,0.024120603015075376,prc
+Correlation,GarciaAlonsoDataset,single_step,F1,Pseudotime,0.45454545454545453,prc
+Correlation,GarciaAlonsoDataset,single_step,AUC_PRC,Pseudotime,0.29429971988795517,prc
+Correlation,GarciaAlonsoDataset,single_step,PRECISION,Pseudotime,0.29411764705882354,prc
+Correlation,GarciaAlonsoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Correlation,GarciaAlonsoDataset,single_step,AUC_ROC,Pseudotime,0.7677419354838709,prc
+Correlation,SuoDataset,multi_step,threshold,Pseudotime,0.0,prc
+Correlation,SuoDataset,multi_step,F1,Pseudotime,0.6775956284153005,prc
+Correlation,SuoDataset,multi_step,AUC_PRC,Pseudotime,0.5934934437679504,prc
+Correlation,SuoDataset,multi_step,PRECISION,Pseudotime,0.512396694214876,prc
+Correlation,SuoDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Correlation,SuoDataset,multi_step,AUC_ROC,Pseudotime,0.5453799890650629,prc
+Correlation,SuoDataset,single_step,threshold,Pseudotime,0.0,prc
+Correlation,SuoDataset,single_step,F1,Pseudotime,0.16666666666666666,prc
+Correlation,SuoDataset,single_step,AUC_PRC,Pseudotime,0.2233052931916568,prc
+Correlation,SuoDataset,single_step,PRECISION,Pseudotime,0.09090909090909091,prc
+Correlation,SuoDataset,single_step,RECALL,Pseudotime,1.0,prc
+Correlation,SuoDataset,single_step,AUC_ROC,Pseudotime,0.6963963963963964,prc
+Correlation,MaDataset,multi_step,threshold,Pseudotime,0.011137629276054098,prc
+Correlation,MaDataset,multi_step,F1,Pseudotime,0.8181818181818182,prc
+Correlation,MaDataset,multi_step,AUC_PRC,Pseudotime,0.5384920634920635,prc
+Correlation,MaDataset,multi_step,PRECISION,Pseudotime,0.6923076923076923,prc
+Correlation,MaDataset,multi_step,RECALL,Pseudotime,1.0,prc
+Correlation,MaDataset,multi_step,AUC_ROC,Pseudotime,0.47619047619047616,prc
+Correlation,MaDataset,single_step,threshold,Pseudotime,0.011137629276054098,prc
+Correlation,MaDataset,single_step,F1,Pseudotime,0.6,prc
+Correlation,MaDataset,single_step,AUC_PRC,Pseudotime,0.44285714285714284,prc
+Correlation,MaDataset,single_step,PRECISION,Pseudotime,0.42857142857142855,prc
+Correlation,MaDataset,single_step,RECALL,Pseudotime,1.0,prc
+Correlation,MaDataset,single_step,AUC_ROC,Pseudotime,0.7948717948717949,prc
+Correlation,SuoDataset,multi_step,JaccardSimilarity,Real Time,0.512396694214876,prc
+Correlation,SuoDataset,single_step,JaccardSimilarity,Real Time,0.09090909090909091,prc
+Correlation,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Real Time,0.5,prc
+Correlation,GarciaAlonsoDataset,single_step,JaccardSimilarity,Real Time,0.23809523809523808,prc
+Correlation,MaDataset,multi_step,JaccardSimilarity,Real Time,0.5625,prc
+Correlation,MaDataset,single_step,JaccardSimilarity,Real Time,0.25,prc
+Correlation,GarciaAlonsoDataset,multi_step,JaccardSimilarity,Pseudotime,0.5,prc
+Correlation,GarciaAlonsoDataset,single_step,JaccardSimilarity,Pseudotime,0.29411764705882354,prc
+Correlation,SuoDataset,multi_step,JaccardSimilarity,Pseudotime,0.512396694214876,prc
+Correlation,SuoDataset,single_step,JaccardSimilarity,Pseudotime,0.09090909090909091,prc
+Correlation,MaDataset,multi_step,JaccardSimilarity,Pseudotime,0.6923076923076923,prc
+Correlation,MaDataset,single_step,JaccardSimilarity,Pseudotime,0.42857142857142855,prc

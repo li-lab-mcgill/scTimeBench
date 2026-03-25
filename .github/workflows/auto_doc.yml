@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'src/**'
+      - 'assets/csv_results/**'
   workflow_dispatch:
 
 permissions:
@@ -25,8 +26,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -37,6 +36,34 @@ jobs:
         run: |
           pip install sphinx sphinx-rtd-theme
           pip install -e ".[benchmark]"
+
+      - name: Copy CSV files to docs static
+        run: |
+          mkdir -p docs/source/_static/leaderboard
+          rm -f docs/source/_static/leaderboard/*.csv
+          shopt -s nullglob
+          csv_files=(assets/csv_results/*.csv)
+          if [ ${#csv_files[@]} -eq 0 ]; then
+            echo "No CSV files found in assets/csv_results/."
+          else
+            cp "${csv_files[@]}" docs/source/_static/leaderboard/
+          fi
+
+      - name: Regenerate plots from CSV
+        run: |
+          scTimeBench --config configs/cooccurrence.yaml --plot_from_csv --csv_dir assets/csv_results --plot_output_dir plots
+
+      - name: Copy plots to docs static
+        run: |
+          mkdir -p docs/source/_static/leaderboard/plots
+          rm -f docs/source/_static/leaderboard/plots/*.svg
+          shopt -s nullglob
+          plot_files=(plots/*.svg)
+          if [ ${#plot_files[@]} -eq 0 ]; then
+            echo "No plot SVG files found in plots/."
+          else
+            cp "${plot_files[@]}" docs/source/_static/leaderboard/plots/
+          fi
 
       - name: Build Sphinx HTML
         run: |
@@ -61,4 +88,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

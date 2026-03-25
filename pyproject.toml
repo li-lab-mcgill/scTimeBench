@@ -46,6 +46,8 @@ scTimeBench = [
 dev = [
     "pre-commit",
     "pytest",
+    "sphinx",
+    "sphinx-rtd-theme",
 ]
 benchmark = [
     "networkx",

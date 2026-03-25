@@ -40,6 +40,7 @@ This project provides a comprehensive benchmarking suite for single cell time se
 
    setup
    base_run
+   leaderboard
    data_contrib
    metric_contrib
    method_contrib

@@ -309,11 +309,11 @@ class DatabaseManager:
         self.conn.commit()
         return outputs
 
-    def graph_sim_to_csv(self, output_csv_path):
+    def graph_sim_to_csv(self, output_csv_path, append=False):
         cursor = self.conn.cursor()
         cursor.execute(
             """
-            SELECT metrics.name, method_outputs.name, datasets.id, datasets.name, evals.result
+            SELECT metrics.name, metrics.parameters, method_outputs.name, datasets.id, datasets.name, evals.result
             FROM evals
             JOIN metrics ON evals.metric_id = metrics.id
             JOIN method_outputs ON evals.method_output_id = method_outputs.id
@@ -323,32 +323,60 @@ class DatabaseManager:
         )
         rows = cursor.fetchall()
 
-        csvfile = open(output_csv_path, "w", newline="")
+        output_path = Path(output_csv_path)
+        write_mode = "a" if append else "w"
+
+        csvfile = open(output_csv_path, write_mode, newline="")
         writer = csv.writer(csvfile)
 
-        writer.writerow(
-            [
-                "method",
-                "dataset",
-                "step_setting",
-                "metric",
-                "time_type",
-                "result",
-            ]
-        )
+        if (
+            (not append)
+            or (not output_path.exists())
+            or output_path.stat().st_size == 0
+        ):
+            writer.writerow(
+                [
+                    "method",
+                    "dataset",
+                    "step_setting",
+                    "metric",
+                    "time_type",
+                    "result",
+                    "threshold_type",
+                ]
+            )
 
         seen_threshold_rows = set()
-        metrics_to_retrieve = ["GraphClassificationReport", "JaccardSimilarity"]
 
-        for metric_name, method_name, dataset_id, dataset_name, result_json in rows:
-            if metric_name not in metrics_to_retrieve:
+        for (
+            metric_name,
+            metric_params,
+            method_name,
+            dataset_id,
+            dataset_name,
+            result_json,
+        ) in rows:
+            # skip certain metrics
+            skip_metrics = [
+                "StackedBarPlot",
+                "GraphVisualization",
+            ]
+            if metric_name in skip_metrics:
                 continue
 
             parsed = json.loads(result_json)
 
-            step_setting = parsed.get("criteria")
+            step_setting = (
+                "multi_step" if parsed.get("criteria") == "all_paths" else "single_step"
+            )
             threshold = parsed.get("threshold")
             eval_payload = parsed.get("eval")
+
+            # now parse the metric params to get the threshold type
+            parsed_metric_params = json.loads(metric_params)
+            threshold_type = (
+                "prc" if parsed_metric_params.get("prc_threshold", False) else "roc"
+            )
 
             dataset_tag = self.get_dataset_tag_from_id(dataset_id)
             time_type = "Pseudotime" if "pseudo" in dataset_tag.lower() else "Real Time"
@@ -363,6 +391,7 @@ class DatabaseManager:
                         "threshold",
                         time_type,
                         threshold,
+                        threshold_type,
                     ]
                 )
                 seen_threshold_rows.add(threshold_key)
@@ -371,7 +400,7 @@ class DatabaseManager:
                 if isinstance(eval_payload, str):
                     eval_payload = json.loads(eval_payload)
 
-                to_retrieve = ["f1", "auc_prc"]
+                to_retrieve = ["f1", "auc_prc", "precision", "recall", "auc_roc"]
                 for key in to_retrieve:
                     writer.writerow(
                         [
@@ -381,6 +410,7 @@ class DatabaseManager:
                             key.upper(),
                             time_type,
                             eval_payload.get(key),
+                            threshold_type,
                         ]
                     )
 
@@ -393,11 +423,153 @@ class DatabaseManager:
                         metric_name,
                         time_type,
                         eval_payload,
+                        threshold_type,
                     ]
                 )
 
         csvfile.close()
         print(f"Graph similarity results saved to {output_csv_path}")
+
+    def embedding_to_csv(self, output_csv_path, append=False):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT metrics.name, method_outputs.name, datasets.name, evals.result
+            FROM evals
+            JOIN metrics ON evals.metric_id = metrics.id
+            JOIN method_outputs ON evals.method_output_id = method_outputs.id
+            JOIN datasets ON method_outputs.dataset_id = datasets.id
+            WHERE metrics.name IN ('ARI', 'ClassificationEntropy')
+        """
+        )
+        rows = cursor.fetchall()
+
+        output_path = Path(output_csv_path)
+        write_mode = "a" if append else "w"
+
+        csvfile = open(output_csv_path, write_mode, newline="")
+        writer = csv.writer(csvfile)
+
+        if (
+            (not append)
+            or (not output_path.exists())
+            or output_path.stat().st_size == 0
+        ):
+            writer.writerow(
+                [
+                    "method",
+                    "dataset",
+                    "metric",
+                    "embedding_type",
+                    "result",
+                ]
+            )
+
+        for metric_name, method_name, dataset_name, result_json in rows:
+            parsed_result = json.loads(result_json)
+
+            for key, value in parsed_result.items():
+                embedding_type = ""
+                if metric_name == "ARI":
+                    if "next_timepoint" in key:
+                        embedding_type = "projected"
+                    else:
+                        embedding_type = "ground_truth"
+                elif metric_name == "ClassificationEntropy":
+                    if key not in [
+                        "avg_normalized_entropy",
+                        "pred_tp_avg_normalized_entropy",
+                    ]:
+                        continue
+                    if "pred_tp" in key:
+                        embedding_type = "projected"
+                    else:
+                        embedding_type = "ground_truth"
+
+                writer.writerow(
+                    [
+                        method_name,
+                        dataset_name,
+                        metric_name,
+                        embedding_type,
+                        value,
+                    ]
+                )
+
+        csvfile.close()
+        print(f"Embedding results saved to {output_csv_path}")
+
+    def gex_pred_to_csv(self, output_csv_path, append=False):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT metrics.name, method_outputs.name, datasets.name, datasets.id, evals.result, metrics.parameters
+            FROM evals
+            JOIN metrics ON evals.metric_id = metrics.id
+            JOIN method_outputs ON evals.method_output_id = method_outputs.id
+            JOIN datasets ON method_outputs.dataset_id = datasets.id
+            WHERE metrics.name IN ('HausdorffLoss', 'MMDLoss', 'WassersteinOTLoss', 'EnergyDistanceLoss')
+        """
+        )
+        rows = cursor.fetchall()
+
+        output_path = Path(output_csv_path)
+        write_mode = "a" if append else "w"
+
+        csvfile = open(output_csv_path, write_mode, newline="")
+        writer = csv.writer(csvfile)
+
+        if (
+            (not append)
+            or (not output_path.exists())
+            or output_path.stat().st_size == 0
+        ):
+            writer.writerow(
+                [
+                    "method",
+                    "dataset",
+                    "interpolation_type",
+                    "metric",
+                    "timepoint",
+                    "result",
+                ]
+            )
+
+        for (
+            metric_name,
+            method_name,
+            dataset_name,
+            dataset_id,
+            result_json,
+            metric_params,
+        ) in rows:
+            dataset_tag = self.get_dataset_tag_from_id(dataset_id)
+            parsed_result = json.loads(result_json)
+            # load the metric parameters as well to get the timepoint
+            parsed_metric_params = json.loads(metric_params)
+            timepoint = parsed_metric_params.get("timepoint", "avg")
+
+            interpolation_type = ""
+            if "Easy" in dataset_tag:
+                interpolation_type = "easy"
+            elif "Medium" in dataset_tag:
+                interpolation_type = "med"
+            elif "Hard" in dataset_tag:
+                interpolation_type = "hard"
+
+            writer.writerow(
+                [
+                    method_name,
+                    dataset_name,
+                    interpolation_type,
+                    metric_name,
+                    timepoint,
+                    parsed_result,
+                ]
+            )
+
+        csvfile.close()
+        print(f"Embedding results saved to {output_csv_path}")
 
     # ** METRIC RELATED FUNCTIONS **
     def has_metric(self, name: str, parameters: str) -> bool:
