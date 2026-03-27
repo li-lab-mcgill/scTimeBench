@@ -36,7 +36,7 @@ jobs:
 
       - name: Upload to PyPI
         env:
-          TWINE_USERNAME: eric_huang
+          TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           if [ -z "$TWINE_PASSWORD" ]; then
