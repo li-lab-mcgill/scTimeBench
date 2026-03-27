@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scTimeBench"  # This is the name you use for 'pip install'
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
     "PyYAML",
     "scanpy",
@@ -38,8 +38,8 @@ where = ["src"]  # Tells Python: "The actual code lives inside the src folder"
 
 [tool.setuptools.package-data]
 scTimeBench = [
-    "metrics/shared/*.yaml",
-    "metrics/shared/cell_lineages/**/*.txt",
+    "shared/dataset/*.yaml",
+    "shared/dataset/cell_lineages/**/*.txt",
 ]
 
 [project.optional-dependencies]
