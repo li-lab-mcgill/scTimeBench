@@ -27,6 +27,10 @@ scTimeBench Documentation
       <a href="https://pypi.org/project/scTimeBench/">
          <img src="https://img.shields.io/badge/pypi-0.1.0-orange?logo=pypi&style=flat-square" alt="Pypi" />
       </a>
+      </a>
+      <a href="https://doi.org/10.5281/zenodo.19196641">
+         <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.19196641.svg" alt="DOI" />
+      </a>
    </p>
 
 Welcome to the scTimeBench documentation!
