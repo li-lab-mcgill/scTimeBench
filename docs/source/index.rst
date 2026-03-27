@@ -25,7 +25,7 @@ scTimeBench Documentation
          <img src="https://github.com/li-lab-mcgill/scTimeBench/actions/workflows/ci-install.yml/badge.svg" alt="Install" />
       </a>
       <a href="https://pypi.org/project/scTimeBench/">
-         <img src="https://img.shields.io/badge/pypi-0.1.0-orange?logo=pypi&style=flat-square" alt="Pypi" />
+         <img src="https://img.shields.io/pypi/v/scTimeBench.svg?logo=pypi&style=flat-square" alt="Pypi" />
       </a>
       </a>
       <a href="https://doi.org/10.5281/zenodo.19196641">
