@@ -27,8 +27,33 @@ echo "Processing content..."
 
 # 5. Let's get the venv ready
 echo "Activating scNODE virtual environment..."
-source ./venv/scNODE/bin/activate
-# TODO: install it otherwise under venv/scNODE using the requirements.txt file in the scNODE directory
+VENV_DIR="./venv/scNODE"
+
+if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/activate" ]; then
+    echo "Found virtualenv at $VENV_DIR. Activating..."
+    # shellcheck disable=SC1091
+    source "$VENV_DIR/bin/activate"
+else
+    echo "Virtualenv not found at $VENV_DIR. Creating..."
+    python3 -m venv "$VENV_DIR"
+    if [ -f "$VENV_DIR/bin/activate" ]; then
+        # shellcheck disable=SC1091
+        source "$VENV_DIR/bin/activate"
+    else
+        echo "Error: failed to create virtualenv at $VENV_DIR"
+        exit 1
+    fi
+
+    echo "Upgrading pip and installing scNODE into the virtualenv..."
+    pip install --upgrade pip
+    if [ -f "./methods/scNODE/scNODE_module/requirements.txt" ]; then
+        pip install -r ./methods/scNODE/scNODE_module/requirements.txt
+    else
+        echo "Warning: scNODE requirements.txt not found at ./methods/scNODE/scNODE_module/requirements.txt"
+    fi
+    pip install -e . # makes crispy-fishstick accessible in the venv
+fi
+
 echo "Virtual environment activated."
 
 # 6. Now let's run train and test on method.py with the provided YAML file
