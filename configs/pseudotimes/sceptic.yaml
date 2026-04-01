@@ -1,0 +1,17 @@
+datasets:
+  - tag: defaultSuoSceptic
+  - tag: defaultGarciaAlonsoSceptic
+  - tag: defaultMaSceptic
+  - tag: defaultMa
+  - tag: defaultGarciaAlonso
+  - tag: defaultSuo
+
+method:
+  name: scNODE
+  train_and_test_script: ./methods/scNODE/train_and_test.sh
+  metadata:
+    epochs: 0
+    pretrain_iters: 1
+
+metrics:
+  - name: StackedBarPlot
