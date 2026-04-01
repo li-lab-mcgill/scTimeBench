@@ -15,3 +15,9 @@
 [submodule "methods/ot_cfm/ot_cfm_module"]
 	path = methods/ot_cfm/ot_cfm_module
 	url = git@github.com:ehuan2/conditional-flow-matching.git
+[submodule "extern/pypsupertime"]
+	path = extern/pypsupertime
+	url = git@github.com:ehuan2/pyPsupertime.git
+[submodule "extern/sceptic"]
+	path = extern/sceptic
+	url = git@github.com:ehuan2/Sceptic.git
