@@ -89,6 +89,9 @@ class OTCFM(BaseMethod):
         self.ode_solver = str(metadata.get("ode_solver", "dopri5"))
         self.ode_sensitivity = str(metadata.get("ode_sensitivity", "adjoint"))
 
+        self.method = str(metadata.get("method", "exact"))
+        self.prior_method = str(metadata.get("prior_method", "to_first"))
+
         self._unique_train_tps = []
         self._tp_to_index = {}
         self._x_by_time = []
@@ -126,7 +129,9 @@ class OTCFM(BaseMethod):
             return
 
         optimizer = torch.optim.Adam(self._model.parameters(), self.learning_rate)
-        fm = ExactOptimalTransportConditionalFlowMatcher(sigma=self.sigma)
+        fm = ExactOptimalTransportConditionalFlowMatcher(
+            sigma=self.sigma, method=self.method, prior_method=self.prior_method
+        )
 
         self._model.train()
         for _ in tqdm(range(self.train_steps)):
