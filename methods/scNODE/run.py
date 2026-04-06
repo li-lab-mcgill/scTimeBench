@@ -41,10 +41,6 @@ def prepare_data(ann_data):
         )
         for t in unique_tps
     ]
-    # traj_data = [
-    #    torch.FloatTensor(data[np.where(cell_tps == t)[0], :].toarray())
-    #    for t in unique_tps
-    # ]
 
     tps = torch.FloatTensor(unique_tps)
     n_cells = [each.shape[0] for each in traj_data]

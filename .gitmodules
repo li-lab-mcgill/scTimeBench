@@ -12,3 +12,6 @@
 [submodule "methods/MNN/MNN_module"]
 	path = methods/MNN/MNN_module
 	url = https://github.com/aosakwe/mech-nn
+[submodule "methods/ot_cfm/ot_cfm_module"]
+	path = methods/ot_cfm/ot_cfm_module
+	url = git@github.com:ehuan2/conditional-flow-matching.git
