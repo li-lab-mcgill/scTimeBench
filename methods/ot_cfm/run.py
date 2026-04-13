@@ -37,7 +37,52 @@ except ImportError:
 from torchdyn.core import NeuralODE
 
 
-def get_batch(fm, x_by_time, batch_size, n_times, device, return_noise=False):
+def label_pseudotimes_global(x_by_time):
+    """Compute one joint diffusion pseudotime over all cells and split by timepoint."""
+    try:
+        import scanpy as sc
+    except ImportError as e:
+        raise ImportError(
+            "scanpy is required for pseudotime_uniform prior. Please install scanpy."
+        ) from e
+
+    if len(x_by_time) < 2:
+        raise ValueError("Need at least two timepoints to compute pseudotime labels.")
+
+    sizes = [x.shape[0] for x in x_by_time]
+    if any(s == 0 for s in sizes):
+        raise ValueError("Each timepoint must contain at least one cell.")
+
+    x_joint = np.concatenate(x_by_time, axis=0).astype(np.float32, copy=False)
+    adata = sc.AnnData(x_joint)
+
+    n_cells = adata.n_obs
+    n_neighbors = min(15, max(1, n_cells - 1))
+    sc.pp.neighbors(adata, n_neighbors=n_neighbors, use_rep="X")
+    sc.tl.diffmap(adata)
+
+    first_tp_count = sizes[0]
+    root_pool = np.arange(first_tp_count)
+    dc1 = adata.obsm["X_diffmap"][root_pool, 0]
+    adata.uns["iroot"] = int(root_pool[np.argmin(dc1)])
+
+    sc.tl.dpt(adata)
+    t_joint = adata.obs["dpt_pseudotime"].to_numpy(dtype=np.float32)
+    t_joint = np.nan_to_num(t_joint, nan=0.0)
+
+    splits = np.cumsum(sizes[:-1])
+    return np.split(t_joint, splits)
+
+
+def get_batch(
+    fm,
+    x_by_time,
+    pseudotime_by_time,
+    batch_size,
+    n_times,
+    device,
+    return_noise=False,
+):
     """Construct a minibatch from each adjacent timepoint pair."""
     ts = []
     xts = []
@@ -47,19 +92,23 @@ def get_batch(fm, x_by_time, batch_size, n_times, device, return_noise=False):
     for t_start in range(n_times - 1):
         x0_np = x_by_time[t_start]
         x1_np = x_by_time[t_start + 1]
+        y0_np = pseudotime_by_time[t_start]
+        y1_np = pseudotime_by_time[t_start + 1]
         idx0 = np.random.randint(x0_np.shape[0], size=batch_size)
         idx1 = np.random.randint(x1_np.shape[0], size=batch_size)
         x0 = torch.from_numpy(x0_np[idx0]).float().to(device)
         x1 = torch.from_numpy(x1_np[idx1]).float().to(device)
+        y0 = torch.from_numpy(y0_np[idx0]).float().to(device)
+        y1 = torch.from_numpy(y1_np[idx1]).float().to(device)
 
         if return_noise:
             t, xt, ut, eps = fm.sample_location_and_conditional_flow(
-                x0, x1, return_noise=True
+                x0, x1, y0=y0, y1=y1, return_noise=True
             )
             noises.append(eps)
         else:
             t, xt, ut = fm.sample_location_and_conditional_flow(
-                x0, x1, return_noise=False
+                x0, x1, y0=y0, y1=y1, return_noise=False
             )
 
         ts.append(t + t_start)
@@ -91,10 +140,12 @@ class OTCFM(BaseMethod):
 
         self.method = str(metadata.get("method", "exact"))
         self.prior_method = str(metadata.get("prior_method", "to_first"))
+        self.reg = float(metadata.get("reg", 0.1))
 
         self._unique_train_tps = []
         self._tp_to_index = {}
         self._x_by_time = []
+        self._pseudotime_by_time = []
         self._model = None
         self._node = None
 
@@ -111,6 +162,12 @@ class OTCFM(BaseMethod):
         self._x_by_time = [
             train_x[np.where(train_tps == tp)[0], :] for tp in self._unique_train_tps
         ]
+        if self.prior_method == "pseudotime_uniform":
+            self._pseudotime_by_time = label_pseudotimes_global(self._x_by_time)
+        else:
+            self._pseudotime_by_time = [
+                np.zeros(x.shape[0], dtype=np.float32) for x in self._x_by_time
+            ]
 
         dim = int(train_x.shape[1])
         cache_path = Path(self.config["output_path"]) / "trained_ot_cfm_model.pth"
@@ -130,7 +187,10 @@ class OTCFM(BaseMethod):
 
         optimizer = torch.optim.Adam(self._model.parameters(), self.learning_rate)
         fm = ExactOptimalTransportConditionalFlowMatcher(
-            sigma=self.sigma, method=self.method, prior_method=self.prior_method
+            sigma=self.sigma,
+            method=self.method,
+            prior_method=self.prior_method,
+            reg=self.reg,
         )
 
         self._model.train()
@@ -139,6 +199,7 @@ class OTCFM(BaseMethod):
             t, xt, ut = get_batch(
                 fm,
                 self._x_by_time,
+                self._pseudotime_by_time,
                 self.batch_size,
                 len(self._x_by_time),
                 self.device,

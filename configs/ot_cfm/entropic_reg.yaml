@@ -1,0 +1,17 @@
+datasets:
+  - tag: defaultGarciaAlonso
+  - tag: EasyDrosophila
+
+method:
+  name: ot_cfm
+  train_and_test_script: ./methods/ot_cfm/train_and_test.sh
+  metadata:
+    method: 'prior'
+    prior_method: 'basic_entropic_ot'
+
+metrics:
+  - name: GexPredictionMetrics
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: CellTypist
+      renormalize: True
