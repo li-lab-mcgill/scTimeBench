@@ -11,3 +11,7 @@ scNODE,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.4316054806800264
 scNODE,GarciaAlonsoDataset,ClassificationEntropy,projected,0.47041463041787707
 scNODE,MaDataset,ClassificationEntropy,ground_truth,0.29575561327104105
 scNODE,MaDataset,ClassificationEntropy,projected,0.3984318875512625
+ot_cfm,GarciaAlonsoDataset,ARI,ground_truth,0.2441041276987011
+ot_cfm,GarciaAlonsoDataset,ARI,projected,0.17144479029277737
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.00038167773212131206
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,projected,0.0003852261444730209

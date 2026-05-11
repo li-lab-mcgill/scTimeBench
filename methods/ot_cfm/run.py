@@ -300,6 +300,58 @@ class OTCFM(BaseMethod):
 
         return out
 
+    def generate_embedding(self, test_ann_data) -> np.ndarray:
+        """Generate embeddings for the current timepoint using the configured embedding space.
+
+        If embedding_space is "PCA", returns PCA-transformed embeddings.
+        Otherwise returns the gene expression directly.
+        """
+        test_gex = self._to_dense_float32(test_ann_data.X)
+
+        if self.embedding_space == "PCA":
+            if self._pca_model is None:
+                raise RuntimeError("PCA model not available. Call train() first.")
+            return self._pca_model.transform(test_gex).astype(np.float32)
+        else:
+            raise NotImplementedError(
+                "generate_embedding is only implemented for PCA embedding space."
+            )
+
+    def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
+        """Generate embeddings for the next timepoint.
+
+        Returns embeddings in the configured embedding space (PCA or GEX).
+        """
+        time_col = ObservationColumns.TIMEPOINT.value
+        test_tps = test_ann_data.obs[time_col].to_numpy()
+        unique_test_tps = sorted(np.unique(test_tps))
+
+        test_gex = self._to_dense_float32(test_ann_data.X)
+        if self.embedding_space == "PCA":
+            if self._pca_model is None:
+                raise RuntimeError("PCA model not available. Call train() first.")
+            test_x = self._pca_model.transform(test_gex).astype(np.float32)
+            out = np.full(
+                (test_ann_data.n_obs, test_x.shape[1]), np.nan, dtype=np.float32
+            )
+        else:
+            raise NotImplementedError(
+                "generate_next_tp_embedding is only implemented for PCA embedding space."
+            )
+
+        for tp in unique_test_tps:
+            candidate_next_tps = [x for x in unique_test_tps if x > tp]
+            if not candidate_next_tps:
+                continue
+            next_tp = candidate_next_tps[0]
+
+            source_idx = np.where(test_tps == tp)[0]
+            source_x = test_x[source_idx]
+
+            out[source_idx] = self._predict_one_step(source_x, tp, next_tp)
+
+        return out.astype(np.float32)
+
 
 if __name__ == "__main__":
     main(OTCFM)
