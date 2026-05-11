@@ -8,10 +8,12 @@ This implementation intentionally stays simple:
 """
 
 from pathlib import Path
+import pickle
 import sys
 
 import numpy as np
 import torch
+from sklearn.decomposition import PCA
 from scipy.sparse import issparse
 from tqdm import tqdm
 
@@ -88,12 +90,21 @@ class OTCFM(BaseMethod):
         self.mlp_width = int(metadata.get("mlp_width", 64))
         self.ode_solver = str(metadata.get("ode_solver", "dopri5"))
         self.ode_sensitivity = str(metadata.get("ode_sensitivity", "adjoint"))
+        self.embedding_space = str(metadata.get("embedding_space", "PCA")).upper()
+        if self.embedding_space not in {"GEX", "PCA"}:
+            raise ValueError("metadata.embedding_space must be either 'GEX' or 'PCA'.")
+        self.pca_components = int(metadata.get("pca_components", 50))
 
         self._unique_train_tps = []
         self._tp_to_index = {}
         self._x_by_time = []
         self._model = None
+        self._pca_model = None
         self._node = None
+
+    def _to_dense_float32(self, X):
+        data = X.toarray() if issparse(X) else X
+        return np.asarray(data, dtype=np.float32)
 
     def train(self, ann_data, all_tps=None):
         time_col = ObservationColumns.TIMEPOINT.value
@@ -103,8 +114,34 @@ class OTCFM(BaseMethod):
         if len(self._unique_train_tps) < 2:
             raise ValueError("OT-CFM training needs at least 2 train timepoints.")
 
-        train_x = ann_data.X.toarray() if issparse(ann_data.X) else ann_data.X
-        train_x = np.asarray(train_x, dtype=np.float32)
+        output_dir = Path(self.config["output_path"])
+        cache_path = (
+            output_dir / f"trained_ot_cfm_model_{self.embedding_space.lower()}.pth"
+        )
+        pca_cache_path = output_dir / "trained_ot_cfm_pca_model.pkl"
+
+        train_gex = self._to_dense_float32(ann_data.X)
+        if self.embedding_space == "PCA":
+            if pca_cache_path.exists():
+                with open(pca_cache_path, "rb") as f:
+                    self._pca_model = pickle.load(f)
+            else:
+                n_components = min(
+                    self.pca_components,
+                    train_gex.shape[0],
+                    train_gex.shape[1],
+                )
+                if n_components < 1:
+                    raise ValueError("PCA requires at least one component.")
+                self._pca_model = PCA(n_components=n_components)
+                self._pca_model.fit(train_gex)
+                with open(pca_cache_path, "wb") as f:
+                    pickle.dump(self._pca_model, f)
+
+            train_x = self._pca_model.transform(train_gex).astype(np.float32)
+        else:
+            train_x = train_gex
+
         self._x_by_time = [
             train_x[np.where(train_tps == tp)[0], :] for tp in self._unique_train_tps
         ]
@@ -227,14 +264,19 @@ class OTCFM(BaseMethod):
         test_tps = test_ann_data.obs[time_col].to_numpy()
         unique_test_tps = sorted(np.unique(test_tps))
 
-        test_x = (
-            test_ann_data.X.toarray() if issparse(test_ann_data.X) else test_ann_data.X
-        )
-        test_x = np.asarray(test_x, dtype=np.float32)
-
-        out = np.full(
-            (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
-        )
+        test_gex = self._to_dense_float32(test_ann_data.X)
+        if self.embedding_space == "PCA":
+            if self._pca_model is None:
+                raise RuntimeError("PCA model not available. Call train() first.")
+            test_x = self._pca_model.transform(test_gex).astype(np.float32)
+            out = np.full(
+                (test_ann_data.n_obs, test_x.shape[1]), np.nan, dtype=np.float32
+            )
+        else:
+            test_x = test_gex
+            out = np.full(
+                (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
+            )
 
         for tp in unique_test_tps:
             candidate_next_tps = [x for x in unique_test_tps if x > tp]
@@ -246,6 +288,15 @@ class OTCFM(BaseMethod):
             source_x = test_x[source_idx]
 
             out[source_idx] = self._predict_one_step(source_x, tp, next_tp)
+
+        if self.embedding_space == "PCA":
+            out_gex = np.full(
+                (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
+            )
+            valid_rows = ~np.isnan(out).any(axis=1)
+            if np.any(valid_rows):
+                out_gex[valid_rows] = self._pca_model.inverse_transform(out[valid_rows])
+            return out_gex.astype(np.float32)
 
         return out
 
