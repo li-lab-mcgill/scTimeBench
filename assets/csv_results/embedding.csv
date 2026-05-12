@@ -15,3 +15,17 @@ ot_cfm,GarciaAlonsoDataset,ARI,ground_truth,0.2441041276987011
 ot_cfm,GarciaAlonsoDataset,ARI,projected,0.17144479029277737
 ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.00038167773212131206
 ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,projected,0.0003852261444730209
+ot_cfm,GarciaAlonsoDataset,ARI,ground_truth,0.2441041276987011
+ot_cfm,GarciaAlonsoDataset,ARI,projected,0.17144479029277737
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.00038167773212131206
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,projected,0.0003852261444730209
+ot_cfm,SuoDataset,ARI,ground_truth,0.35722034331197233
+ot_cfm,SuoDataset,ARI,projected,0.38110535568572107
+ot_cfm,MaDataset,ARI,ground_truth,0.1731598450027568
+ot_cfm,MaDataset,ARI,projected,0.17009807981656302
+ot_cfm,SuoDataset,ClassificationEntropy,ground_truth,0.2356505651297993
+ot_cfm,SuoDataset,ClassificationEntropy,projected,0.32281102319861044
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,ground_truth,0.3057686871432903
+ot_cfm,GarciaAlonsoDataset,ClassificationEntropy,projected,0.4749255354532677
+ot_cfm,MaDataset,ClassificationEntropy,ground_truth,0.3799421509529648
+ot_cfm,MaDataset,ClassificationEntropy,projected,0.44744211899831876
