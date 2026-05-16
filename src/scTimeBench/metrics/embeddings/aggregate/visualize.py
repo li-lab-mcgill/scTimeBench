@@ -16,6 +16,14 @@ import pandas as pd
 import scanpy as sc
 from matplotlib.lines import Line2D
 from sklearn.neighbors import NearestNeighbors
+from enum import Enum
+
+
+class VisualizeType(Enum):
+    UMAP = "umap"
+    TSNE = "tsne"
+    PHATE = "phate"
+    PCA = "pca"
 
 
 class VisualizeEmbeds(AggregateEmbeddingMetrics):
@@ -28,7 +36,7 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
     def _defaults(self):
         return {
             "n_neighbors": 15,
-            "type": "umap",
+            "type": VisualizeType.UMAP,
         }
 
     def _embedding_eval(self, output_path, dataset):
@@ -76,16 +84,17 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
 
         pred_labels = np.array(pred_labels)
 
-        if self.type in {"umap", "tsne"}:
-            (
-                graph_path,
-                next_tp_graph_path,
-                orig_graph_path,
-            ) = self.visualize_embedding_projection(
-                embeddings, pred_embeddings, cell_types, pred_labels, output_path
-            )
-        else:
+        # if self.type is not an enum's value, raise an error
+        if not self.type in [val.value for val in VisualizeType]:
             raise ValueError(f"Unsupported visualization type: {self.type}")
+
+        (
+            graph_path,
+            next_tp_graph_path,
+            orig_graph_path,
+        ) = self.visualize_embedding_projection(
+            embeddings, pred_embeddings, cell_types, pred_labels, output_path
+        )
 
         logging.debug(
             f"Saved {self.type} visualizations to {graph_path}, {next_tp_graph_path}, and {orig_graph_path}"
@@ -125,12 +134,23 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
         n_neighbors = min(self.n_neighbors, max(1, total_embeddings.shape[0] - 1))
         sc.pp.neighbors(adata, n_neighbors=n_neighbors, use_rep="X")
 
-        if self.type == "umap":
+        if VisualizeType(self.type) == VisualizeType.UMAP:
             sc.tl.umap(adata, random_state=42)
             coord_key = "X_umap"
-        elif self.type == "tsne":
+        elif VisualizeType(self.type) == VisualizeType.TSNE:
             sc.tl.tsne(adata, random_state=42)
             coord_key = "X_tsne"
+        elif VisualizeType(self.type) == VisualizeType.PHATE:
+            import phate
+
+            phate_operator = phate.PHATE(
+                knn=n_neighbors, n_jobs=-2, decay=15, verbose=True
+            )
+            adata.obsm["X_phate"] = phate_operator.fit_transform(adata.X)
+            coord_key = "X_phate"
+        elif VisualizeType(self.type) == VisualizeType.PCA:
+            sc.tl.pca(adata, n_comps=2, random_state=42)
+            coord_key = "X_pca"
         else:
             raise ValueError(f"Unsupported visualization type: {self.type}")
 
