@@ -76,13 +76,19 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
 
         pred_labels = np.array(pred_labels)
 
-        if self.type == "umap":
-            graph_path, next_tp_graph_path, orig_graph_path = self.visualize_umap(
+        if self.type in {"umap", "tsne"}:
+            (
+                graph_path,
+                next_tp_graph_path,
+                orig_graph_path,
+            ) = self.visualize_embedding_projection(
                 embeddings, pred_embeddings, cell_types, pred_labels, output_path
             )
+        else:
+            raise ValueError(f"Unsupported visualization type: {self.type}")
 
         logging.debug(
-            f"Saved UMAP visualizations to {graph_path}, {next_tp_graph_path}, and {orig_graph_path}"
+            f"Saved {self.type} visualizations to {graph_path}, {next_tp_graph_path}, and {orig_graph_path}"
         )
 
         return json.dumps(
@@ -93,10 +99,10 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
             }
         )
 
-    def visualize_umap(
+    def visualize_embedding_projection(
         self, embeddings, pred_embeddings, cell_types, pred_labels, output_path
     ):
-        # Use Scanpy to compute UMAP on combined embeddings and plot
+        # Use Scanpy to compute a 2D projection on combined embeddings and plot
         logging.getLogger("numba").setLevel(logging.WARNING)
 
         n_orig = embeddings.shape[0]
@@ -115,11 +121,20 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
 
         adata = sc.AnnData(X=total_embeddings, obs=obs)
 
-        # Compute neighbors and UMAP using Scanpy
-        sc.pp.neighbors(adata, n_neighbors=self.n_neighbors, use_rep="X")
-        sc.tl.umap(adata)
+        # Compute neighbors and the requested projection using Scanpy
+        n_neighbors = min(self.n_neighbors, max(1, total_embeddings.shape[0] - 1))
+        sc.pp.neighbors(adata, n_neighbors=n_neighbors, use_rep="X")
 
-        coords = adata.obsm["X_umap"]
+        if self.type == "umap":
+            sc.tl.umap(adata, random_state=42)
+            coord_key = "X_umap"
+        elif self.type == "tsne":
+            sc.tl.tsne(adata, random_state=42)
+            coord_key = "X_tsne"
+        else:
+            raise ValueError(f"Unsupported visualization type: {self.type}")
+
+        coords = adata.obsm[coord_key]
 
         # Prepare color mapping across all labels so colors are consistent
         all_labels = np.unique(adata.obs["cell_type"].values)
@@ -132,6 +147,7 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
         # Prepare output file paths
         graph_path = os.path.join(output_path, f"{self.type}.png")
         next_tp_graph_path = os.path.join(output_path, f"next_tp_{self.type}.png")
+        orig_graph_path = os.path.join(output_path, f"orig_{self.type}.png")
 
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
@@ -161,8 +177,8 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
         )
 
         plt.title(f"{self.type} of embeddings (orig + pred)")
-        plt.xlabel("UMAP1")
-        plt.ylabel("UMAP2")
+        plt.xlabel(f"{self.type.upper()}1")
+        plt.ylabel(f"{self.type.upper()}2")
         # Legend for cell types
         handles = [
             Line2D(
@@ -201,8 +217,8 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
             linewidths=0.4,
         )
         plt.title(f"{self.type} of next timepoint embeddings (highlighted)")
-        plt.xlabel("UMAP1")
-        plt.ylabel("UMAP2")
+        plt.xlabel(f"{self.type.upper()}1")
+        plt.ylabel(f"{self.type.upper()}2")
         plt.legend(
             handles=handles,
             title="cell_type",
@@ -215,7 +231,6 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
         plt.close()
 
         # Third plot: predicted greyed out, originals coloured (highlight originals)
-        orig_graph_path = os.path.join(output_path, f"orig_{self.type}.png")
         plt.figure(figsize=(6, 5))
         plt.scatter(
             coords[mask_pred, 0], coords[mask_pred, 1], c="#dddddd", s=6, alpha=0.6
@@ -229,8 +244,8 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
             linewidths=0.4,
         )
         plt.title(f"{self.type} of original embeddings (highlighted)")
-        plt.xlabel("UMAP1")
-        plt.ylabel("UMAP2")
+        plt.xlabel(f"{self.type.upper()}1")
+        plt.ylabel(f"{self.type.upper()}2")
         plt.legend(
             handles=handles,
             title="cell_type",
