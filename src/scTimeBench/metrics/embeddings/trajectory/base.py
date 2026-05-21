@@ -24,6 +24,7 @@ class TrajectoryEmbeddingMetrics(EmbeddingMetrics):
         self.required_outputs = [
             RequiredOutputFiles.EMBEDDING,
             RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
+            RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
         ]
 
 
@@ -69,20 +70,57 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
         num_classes = test_probas.shape[1]
         normalized_entropy = entropy / np.log(num_classes)
 
-        return json.dumps(
+        results = {
+            "avg_entropy": np.mean(entropy).item(),
+            "std_entropy": np.std(entropy).item(),
+            "avg_normalized_entropy": np.mean(normalized_entropy).item(),
+            "std_normalized_entropy": np.std(normalized_entropy).item(),
+            "num_classes": num_classes,
+            "pred_tp_avg_entropy": np.mean(predicted_entropy).item(),
+            "pred_tp_avg_normalized_entropy": np.mean(
+                predicted_entropy / np.log(num_classes)
+            ).item(),
+            "pred_tp_std_entropy": np.std(predicted_entropy).item(),
+        }
+
+        gex_traj_config = dict(
+            self.metric_config.get(
+                "trajectory_infer_model", {"name": Classifier.__name__}
+            )
+        )
+        gex_traj_config["embedding_classifier"] = False
+        gex_model: BaseTrajectoryInferMethod = (
+            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
+                gex_traj_config
+            )
+        )
+        gex_probas_and_labels, _ = gex_model.train_and_predict(output_path)
+        gex_test_probas, _ = gex_probas_and_labels
+        gex_next_tp_probas, _ = gex_model.predict_next_tp(output_path)
+
+        gex_entropy = -np.sum(gex_test_probas * np.log(gex_test_probas + 1e-10), axis=1)
+        gex_predicted_entropy = -np.sum(
+            gex_next_tp_probas * np.log(gex_next_tp_probas + 1e-10), axis=1
+        )
+        gex_num_classes = gex_test_probas.shape[1]
+        gex_normalized_entropy = gex_entropy / np.log(gex_num_classes)
+
+        results.update(
             {
-                "avg_entropy": np.mean(entropy).item(),
-                "std_entropy": np.std(entropy).item(),
-                "avg_normalized_entropy": np.mean(normalized_entropy).item(),
-                "std_normalized_entropy": np.std(normalized_entropy).item(),
-                "num_classes": num_classes,
-                "pred_tp_avg_entropy": np.mean(predicted_entropy).item(),
-                "pred_tp_avg_normalized_entropy": np.mean(
-                    predicted_entropy / np.log(num_classes)
+                "gex_avg_entropy": np.mean(gex_entropy).item(),
+                "gex_std_entropy": np.std(gex_entropy).item(),
+                "gex_avg_normalized_entropy": np.mean(gex_normalized_entropy).item(),
+                "gex_std_normalized_entropy": np.std(gex_normalized_entropy).item(),
+                "gex_num_classes": gex_num_classes,
+                "gex_pred_tp_avg_entropy": np.mean(gex_predicted_entropy).item(),
+                "gex_pred_tp_avg_normalized_entropy": np.mean(
+                    gex_predicted_entropy / np.log(gex_num_classes)
                 ).item(),
-                "pred_tp_std_entropy": np.std(predicted_entropy).item(),
+                "gex_pred_tp_std_entropy": np.std(gex_predicted_entropy).item(),
             }
         )
+
+        return json.dumps(results)
 
 
 @skip_metric
