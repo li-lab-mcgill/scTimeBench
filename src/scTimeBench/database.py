@@ -439,7 +439,7 @@ class DatabaseManager:
             JOIN metrics ON evals.metric_id = metrics.id
             JOIN method_outputs ON evals.method_output_id = method_outputs.id
             JOIN datasets ON method_outputs.dataset_id = datasets.id
-            WHERE metrics.name IN ('ARI', 'ClassificationEntropy')
+            WHERE metrics.name IN ('ARI','ARIGEx','ClassificationEntropy','ClassificationEntropyGEx')
         """
         )
         rows = cursor.fetchall()
@@ -470,21 +470,26 @@ class DatabaseManager:
 
             for key, value in parsed_result.items():
                 embedding_type = ""
-                if metric_name == "ARI":
+                if metric_name in ("ARI", "ARIGEx"):
                     if "next_timepoint" in key:
                         embedding_type = "projected"
                     else:
                         embedding_type = "ground_truth"
-                elif metric_name == "ClassificationEntropy":
-                    if key not in [
+                elif metric_name in (
+                    "ClassificationEntropy",
+                    "ClassificationEntropyGEx",
+                ):
+                    if key not in (
                         "avg_normalized_entropy",
                         "pred_tp_avg_normalized_entropy",
-                    ]:
+                    ):
                         continue
                     if "pred_tp" in key:
                         embedding_type = "projected"
                     else:
                         embedding_type = "ground_truth"
+                else:
+                    continue
 
                 writer.writerow(
                     [
