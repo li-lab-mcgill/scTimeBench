@@ -58,6 +58,19 @@ benchmark = [
     "graphviz",
     "celltypist"
 ]
+pypsupertime = [ "pypsupertime" ]
+sceptic = [ "sceptic" ]
 
 [project.scripts]
 scTimeBench = "scTimeBench.main:main"
+
+# --- UV SPECIFIC CONFIGURATION ---
+
+[tool.uv]
+# This tells uv that psupertime is part of your development 'workspace'
+workspace = { members = ["extern/pypsupertime", "extern/sceptic"] }
+
+[tool.uv.sources]
+# This ensures uv looks in your submodule folder and treats it as an editable install.
+pypsupertime = { editable = true, workspace = true }
+sceptic = { editable = true, workspace = true }

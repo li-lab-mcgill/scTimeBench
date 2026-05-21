@@ -26,7 +26,7 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
         super().__init__(dataset_dict)
         self.PCA_FILE = "pca_model.pkl"
         self.preprocess_type = PreprocessType(preprocess_type)
-        self.PSEUDOTIME_FILE = "pseudotime.npy"
+        self.PSEUDOTIME_FILE = self.label() + ".npy"
 
     def label(self):
         raise NotImplementedError("Subclasses should implement this method.")
@@ -126,6 +126,9 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
                 ann_data, n_top_genes=self._parameters()["n_top_genes"], copy=True
             )
 
+        else:
+            preprocessed_ann_data = ann_data.copy()
+
         pseudotime = self._filter_pseudotime(preprocessed_ann_data)
 
         # now to get a good idea on how well the pseudotime estimation is doing, let's check the spearman correlation
@@ -140,91 +143,6 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
         np.save(cache_path, pseudotime)
         logging.debug(f"Caching to {cache_path}...")
         return ann_data
-
-    def _select_train_data(self, ann_data):
-        # 2) Subset the data per timepoint so that we only use n_cells_train cells
-        # for the pseudotime estimation to speed things up (since some pseudotime estimation methods can be quite slow, especially on large datasets).
-        # Then we would apply this model on the full data to get the pseudotime for all cells.
-        train_ann_data = ann_data.copy()
-        if ann_data.n_obs > self._parameters()["n_cells_train"]:
-            # we would want to make sure that we have a balanced number of cells
-            # from each timepoint, so we would sample n_cells_train / n_timepoints
-            # cells from each timepoint to make sure that we have a balanced representation
-            # of each timepoint in the training data for pseudotime estimation.
-            logging.debug(
-                f"Filtering for {self._parameters()['n_cells_train']} random cells out of {ann_data.n_obs} to speed up pseudotime estimation for debugging..."
-            )
-
-            time_col = ObservationColumns.TIMEPOINT.value
-            timepoints = list(ann_data.obs[time_col].unique())
-            n_timepoints = len(timepoints)
-            n_cells_train = self._parameters()["n_cells_train"]
-            base_per_tp = int(n_cells_train // n_timepoints)
-
-            rng = np.random.default_rng()
-            selected_indices = []
-            # keep track of which timepoints have remaining cells to sample from
-            # in case we need to do additional rounds of sampling to fill the remaining budget
-            remaining_by_tp = {}
-
-            for tp in timepoints:
-                tp_mask = ann_data.obs[ObservationColumns.TIMEPOINT.value] == tp
-                tp_indices = np.where(tp_mask)[0]
-                permuted = rng.permutation(tp_indices)
-
-                take = min(base_per_tp, permuted.size)
-                if take > 0:
-                    selected_indices.extend(permuted[:take].tolist())
-
-                if permuted.size > take:
-                    remaining_by_tp[tp] = permuted[take:]
-
-            remaining_budget = n_cells_train - len(selected_indices)
-            while remaining_budget > 0 and remaining_by_tp:
-                available_tps = list(remaining_by_tp.keys())
-                base_take = remaining_budget // len(available_tps)
-                extra = remaining_budget % len(available_tps)
-                to_remove = []
-                any_taken = False
-
-                for i, tp in enumerate(available_tps):
-                    tp_remaining = remaining_by_tp[tp]
-                    take = base_take + (1 if i < extra else 0)
-                    if take == 0 and remaining_budget > 0:
-                        take = 1
-                    take = min(take, tp_remaining.size)
-
-                    if take > 0:
-                        selected_indices.extend(tp_remaining[:take].tolist())
-                        remaining_budget -= take
-                        any_taken = True
-
-                    if tp_remaining.size == take:
-                        to_remove.append(tp)
-                    else:
-                        remaining_by_tp[tp] = tp_remaining[take:]
-
-                    if remaining_budget == 0:
-                        break
-
-                for tp in to_remove:
-                    remaining_by_tp.pop(tp, None)
-
-                if not any_taken:
-                    break
-
-            # finally let's verify that there are no duplicated entries:
-            assert len(selected_indices) == len(
-                set(selected_indices)
-            ), "There are duplicated entries in the selected indices for pseudotime estimation training data."
-            train_ann_data = ann_data[np.array(selected_indices, dtype=int)].copy()
-
-            # finally logging.debug the new counts
-            logging.debug(
-                f"Cell counts by timepoint: {train_ann_data.obs[ObservationColumns.TIMEPOINT.value].value_counts()}",
-            )
-
-        return train_ann_data
 
     def _filter_pseudotime(self, preprocessed_ann_data):
         """
@@ -243,7 +161,6 @@ class Psupertime(BasePseudotimePreprocessor):
     c501310953af8391ddfdaa2b73af324f73fdd9c3
     for a reference on how to set things up.
     """
-        
 
     def label(self):
         return "Psupertime"
@@ -254,7 +171,7 @@ class Psupertime(BasePseudotimePreprocessor):
         """
         return {
             **super()._parameters(),
-            "n_cpus": self.dataset_dict.get("n_cpus", 20),
+            "n_cpus": self.dataset_dict.get("n_cpus", 10),
         }
 
     def _filter_pseudotime(self, preprocessed_ann_data):
@@ -262,6 +179,7 @@ class Psupertime(BasePseudotimePreprocessor):
         Filter the dataset to replace its time column with a psupertime.
         """
         from pypsupertime import Psupertime
+        from pypsupertime.model import SGDModel
 
         logging.warning(
             f"""
@@ -274,25 +192,33 @@ class Psupertime(BasePseudotimePreprocessor):
         logging.getLogger("numba").setLevel(logging.WARNING)
 
         # then let's run psupertime!
+        # let's first preprocess on all the data
         psup = Psupertime(
             n_jobs=self._parameters()["n_cpus"],
-            n_folds=3,
+            n_folds=2,
+            n_batches=1,
+            preprocessing_params={"select_genes": "hvg", "hvg_n_top_genes": 1000},
+            estimator_class=SGDModel,
+            estimator_params={
+                "max_iter": 25,
+                "n_iter_no_change": 4,
+                "early_stopping": False,
+            },
+            regularization_params={
+                "n_params": 5,
+            },
         )
 
-        # let's first preprocess on all the data
-        preprocessed_ann_data = psup.preprocessing.fit_transform(preprocessed_ann_data)
-        train_preprocessed_ann_data = self._select_train_data(preprocessed_ann_data)
+        preprocessed_ann_data = psup.preprocessing.fit_transform(
+            preprocessed_ann_data,
+        )
 
         # now let's avoid preprocessing during the run
         psup.preprocessing = None
-        train_preprocessed_ann_data = psup.run(
-            train_preprocessed_ann_data,
+        preprocessed_ann_data = psup.run(
+            preprocessed_ann_data,
             ObservationColumns.TIMEPOINT.value,
         )
-
-        # now that we've done the training, let's apply it to the full data to get the pseudotime for all cells
-        # then let's first preprocess the data as the train data
-        psup.predict_psuper(preprocessed_ann_data, inplace=True)
 
         logging.debug(
             f'Psupertime observation: {preprocessed_ann_data.obs["psupertime"]}'
@@ -321,6 +247,7 @@ class Sceptic(BasePseudotimePreprocessor):
         Filter the dataset to replace its time column with a psupertime.
         """
         from sceptic import run_sceptic_and_evaluate
+        import torch
 
         logging.warning(
             f"""
@@ -361,6 +288,7 @@ class Sceptic(BasePseudotimePreprocessor):
             labels=label,
             label_list=unique_time_labels,
             method="xgboost",
+            use_gpu=torch.cuda.is_available(),
         )
 
         logging.debug(f"Sceptic confusion matrix:\n{cm}")
