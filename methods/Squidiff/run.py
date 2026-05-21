@@ -6,9 +6,11 @@ It keeps the BaseMethod runner structure used across the project.
 """
 
 import os
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+import torch.distributed as dist
 import torch
 
 from scTimeBench.method_utils.method_runner import main, BaseMethod
@@ -46,6 +48,20 @@ def _ensure_dense(x) -> np.ndarray:
     except Exception:
         pass
     return np.asarray(x)
+
+
+def _setup_single_process_dist() -> None:
+    if not dist.is_available() or dist.is_initialized():
+        return
+
+    store_dir = tempfile.mkdtemp(prefix="squidiff-dist-")
+    store_path = os.path.join(store_dir, "init")
+    dist.init_process_group(
+        backend="gloo",
+        init_method=f"file://{store_path}",
+        rank=0,
+        world_size=1,
+    )
 
 
 def _prepare_grouped_adata(ann_data, all_tps: Optional[List]) -> Tuple:
@@ -141,7 +157,7 @@ def _build_args(metadata: Dict, data_path: str, output_path: str, n_genes: int) 
 
 
 def _run_training(args: Dict) -> None:
-    from Squidiff import logger  # type: ignore
+    from Squidiff import dist_util, logger  # type: ignore
 
     # from Squidiff import dist_util, logger
     from Squidiff.scrna_datasets import prepared_data  # type: ignore
@@ -153,8 +169,8 @@ def _run_training(args: Dict) -> None:
     )
     from Squidiff.train_util import TrainLoop, plot_loss  # type: ignore
 
+    _setup_single_process_dist()
     device = _single_device()
-    # dist_util.setup_dist()
     logger.configure(dir=args["logger_path"])
 
     model, diffusion = create_model_and_diffusion(
@@ -206,8 +222,12 @@ def _run_training(args: Dict) -> None:
         comb_num=args["comb_num"],
     )
 
-    train_loop.run_loop()
-    plot_loss(train_loop.loss_list, args)
+    try:
+        train_loop.run_loop()
+        plot_loss(train_loop.loss_list, args)
+    finally:
+        if dist.is_available() and dist.is_initialized():
+            dist.destroy_process_group()
 
 
 def _load_model(args: Dict, model_path: str):
@@ -263,87 +283,127 @@ def _load_model(args: Dict, model_path: str):
 
 
 def _encode_latent(
-    model, x: np.ndarray, device, batch_size: int, use_encoder: bool
+    model,
+    x: np.ndarray,
+    device,
+    batch_size: int,
+    use_encoder: bool,
+    labels: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     if not use_encoder or not hasattr(model, "encoder"):
         return x.astype(np.float32)
 
-    def _encoder_forward(batch_tensor: torch.Tensor):
+    requires_labels = getattr(model, "num_classes", None) is not None
+    if requires_labels and labels is None:
+        raise ValueError("Squidiff encoder requires labels when class_cond is enabled.")
+
+    def _encoder_forward(
+        batch_tensor: torch.Tensor, label_tensor: Optional[torch.Tensor] = None
+    ):
         encoder = model.encoder
         try:
             import inspect
 
             sig = inspect.signature(encoder.forward)
-            kwargs = {
-                "label": None,
-                "drug_dose": None,
-                "control_feature": None,
-            }
+            kwargs = {"drug_dose": None, "control_feature": None}
+            if label_tensor is not None and "label" in sig.parameters:
+                kwargs["label"] = label_tensor
             filtered = {k: v for k, v in kwargs.items() if k in sig.parameters}
             return encoder(batch_tensor, **filtered)
         except Exception:
+            if label_tensor is not None:
+                return encoder(batch_tensor, label=label_tensor)
             return encoder(batch_tensor)
 
     embeddings = []
+    label_values = None if labels is None else np.asarray(labels)
     for start in range(0, x.shape[0], batch_size):
         batch = torch.tensor(
             x[start : start + batch_size], dtype=torch.float32, device=device
         )
+        label_batch = None
+        if requires_labels and label_values is not None:
+            label_batch = torch.tensor(
+                label_values[start : start + batch_size],
+                dtype=torch.float32,
+                device=device,
+            )
+            if label_batch.ndim == 1:
+                label_batch = label_batch[:, None]
         with torch.no_grad():
-            z_sem = _encoder_forward(batch)
+            z_sem = _encoder_forward(batch, label_batch)
         embeddings.append(z_sem.detach().cpu().numpy())
     return np.vstack(embeddings)
 
 
-def _sample_outputs(
+def _sample_around_point(
+    point: np.ndarray, num_samples: int, scale: float
+) -> np.ndarray:
+    if num_samples <= 0:
+        return np.zeros((0, point.shape[0]), dtype=np.float32)
+    noise = np.random.randn(num_samples, point.shape[0]).astype(np.float32)
+    return point.astype(np.float32) + scale * noise
+
+
+def _compute_latent_means(
+    model,
+    ann_data,
+    device,
+    batch_size: int,
+    use_encoder: bool,
+    labels: Optional[np.ndarray] = None,
+) -> Dict:
+    if not use_encoder:
+        return {}
+
+    data = _ensure_dense(ann_data.X).astype(np.float32)
+    z_sem = _encode_latent(model, data, device, batch_size, use_encoder, labels=labels)
+    time_col = ObservationColumns.TIMEPOINT.value
+    tps = ann_data.obs[time_col].to_numpy()
+    means: Dict = {}
+    for tp in _sorted_unique(tps):
+        mask = tps == tp
+        if np.any(mask):
+            means[tp] = z_sem[mask].mean(axis=0)
+    return means
+
+
+def _compute_global_direction(
+    latent_means: Dict, ordered_tps: List
+) -> Tuple[np.ndarray, Optional[object], Optional[object]]:
+    available = [tp for tp in ordered_tps if tp in latent_means]
+    if len(available) < 2:
+        return np.array([]), None, None
+    start_tp = available[0]
+    end_tp = available[-1]
+    direction = latent_means[end_tp] - latent_means[start_tp]
+    return direction, start_tp, end_tp
+
+
+def _sample_from_latent(
     model,
     diffusion,
-    x: np.ndarray,
+    z_sem: np.ndarray,
     device,
     gene_size: int,
     use_ddim: bool,
     batch_size: int,
-    use_encoder: bool,
 ) -> np.ndarray:
     sample_fn = diffusion.ddim_sample_loop if use_ddim else diffusion.p_sample_loop
-
     outputs = []
-    for start in range(0, x.shape[0], batch_size):
+    for start in range(0, z_sem.shape[0], batch_size):
         batch = torch.tensor(
-            x[start : start + batch_size], dtype=torch.float32, device=device
+            z_sem[start : start + batch_size], dtype=torch.float32, device=device
         )
         with torch.no_grad():
-            if use_encoder and hasattr(model, "encoder"):
-                try:
-                    z_sem = model.encoder(
-                        batch, label=None, drug_dose=None, control_feature=None
-                    )
-                except TypeError:
-                    z_sem = model.encoder(batch)
-                pred = sample_fn(
-                    model,
-                    shape=(batch.shape[0], gene_size),
-                    model_kwargs={"z_mod": z_sem},
-                    noise=None,
-                )
-            else:
-                pred = sample_fn(
-                    model,
-                    shape=(batch.shape[0], gene_size),
-                    model_kwargs={},
-                    noise=None,
-                )
+            pred = sample_fn(
+                model,
+                shape=(batch.shape[0], gene_size),
+                model_kwargs={"z_mod": batch},
+                noise=None,
+            )
         outputs.append(pred.detach().cpu().numpy())
     return np.vstack(outputs)
-
-
-def _next_timepoint_mask(cell_tps: np.ndarray, unique_tps: List) -> np.ndarray:
-    ordered = _sorted_unique(unique_tps)
-    next_map = {
-        ordered[i]: (ordered[i + 1] if i + 1 < len(ordered) else None)
-        for i in range(len(ordered))
-    }
-    return np.array([next_map.get(tp) is not None for tp in cell_tps], dtype=bool)
 
 
 class Squidiff(BaseMethod):
@@ -366,6 +426,10 @@ class Squidiff(BaseMethod):
             self.args = cache["args"]
             self.tp_to_idx = cache.get("tp_to_idx", {})
             self.unique_tps = cache.get("unique_tps", [])
+            self.latent_direction = cache.get("latent_direction")
+            self.latent_start_tp = cache.get("latent_start_tp")
+            self.latent_end_tp = cache.get("latent_end_tp")
+            self.class_cond = bool(cache.get("class_cond", False))
             return
 
         grouped_adata, unique_tps, tp_to_idx = _prepare_grouped_adata(ann_data, all_tps)
@@ -392,6 +456,33 @@ class Squidiff(BaseMethod):
 
         self.model_path = model_path
         self.args = args
+        self.class_cond = bool(args.get("class_cond", False))
+
+        self.latent_direction = None
+        self.latent_start_tp = None
+        self.latent_end_tp = None
+
+        use_encoder = bool(args.get("use_encoder", True))
+        batch_size = int(args.get("batch_size", 64))
+        if use_encoder:
+            model, _, device = _load_model(args, self.model_path)
+            latent_means = _compute_latent_means(
+                model,
+                grouped_adata,
+                device,
+                batch_size,
+                use_encoder,
+                labels=grouped_adata.obs["Group"]
+                .to_numpy(dtype=np.float32)
+                .reshape(-1, 1),
+            )
+            direction, start_tp, end_tp = _compute_global_direction(
+                latent_means, unique_tps
+            )
+            if direction.size > 0:
+                self.latent_direction = direction
+                self.latent_start_tp = start_tp
+                self.latent_end_tp = end_tp
 
         torch.save(
             {
@@ -399,6 +490,10 @@ class Squidiff(BaseMethod):
                 "args": self.args,
                 "tp_to_idx": self.tp_to_idx,
                 "unique_tps": self.unique_tps,
+                "latent_direction": self.latent_direction,
+                "latent_start_tp": self.latent_start_tp,
+                "latent_end_tp": self.latent_end_tp,
+                "class_cond": self.class_cond,
             },
             cache_path,
         )
@@ -418,30 +513,98 @@ class Squidiff(BaseMethod):
         use_ddim = bool(self.args.get("use_ddim", True))
         use_encoder = bool(self.args.get("use_encoder", True))
 
-        embeds = _encode_latent(model, data, device, batch_size, use_encoder)
-        preds = _sample_outputs(
+        if not use_encoder:
+            raise ValueError(
+                "Squidiff temporal projection follows the published encoder-driven sampling path and requires use_encoder=True."
+            )
+
+        if getattr(self, "class_cond", False):
+            raise ValueError(
+                "Squidiff temporal inference in this runner follows the published reproduction scripts, which do not use class-conditional labels. Set class_cond=false."
+            )
+
+        time_col = ObservationColumns.TIMEPOINT.value
+        cell_tps = test_ann_data.obs[time_col].to_numpy()
+
+        metadata = self.config.get("method", {}).get("metadata", {})
+        latent_noise_scale = float(metadata.get("latent_noise_scale", 0.7))
+
+        embeds = _encode_latent(
             model,
-            diffusion,
             data,
             device,
-            gene_size,
-            use_ddim,
             batch_size,
             use_encoder,
         )
-        next_embeds = _encode_latent(model, preds, device, batch_size, use_encoder)
 
-        final_ann_data = test_ann_data.copy()
-        time_col = ObservationColumns.TIMEPOINT.value
-        cell_tps = final_ann_data.obs[time_col].to_numpy()
-        unique_tps = _sorted_unique(cell_tps)
-        has_next = _next_timepoint_mask(cell_tps, unique_tps)
+        latent_direction = getattr(self, "latent_direction", None)
+        latent_start_tp = getattr(self, "latent_start_tp", None)
+        latent_end_tp = getattr(self, "latent_end_tp", None)
 
-        next_expr = np.full_like(preds, np.nan, dtype=np.float32)
-        next_expr[has_next] = preds[has_next]
+        if latent_direction is None or getattr(latent_direction, "size", 0) == 0:
+            raise ValueError(
+                "Squidiff latent direction is unavailable; train() must complete successfully and cache the reference direction before generation."
+            )
 
-        next_latent = np.full_like(next_embeds, np.nan, dtype=np.float32)
-        next_latent[has_next] = next_embeds[has_next]
+        test_tps = _sorted_unique(cell_tps)
+        global_tps = self.unique_tps or test_tps
+
+        tp_numeric = {tp: float(tp) for tp in global_tps}
+        start_tp = latent_start_tp if latent_start_tp in tp_numeric else global_tps[0]
+        end_tp = latent_end_tp if latent_end_tp in tp_numeric else global_tps[-1]
+        denom = tp_numeric[end_tp] - tp_numeric[start_tp]
+        if denom == 0:
+            raise ValueError(
+                "Squidiff latent direction cannot be scaled because the training time axis collapsed to a single point."
+            )
+
+        next_expr = np.full((test_ann_data.n_obs, gene_size), np.nan, dtype=np.float32)
+        next_latent = np.full_like(embeds, np.nan, dtype=np.float32)
+
+        for idx, tp in enumerate(test_tps[:-1]):
+            next_tp = test_tps[idx + 1]
+            mask = cell_tps == tp
+            if not np.any(mask):
+                continue
+
+            # Mirror Squidiff's published interpolation path: move the mean latent
+            # state along a reference direction, then add local noise and sample.
+            # Project each individual cell's latent state along the reference direction,
+            # preserving single-cell heterogeneity, then add local noise.
+            delta_scale = (tp_numeric[next_tp] - tp_numeric[tp]) / denom
+            interp_center = embeds[mask] + (latent_direction * delta_scale)
+            z_next = interp_center + (
+                latent_noise_scale
+                * np.random.randn(*interp_center.shape).astype(np.float32)
+            )
+
+            preds_tp = _sample_from_latent(
+                model,
+                diffusion,
+                z_next,
+                device,
+                gene_size,
+                use_ddim,
+                batch_size,
+            )
+            next_expr[mask] = preds_tp
+            next_latent[mask] = z_next
+
+        # Fill NaNs using column means (average over projected cells), omitting NaNs.
+        def _fill_nans_with_column_mean(values: np.ndarray) -> np.ndarray:
+            if not np.isnan(values).any():
+                return values
+            col_means = np.nanmean(values, axis=0)
+            col_means = np.where(np.isnan(col_means), 0.0, col_means)
+            nan_rows, nan_cols = np.where(np.isnan(values))
+            values[nan_rows, nan_cols] = col_means[nan_cols]
+            return values
+
+        if next_latent is not None and np.isnan(next_latent).any():
+            next_latent = _fill_nans_with_column_mean(next_latent)
+
+        if next_expr is not None and np.isnan(next_expr).any():
+            next_expr = _fill_nans_with_column_mean(next_expr)
 
         self._cached_outputs = (embeds, next_latent, next_expr)
         return self._cached_outputs
