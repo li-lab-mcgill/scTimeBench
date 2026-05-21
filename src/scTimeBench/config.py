@@ -198,26 +198,32 @@ class Config:
                 sys.stdout.write("\033[?25h")  # Re-show the cursor if you hid it
             exit()
 
+        # Utility flags that only need CLI options (see main.py early-exit paths).
+        yaml_optional = (
+            args.available
+            or args.print_all
+            or args.to_csv is not None
+            or args.clear_tables
+            or args.plot_from_csv
+        )
+
         # Get all config keys
         config_keys = list(args.__dict__.keys())
 
         # other keys to add from the yaml file
         config_keys.extend(["method", "datasets"])
 
-        # First read the config file if provided
-        assert (
-            args.config is not None
-        ), "Config file path must be provided with --config"
-        if not os.path.exists(args.config):
-            raise FileNotFoundError(f"Config file not found: {args.config}")
-
-        with open(args.config, "r") as file:
-            data = yaml.safe_load(file)
-
-        # Set attributes from YAML file
-        for key in config_keys:
-            if key in data.keys():
-                setattr(self, key, data[key])
+        data = {}
+        if args.config is not None:
+            if not os.path.exists(args.config):
+                raise FileNotFoundError(f"Config file not found: {args.config}")
+            with open(args.config, "r") as file:
+                data = yaml.safe_load(file) or {}
+            for key in config_keys:
+                if key in data:
+                    setattr(self, key, data[key])
+        elif not yaml_optional:
+            raise ValueError("Config file path must be provided with --config")
 
         # Override with command-line arguments
         for key, value in args._get_kwargs():
@@ -265,6 +271,17 @@ class Config:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
             handlers=handlers,
         )
+
+        if yaml_optional:
+            self.method_yaml_data = data.get("method", {})
+            self.metrics_skiplist = data.get("metrics_skiplist", [])
+            self.metrics_skiplist = [
+                metric if isinstance(metric, str) else metric.get("name", "")
+                for metric in self.metrics_skiplist
+            ]
+            self.run_type = RunType(self.run_type)
+            logging.info("Configuration loaded (YAML optional)")
+            return
 
         # Validate required fields
         required_fields = ["method", "metrics"]
