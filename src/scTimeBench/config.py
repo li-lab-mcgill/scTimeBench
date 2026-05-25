@@ -273,14 +273,9 @@ class Config:
         )
 
         if yaml_optional:
-            self.method_yaml_data = data.get("method", {})
-            self.metrics_skiplist = data.get("metrics_skiplist", [])
-            self.metrics_skiplist = [
-                metric if isinstance(metric, str) else metric.get("name", "")
-                for metric in self.metrics_skiplist
-            ]
-            self.run_type = RunType(self.run_type)
-            logging.info("Configuration loaded (YAML optional)")
+            logging.info(
+                "Config-independent operation selected; skipping YAML loading."
+            )
             return
 
         # Validate required fields
