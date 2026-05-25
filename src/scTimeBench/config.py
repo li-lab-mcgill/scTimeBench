@@ -37,6 +37,21 @@ class CsvWriteMode(Enum):
     SEPARATE = "separate"
 
 
+def check_yaml_optional(args=None):
+    if args is None:
+        return False  # Set to False to ensure config error is raised
+    else:
+        return any(
+            [
+                args.available,
+                args.print_all,
+                args.to_csv is not None,
+                args.clear_tables,
+                args.plot_from_csv,
+            ]
+        )
+
+
 class Config:
     """Config class for both yaml and cli arguments."""
 
@@ -199,13 +214,7 @@ class Config:
             exit()
 
         # Utility flags that only need CLI options (see main.py early-exit paths).
-        yaml_optional = (
-            args.available
-            or args.print_all
-            or args.to_csv is not None
-            or args.clear_tables
-            or args.plot_from_csv
-        )
+        yaml_optional = check_yaml_optional(args)
 
         # Get all config keys
         config_keys = list(args.__dict__.keys())
