@@ -8,6 +8,7 @@ Examples are the kNN graph-based methods, or the optimal transport based methods
 """
 from scTimeBench.shared.constants import ObservationColumns, RequiredOutputFiles
 from scTimeBench.shared.utils import (
+    load_train_dataset,
     load_test_dataset,
     load_output_file,
     get_dataset,
@@ -144,7 +145,7 @@ class BaseTrajectoryInferMethod:
             )
             return next_tp_embed[valid_timepoints]
 
-    def _get_cur_tp_tensors(self, output_path, test_ann_data):
+    def _get_cur_tp_tensors(self, output_path, ann_data):
         """
         Based on the embedding_classifier property, get the proper tensors for trajectory inference.
 
@@ -154,11 +155,11 @@ class BaseTrajectoryInferMethod:
         if self.uses_gene_expr():
             # first we check that X is normalized to counts as expected
             # because this should happen at the filter stage
-            assert is_log_normalized_to_counts(test_ann_data), (
+            assert is_log_normalized_to_counts(ann_data), (
                 "Data is not log-normalized to counts as expected for gene expression-based trajectory inference. "
                 "Please use LogNormPreprocessor to ensure that the data is properly normalized before running the trajectory inference model."
             )
-            return test_ann_data.X.toarray()
+            return ann_data.X.toarray()
         else:
             return load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
 
@@ -190,10 +191,13 @@ class BaseTrajectoryInferMethod:
     def train_and_predict(self, output_path, train_only=False):
         """
         Trains and predicts using the trajectory inference model.
+
+        Note for this one here, we train on the train dataset subset instead of the test one.
+        The rest uses the test dataset.
         """
         # ** Note: we just redo the preparation so classifier_save_path can be used **
         # ** This is not a big deal because we already have caching in the first place **
-        test_ann_data = load_test_dataset(output_path)
+        train_ann_data = load_train_dataset(output_path)
         traj_infer_path, classifier_save_path = self._get_traj_infer_path(output_path)
 
         # now we also write the traj_config to file for future reference
@@ -207,10 +211,10 @@ class BaseTrajectoryInferMethod:
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = train_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, train_ann_data)
 
         X_train, X_test, y_train, y_test = train_test_split(
             embeddings,
@@ -236,7 +240,7 @@ class BaseTrajectoryInferMethod:
 
         We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
         """
-        test_ann_data = load_test_dataset(output_path)
+        train_ann_data = load_train_dataset(output_path)
         _, classifier_save_path = self._get_traj_infer_path(output_path)
         k_fold_path = os.path.join(classifier_save_path, f"k_fold_{k}")
         os.makedirs(k_fold_path, exist_ok=True)
@@ -244,10 +248,10 @@ class BaseTrajectoryInferMethod:
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = train_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, train_ann_data)
 
         kf = KFold(
             n_splits=k, shuffle=True, random_state=self._parameters()["random_state"]
