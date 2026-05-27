@@ -1,0 +1,50 @@
+datasets:
+  ######################### PERTURBATION DATASETS #########################
+  # With perturbation:
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+      - name: PerturbationPreprocessor
+        gene_col_name: gene_symbols
+        # find using: grep -oP '.{0,10}your_keyword.{0,10}' logs/...
+        knockout_genes: ['RPLP1']
+        top_n_genes_plot_path: logs/garcia-alonso.png
+      - name: LogNormPreprocessor
+        filter_genes: false
+
+  # Without perturbation:
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+      - name: LogNormPreprocessor
+        filter_genes: false
+      - name: CopyTrainTest
+
+method:
+  name: scNODE
+  train_and_test_script: ./methods/scNODE/train_and_test.sh
+
+metrics:
+  - name: StackedBarPlot
+    from_tp_zero: True
+    infer_first_tp: True

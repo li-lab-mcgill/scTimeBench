@@ -89,6 +89,7 @@ class BaseTrajectoryInferMethod:
             "random_state": self.traj_config.get("random_state", 42),
             "embedding_classifier": self.traj_config.get("embedding_classifier", False),
             "from_tp_zero": self.traj_config.get("from_tp_zero", False),
+            "infer_first_tp": self.traj_config.get("infer_first_tp", False),
             **self._subclass_parameters(),
         }
 
@@ -113,6 +114,9 @@ class BaseTrajectoryInferMethod:
     def _from_tp_zero(self):
         return self._parameters().get("from_tp_zero", False)
 
+    def _infer_first_tp(self):
+        return self._parameters().get("infer_first_tp", False)
+
     def _get_next_tp_tensors(self, output_path, test_ann_data):
         """
         Based on the embedding_classifier property, get the proper tensors for trajectory inference.
@@ -123,10 +127,12 @@ class BaseTrajectoryInferMethod:
         if self._from_tp_zero():
             # here we have different logic because we have the predicted timepoints
             # not the previous ones here
+            logging.debug(
+                "Loading from zero to end predicted gene expression for trajectory inference."
+            )
             next_tp_gex_anndata = load_output_file(
                 output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
             )
-            timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
             # we should be predicting on every single timepoint
             # the starting timepoint as well
             return next_tp_gex_anndata.X.toarray()
@@ -347,6 +353,10 @@ class BaseTrajectoryInferMethod:
             )
             with open(save_path, "r") as f:
                 inferred_traj = json.load(f)
+
+            if per_tp:
+                # make the keys floats
+                inferred_traj = {float(tp): traj for tp, traj in inferred_traj.items()}
             return inferred_traj
 
         # now we also write the traj_config to file for future reference
@@ -478,11 +488,13 @@ class BaseTrajectoryInferMethod:
 
         # if we are in the from_tp_zero case, then we need to get the cell types and cell tps for all the timepoints
         timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
-        start_tps = np.where(timepoints == timepoints.min())[0]
-        start_cell_type = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
-            start_tps
-        ]
-        logging.debug(f"Start cell types: {start_cell_type}")
+
+        if not self._infer_first_tp():
+            start_tps = np.where(timepoints == timepoints.min())[0]
+            start_cell_type = test_ann_data.obs[
+                ObservationColumns.CELL_TYPE.value
+            ].iloc[start_tps]
+            logging.debug(f"Start cell types: {start_cell_type}")
 
         # then, the cell types are the first tp's real cell types
         # and for every timepoint after it's the predicted one
@@ -490,17 +502,34 @@ class BaseTrajectoryInferMethod:
             output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
         )
         timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
-        cell_type_valid_timepoints = np.where(
-            (timepoints < timepoints.max()) & (timepoints != timepoints.min())
-        )[0]
-        cell_types = np.array(next_cell_types)[cell_type_valid_timepoints]
-        cell_types = np.concatenate([start_cell_type, cell_types]).tolist()
+
+        if not self._infer_first_tp():
+            cell_type_valid_timepoints = np.where(
+                (timepoints < timepoints.max()) & (timepoints != timepoints.min())
+            )[0]
+            cell_types = np.array(next_cell_types)[cell_type_valid_timepoints]
+            cell_types = np.concatenate([start_cell_type, cell_types]).tolist()
+        else:
+            logging.debug(
+                "infer_first_tp is True, using predicted cell types for the first timepoint as well."
+            )
+            cell_type_valid_timepoints = np.where(timepoints < timepoints.max())[0]
+            cell_types = np.array(next_cell_types)[cell_type_valid_timepoints].tolist()
+            cells_besides_last = len(timepoints) - len(
+                np.where(timepoints == timepoints.max())[0]
+            )
+            assert (
+                len(cell_types) == cells_besides_last
+            ), f"Length of cell types: {len(cell_types)} should be equal to the number of cells: {len(timepoints)}."
 
         next_cell_type_valid_timepoints = np.where(timepoints > timepoints.min())[0]
         next_cell_types = np.array(next_cell_types)[
             next_cell_type_valid_timepoints
         ].tolist()
-        cell_tps = timepoints[next_cell_type_valid_timepoints]
+
+        # the cell timepoints we want to use are the source cell timepoints
+        valid_timepoints = np.where(timepoints < timepoints.max())[0]
+        cell_tps = timepoints[valid_timepoints]
         return cell_types, next_cell_types, cell_tps
 
     def __str__(self):
