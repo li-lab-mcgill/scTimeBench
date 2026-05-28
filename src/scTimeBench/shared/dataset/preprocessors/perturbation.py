@@ -48,7 +48,6 @@ class PerturbationPreprocessor(BaseDatasetPreprocessor):
             "gene_col_name": self.params.get(
                 "gene_col_name"
             ),  # optional column name in var to use for gene names, if not specified will use var_names
-            "top_n_genes_plot_path": self.params.get("top_n_genes_plot_path", None),
         }
 
     def preprocess(self, ann_data, **kwargs):
@@ -103,7 +102,7 @@ class PerturbationPreprocessor(BaseDatasetPreprocessor):
 
         logging.debug(f"Gene names in the dataset: {gene_names[:10]}")
         # let's also show the top n expressed genes
-        if self._parameters()["top_n_genes_plot_path"]:
+        if self.params.get("top_n_genes_plot_path") is not None:
             logging.getLogger("matplotlib").setLevel(logging.WARNING)
             ax = sc.pl.highest_expr_genes(
                 test_data,
@@ -111,10 +110,17 @@ class PerturbationPreprocessor(BaseDatasetPreprocessor):
                 show=False,
             )
             os.makedirs(
-                os.path.dirname(self._parameters()["top_n_genes_plot_path"]),
+                os.path.dirname(self.params["top_n_genes_plot_path"]),
                 exist_ok=True,
             )
-            ax.get_figure().savefig(self._parameters()["top_n_genes_plot_path"])
+            ax.get_figure().savefig(self.params["top_n_genes_plot_path"])
+
+        if self.params.get("genes_output_path") is not None:
+            os.makedirs(
+                os.path.dirname(self.params["genes_output_path"]), exist_ok=True
+            )
+            with open(self.params["genes_output_path"], "w") as f:
+                f.write("\n".join(gene_names))
 
         gene_to_index = {gene: idx for idx, gene in enumerate(gene_names)}
 
