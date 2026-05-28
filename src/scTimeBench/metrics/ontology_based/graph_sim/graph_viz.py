@@ -3,7 +3,7 @@ from scTimeBench.metrics.ontology_based.graph_sim.base import (
     AdjacencyMatrixType,
     ThresholdCriteria,
 )
-from scTimeBench.shared.utils import load_train_dataset
+from scTimeBench.shared.utils import load_train_dataset, load_test_dataset
 from scTimeBench.shared.constants import ObservationColumns
 import os
 import logging
@@ -225,8 +225,8 @@ class StackedBarPlot(GraphSimMetric):
         target_records = []
 
         # now we need to get the starting and ending timepoints as well
-        tps = train_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique().tolist()
-        tps.sort()
+        test_ann_data = load_test_dataset(self.output_path)
+        tps = sorted(test_ann_data.uns[ObservationColumns.FUTURE_TIMEPOINTS.value])
 
         def populate_row(traj, populate_from_target=False):
             src_cell_types = {}

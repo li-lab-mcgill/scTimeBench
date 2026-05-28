@@ -5,7 +5,7 @@ from scTimeBench.trajectory_infer.base import (
     BaseTrajectoryInferMethod,
 )
 from scTimeBench.shared.constants import ObservationColumns
-from scTimeBench.shared.utils import is_log_normalized_to_counts
+from scTimeBench.shared.utils import is_log_normalized_to_counts, is_raw
 from enum import Enum
 import logging
 
@@ -111,7 +111,7 @@ class CellTypist(BaseTrajectoryInferMethod):
             logging.debug("Data appears to be already normalized to CP10K.")
             return data
 
-        if data.X.max() <= 20:
+        if not is_raw(data):
             logging.debug(
                 "Data appears to be log-transformed but not normalized. We need to normalize in any case"
                 " for CellTypist to work. Proceed with caution as this might not be ideal for CellTypist performance."

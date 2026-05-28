@@ -1,6 +1,6 @@
 datasets:
   ######################### PERTURBATION DATASETS #########################
-   # Promoting pre-spermatogonia
+  # Promoting pre-spermatogonia
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
@@ -68,8 +68,8 @@ datasets:
         filter_genes: false
 
 method:
-  name: scNODE
-  train_and_test_script: ./methods/scNODE/train_and_test.sh
+  name: ot_cfm
+  train_and_test_script: ./methods/ot_cfm/train_and_test.sh
 
 metrics:
   - name: StackedBarPlot
