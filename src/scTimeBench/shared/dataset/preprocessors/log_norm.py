@@ -20,9 +20,9 @@ class LogNormPreprocessor(BaseDatasetPreprocessor):
         """
         return {
             "counts": 10_000,  # default is 10^4
-            "filter_genes": self.params.get(
-                "filter_genes", True
-            ),  # whether to filter out genes that are not expressed in any cells
+            # whether to filter out genes that are not expressed in any cells
+            # put as false due to potential downstream issues
+            "filter_genes": self.params.get("filter_genes", False),
         }
 
     def preprocess(self, ann_data: sc.AnnData, **kwargs):

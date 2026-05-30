@@ -107,7 +107,7 @@ class OTCFM(BaseMethod):
         data = X.toarray() if issparse(X) else X
         return np.asarray(data, dtype=np.float32)
 
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         time_col = ObservationColumns.TIMEPOINT.value
         train_tps = ann_data.obs[time_col].to_numpy()
         self._unique_train_tps = sorted(np.unique(train_tps))
@@ -115,7 +115,7 @@ class OTCFM(BaseMethod):
         if len(self._unique_train_tps) < 2:
             raise ValueError("OT-CFM training needs at least 2 train timepoints.")
 
-        output_dir = Path(self.config["output_path"])
+        output_dir = Path(train_output_path)
         cache_path = (
             output_dir / f"trained_ot_cfm_model_{self.embedding_space.lower()}.pth"
         )
@@ -148,7 +148,7 @@ class OTCFM(BaseMethod):
         ]
 
         dim = int(train_x.shape[1])
-        cache_path = Path(self.config["output_path"]) / "trained_ot_cfm_model.pth"
+        cache_path = Path(train_output_path) / "trained_ot_cfm_model.pth"
         self._model = MLP(dim=dim, time_varying=True, w=self.mlp_width).to(self.device)
 
         if cache_path.exists():

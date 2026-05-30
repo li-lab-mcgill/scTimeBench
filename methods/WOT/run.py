@@ -31,13 +31,15 @@ class WOT(BaseOTMethod):
             lambda2=lambda2,
         )
 
-    def get_transport_plan(self, ann_data: anndata.AnnData, source_tp, target_tp):
+    def get_transport_plan(
+        self, ann_data: anndata.AnnData, source_tp, target_tp, train_output_path
+    ):
         """
         Solve a single transport problem for transition source_tp -> target_tp.
         """
 
         def get_transport_map(source_tp: str, target_tp: str, ot_model) -> np.ndarray:
-            problems_dir = os.path.join(self.config["output_path"], "problems")
+            problems_dir = os.path.join(train_output_path, "problems")
             cache_file = os.path.join(problems_dir, f"{source_tp}_{target_tp}.h5ad")
             if os.path.exists(cache_file):
                 transport_map = anndata.read_h5ad(cache_file)

@@ -327,7 +327,7 @@ class GraphSimMetric(OntologyBasedMetrics):
 
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
         self.output_path = output_path
-        self.dataset_dir = dataset.get_dataset_dir()
+        self.dataset_dir = dataset.get_test_dataset_dir()
         self.dataset_name = dataset.get_name()
         self.time_label = "Time"
         for dataset_preprocessor in dataset.dataset_preprocessors:

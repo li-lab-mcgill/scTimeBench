@@ -26,7 +26,9 @@ class Moscot(BaseOTMethod):
             {}
         )  # Cache for solved problems: (t_i, t_{i+1}) -> TemporalProblem
 
-    def get_transport_plan(self, ann_data: anndata.AnnData, source_tp, target_tp):
+    def get_transport_plan(
+        self, ann_data: anndata.AnnData, source_tp, target_tp, train_output_path
+    ):
         """
         Solve a single temporal problem for transition source_tp -> target_tp.
         Check cache first, then solve and cache if needed.
@@ -45,7 +47,7 @@ class Moscot(BaseOTMethod):
             return self.temporal_problems[cache_key]
 
         # Check file cache
-        problems_dir = os.path.join(self.config["output_path"], "problems")
+        problems_dir = os.path.join(train_output_path, "problems")
         cache_file = os.path.join(problems_dir, f"{source_tp}_{target_tp}.pkl")
 
         if os.path.exists(cache_file):

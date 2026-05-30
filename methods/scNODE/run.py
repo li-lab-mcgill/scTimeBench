@@ -108,15 +108,13 @@ def model_training(
 
 
 class scNODE(BaseMethod):
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         """
         Training logic for scNODE.
         """
         # so we already have the preprocessed ann_data with columns
         # ObservationColumns.TIMEPOINT and ObservationColumns.CELL_TYPE
-        cache_path = os.path.join(
-            self.config["output_path"], "trained_scNODE_model.pth"
-        )
+        cache_path = os.path.join(train_output_path, "trained_scNODE_model.pth")
 
         if os.path.exists(cache_path):
             print("Trained scNODE model found, loading from file.")

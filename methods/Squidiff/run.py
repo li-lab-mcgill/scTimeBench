@@ -347,13 +347,11 @@ def _next_timepoint_mask(cell_tps: np.ndarray, unique_tps: List) -> np.ndarray:
 
 
 class Squidiff(BaseMethod):
-    def train(self, ann_data, all_tps: Optional[List] = None):
+    def train(self, ann_data, all_tps: Optional[List] = None, train_output_path=None):
         """
         Training logic for Squidiff.
         """
-        cache_path = os.path.join(
-            self.config["output_path"], "trained_squidiff_model.pt"
-        )
+        cache_path = os.path.join(train_output_path, "trained_squidiff_model.pt")
         metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
@@ -372,15 +370,11 @@ class Squidiff(BaseMethod):
         self.unique_tps = unique_tps
         self.tp_to_idx = tp_to_idx
 
-        train_data_path = os.path.join(
-            self.config["output_path"], "squidiff_train.h5ad"
-        )
+        train_data_path = os.path.join(train_output_path, "squidiff_train.h5ad")
         grouped_adata.write_h5ad(train_data_path)
 
         n_genes = grouped_adata.X.shape[1]
-        args = _build_args(
-            metadata, train_data_path, self.config["output_path"], n_genes
-        )
+        args = _build_args(metadata, train_data_path, train_output_path, n_genes)
 
         _run_training(args)
 

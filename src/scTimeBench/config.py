@@ -285,7 +285,11 @@ class Config:
         # N.B.: we don't need them to specify preprocessors because it might already be preprocessed
         # ** DATASETS **
         dataset_required_fields = ["data_path", "name"]
-        dataset_optional_fields = ["data_preprocessing_steps", "requires_caching"]
+        dataset_optional_fields = [
+            "data_preprocessing_steps",
+            "requires_caching",
+            "equiv_train_dataset_tag",
+        ]
         dataset_alternate_field = "tag"
 
         for dataset in self.datasets:

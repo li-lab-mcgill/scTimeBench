@@ -257,13 +257,11 @@ def _fill_from_next(sim_list: List[np.ndarray], tp_idx: np.ndarray) -> np.ndarra
 
 
 class PRESCIENT(BaseMethod):
-    def train(self, ann_data, all_tps: Optional[List] = None):
+    def train(self, ann_data, all_tps: Optional[List] = None, train_output_path=None):
         """
         Training logic for PRESCIENT.
         """
-        cache_path = os.path.join(
-            self.config["output_path"], "trained_prescient_model.pth"
-        )
+        cache_path = os.path.join(train_output_path, "trained_prescient_model.pth")
         metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
@@ -278,7 +276,7 @@ class PRESCIENT(BaseMethod):
                 self.unique_tps, self.tp_to_idx = _build_tp_to_idx(all_tps)
             else:
                 self.unique_tps, self.tp_to_idx = _build_tp_to_idx(cached_unique_tps)
-            self.model_dir = cache.get("model_dir", self.config["output_path"])
+            self.model_dir = cache.get("model_dir", train_output_path)
             return
 
         time_col = ObservationColumns.TIMEPOINT.value
@@ -310,7 +308,7 @@ class PRESCIENT(BaseMethod):
         )
         # Keep the mapping built from all_tps to avoid missing test-only timepoints.
 
-        data_path = os.path.join(self.config["output_path"], "prescient_data.pt")
+        data_path = os.path.join(train_output_path, "prescient_data.pt")
         torch.save(data_pt, data_path, pickle_protocol=4)
 
         min_cells = min(len(x) for x in data_pt["xp"])
@@ -328,7 +326,7 @@ class PRESCIENT(BaseMethod):
 
         args = SimpleNamespace(
             data_path=data_path,
-            out_dir=self.config["output_path"],
+            out_dir=train_output_path,
             weight=metadata.get("weight", "weight"),
             weight_name=metadata.get("weight_name", None),
             loss=metadata.get("loss", "euclidean"),

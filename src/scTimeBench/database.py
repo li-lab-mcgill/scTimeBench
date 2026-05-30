@@ -127,7 +127,7 @@ class DatabaseManager:
                 dataset.get_name(),
                 dataset.encode_dataset_dict(),
                 dataset.encode_preprocessors(),
-                dataset.get_dataset_dir(),
+                dataset.get_test_dataset_dir(),
             ),
         )
         self.conn.commit()
