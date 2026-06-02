@@ -1,5 +1,5 @@
 """
-Embedding-based metrics.
+Embedding-based trajectory metrics (classification entropy, classifier metrics).
 """
 from scTimeBench.metrics.base import skip_metric
 from scTimeBench.metrics.embeddings.base import EmbeddingMetrics
@@ -18,35 +18,59 @@ import numpy as np
 
 class TrajectoryEmbeddingMetrics(EmbeddingMetrics):
     def _setup_method_output_requirements(self):
-        # ** NOTE: must define the following attributes **
-        # where we define the output embedding name
-        # as well as the required features and outputs
         self.required_outputs = [
             RequiredOutputFiles.EMBEDDING,
             RequiredOutputFiles.NEXT_TIMEPOINT_EMBEDDING,
+            RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
         ]
 
 
-# now let's create the other metrics such as the gini index or classification entropy, etc.
-class ClassificationEntropy(TrajectoryEmbeddingMetrics):
-    def _setup_trajectory_inference_model(self):
-        # by default we use the classifier trajectory inference model
-        logging.debug(
-            "Setting up trajectory inference model for classification entropy."
-        )
+def _classification_entropy_results(test_probas, next_tp_probas) -> dict:
+    entropy = -np.sum(test_probas * np.log(test_probas + 1e-10), axis=1)
+    predicted_entropy = -np.sum(next_tp_probas * np.log(next_tp_probas + 1e-10), axis=1)
+    num_classes = test_probas.shape[1]
+    normalized_entropy = entropy / np.log(num_classes)
 
-        self.trajectory_infer_model: BaseTrajectoryInferMethod = (
-            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(
-                self.metric_config.get(
-                    "trajectory_infer_model",
-                    {"name": Classifier.__name__, "embedding_classifier": True},
-                )
+    return {
+        "avg_entropy": np.mean(entropy).item(),
+        "std_entropy": np.std(entropy).item(),
+        "avg_normalized_entropy": np.mean(normalized_entropy).item(),
+        "std_normalized_entropy": np.std(normalized_entropy).item(),
+        "num_classes": num_classes,
+        "pred_tp_avg_entropy": np.mean(predicted_entropy).item(),
+        "pred_tp_avg_normalized_entropy": np.mean(
+            predicted_entropy / np.log(num_classes)
+        ).item(),
+        "pred_tp_std_entropy": np.std(predicted_entropy).item(),
+    }
+
+
+class _ClassificationEntropyBase(TrajectoryEmbeddingMetrics):
+    def _setup_trajectory_inference_model(self):
+        logging.debug(
+            "Setting up trajectory inference model for %s.",
+            self.__class__.__name__,
+        )
+        traj_config = dict(
+            self.metric_config.get(
+                "trajectory_infer_model", {"name": Classifier.__name__}
             )
+        )
+        traj_config["embedding_classifier"] = self._uses_embedding_classifier()
+        self.trajectory_infer_model: BaseTrajectoryInferMethod = (
+            TrajectoryInferenceMethodFactory().get_trajectory_infer_method(traj_config)
         )
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
+    def _uses_embedding_classifier(self) -> bool:
+        raise NotImplementedError
+
+
+class ClassificationEntropy(_ClassificationEntropyBase):
+    def _uses_embedding_classifier(self) -> bool:
+        return True
+
     def _embedding_eval(self, output_path, dataset):
-        # grab the probabilities needed
         probas_and_labels, _ = self.trajectory_infer_model.train_and_predict(
             output_path
         )
@@ -54,35 +78,38 @@ class ClassificationEntropy(TrajectoryEmbeddingMetrics):
         next_tp_probas, _ = self.trajectory_infer_model.predict_next_tp(output_path)
 
         logging.debug(f"Test probabilities: {test_probas}")
-        entropy = -np.sum(
-            test_probas * np.log(test_probas + 1e-10), axis=1
-        )  # avoid log(0)
-        logging.debug(f"Average classification entropy: {np.mean(entropy)}")
-
-        predicted_entropy = -np.sum(
-            next_tp_probas * np.log(next_tp_probas + 1e-10), axis=1
-        )  # avoid log(0)
+        results = _classification_entropy_results(test_probas, next_tp_probas)
+        logging.debug("Average classification entropy: %s", results["avg_entropy"])
         logging.debug(
-            f"Average predicted classification entropy: {np.mean(predicted_entropy)}"
+            "Average predicted classification entropy: %s",
+            results["pred_tp_avg_entropy"],
         )
+        return json.dumps(results)
 
-        num_classes = test_probas.shape[1]
-        normalized_entropy = entropy / np.log(num_classes)
 
-        return json.dumps(
-            {
-                "avg_entropy": np.mean(entropy).item(),
-                "std_entropy": np.std(entropy).item(),
-                "avg_normalized_entropy": np.mean(normalized_entropy).item(),
-                "std_normalized_entropy": np.std(normalized_entropy).item(),
-                "num_classes": num_classes,
-                "pred_tp_avg_entropy": np.mean(predicted_entropy).item(),
-                "pred_tp_avg_normalized_entropy": np.mean(
-                    predicted_entropy / np.log(num_classes)
-                ).item(),
-                "pred_tp_std_entropy": np.std(predicted_entropy).item(),
-            }
+class ClassificationEntropyGEx(_ClassificationEntropyBase):
+    def _uses_embedding_classifier(self) -> bool:
+        return False
+
+    def _setup_method_output_requirements(self):
+        self.required_outputs = [
+            RequiredOutputFiles.NEXT_TIMEPOINT_GENE_EXPRESSION,
+        ]
+
+    def _embedding_eval(self, output_path, dataset):
+        probas_and_labels, _ = self.trajectory_infer_model.train_and_predict(
+            output_path
         )
+        test_probas, _ = probas_and_labels
+        next_tp_probas, _ = self.trajectory_infer_model.predict_next_tp(output_path)
+
+        results = _classification_entropy_results(test_probas, next_tp_probas)
+        logging.debug("Average GEx classification entropy: %s", results["avg_entropy"])
+        logging.debug(
+            "Average predicted GEx classification entropy: %s",
+            results["pred_tp_avg_entropy"],
+        )
+        return json.dumps(results)
 
 
 @skip_metric
@@ -91,7 +118,6 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
         return {"f1_average": "weighted", "k_folds": 3}
 
     def _setup_trajectory_inference_model(self):
-        # by default we use the classifier trajectory inference model
         logging.debug(
             "Setting up trajectory inference model for classification entropy."
         )
@@ -120,12 +146,10 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
             ) = self.trajectory_infer_model.train_and_predict(output_path)
             probs, idx_to_cell_map = pred_probs_and_mapping
 
-            # now let's get the predicted labels
             pred_labels = np.array(
                 [idx_to_cell_map[np.argmax(proba)] for proba in probs]
             )
 
-            # TODO: future, add more metrics such as precision, recall, f1-score, etc.
             return json.dumps(
                 {
                     "accuracy": np.mean(true_labels == pred_labels).item(),
@@ -145,7 +169,6 @@ class ClassifierMetrics(TrajectoryEmbeddingMetrics):
             for fold_idx, (pred_probs_and_mapping, true_labels) in enumerate(results):
                 probs, idx_to_cell_map = pred_probs_and_mapping
 
-                # now let's get the predicted labels
                 pred_labels = np.array(
                     [idx_to_cell_map[np.argmax(proba)] for proba in probs]
                 )
