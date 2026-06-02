@@ -308,6 +308,24 @@ class BaseMetric:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
+    def _get_relative_output_path(self) -> str:
+        """
+        Subclasses can optionally implement this method to provide additional
+        subdirectories in case they want stratified output results, e.g.: perturbations.
+
+        Returns:
+            str: relative path to the method output directory where the required outputs are stored.
+        """
+        # by default we don't change the relative path
+        return "./"
+
+    def _submetric_eval_setup(self, eval_output_path):
+        """
+        Optional setup steps that give the output path to the submetric evaluation function,
+        in case there are some steps needed for training/evaluation specifically
+        e.g.: loading the perturbation set config.
+        """
+
     def _preprocess(self, dataset: BaseDataset):
         """
         Preprocessing steps required before evaluating the metric.
@@ -339,6 +357,8 @@ class BaseMetric:
         # to make our lives easier, we will also pickle our current dataset object
         # and store this in the output directory as well
         # so that the method can load this dataset object directly for training and testing
+
+        # this below forces the requiredoutputfiles to be of a certain format
         assert hasattr(
             self, "required_outputs"
         ), "Subclasses must define required_outputs attribute."
@@ -367,8 +387,14 @@ class BaseMetric:
 
         logging.debug(f"Required outputs serialized: {required_outputs_serialized}")
 
+        # note that this differs because it is the path to the evaluation outputs
+        # not just the method outputs
+        eval_output_path = os.path.join(output_path, self._get_relative_output_path())
+        os.makedirs(eval_output_path, exist_ok=True)
+
         yaml_config = {
-            "output_path": output_path,
+            # let submetrics decide the path
+            "output_path": eval_output_path,
             "train_output_path": train_output_path,
             "dataset_pkl_path": os.path.join(
                 dataset.get_test_dataset_dir(), PICKLED_DATASET_FILENAME
@@ -378,6 +404,9 @@ class BaseMetric:
             "datasets": dataset.encode_dataset_dict(),
             "preprocessors": dataset.encode_preprocessors(),
         }
+
+        # let submetrics do their own setup as well
+        self._submetric_eval_setup(eval_output_path)
 
         # write out the yaml config file for the method
         yaml_config_path = os.path.join(output_path, METHOD_CONFIG_FILENAME)
