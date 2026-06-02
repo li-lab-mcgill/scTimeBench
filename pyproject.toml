@@ -60,6 +60,7 @@ benchmark = [
 ]
 pypsupertime = [ "pypsupertime" ]
 sceptic = [ "sceptic" ]
+phate = [ "phate" ]
 
 [project.scripts]
 scTimeBench = "scTimeBench.main:main"
