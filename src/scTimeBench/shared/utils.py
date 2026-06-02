@@ -181,8 +181,10 @@ def log_normalize_to_counts(ann_data, counts=10_000):
     Returns:
         The log-normalized AnnData object
     """
-    sc.pp.normalize_total(ann_data, target_sum=counts)
-    sc.pp.log1p(ann_data)
+    data = ann_data.copy()
+    sc.pp.normalize_total(data, target_sum=counts)
+    sc.pp.log1p(data)
+    ann_data.X = data.X
     return ann_data
 
 

@@ -63,4 +63,6 @@ class LogNormPreprocessor(BaseDatasetPreprocessor):
         logging.debug(
             f'Finished running normalization, final check: {is_log_normalized_to_counts(data, counts=self._parameters()["counts"])}'
         )
-        return data
+
+        ann_data.X = data.X
+        return ann_data

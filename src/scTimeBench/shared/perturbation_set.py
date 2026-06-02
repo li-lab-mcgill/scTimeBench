@@ -48,9 +48,10 @@ class PerturbationSet:
             }
 
     def apply_perturbation(self, ann_data, timepoint_idx):
-        assert (
-            timepoint_idx in self.perturbations
-        ), f"Timepoint index {timepoint_idx} not found in perturbations."
+        if timepoint_idx not in self.perturbations:
+            print(f"No perturbation specified for timepoint {timepoint_idx}.")
+            return ann_data
+
         perturb = self.perturbations[timepoint_idx]
 
         if perturb["gene_col_name"] is None:

@@ -384,6 +384,31 @@ class OTCFM(BaseMethod):
 
         return pred_ann_data
 
+    def generate_gex_from_t_to_t1(self, test_ann_data, t, t1):
+        """Generate predicted gene expression from timepoint t to t1."""
+        # assert that all the tps are of timepoint t
+        test_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
+        assert np.all(
+            test_tps == t
+        ), f"All cells must be from timepoint {t}, but found timepoints: {np.unique(test_tps)}"
+        first_gex = self._to_dense_float32(test_ann_data.X)
+
+        if self.embedding_space == "PCA":
+            if self._pca_model is None:
+                raise RuntimeError("PCA model not available. Call train() first.")
+            source_x = self._pca_model.transform(first_gex).astype(np.float32)
+        else:
+            source_x = first_gex
+
+        t1_cells = self._predict_one_step(source_x, t, t1)
+        if self.embedding_space == "PCA":
+            t1_cells = self._pca_model.inverse_transform(t1_cells)
+
+        pred_ann_data = test_ann_data.copy()
+        pred_ann_data.X = t1_cells
+        pred_ann_data.obs[ObservationColumns.TIMEPOINT.value] = t1
+        return pred_ann_data
+
 
 if __name__ == "__main__":
     main(OTCFM)

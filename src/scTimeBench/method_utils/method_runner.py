@@ -133,7 +133,7 @@ class BaseMethod:
             elif required_output == RequiredOutputFiles.PERTURBED_TEST_ANN_DATA:
                 # here we generate the perturbation set
                 first_tp_cells, all_tps = self._prep_from_first_tp(test_ann_data)
-                result = self.generate_perturbation(first_tp_cells, all_tps)
+                result = self._generate_perturbation(first_tp_cells, all_tps)
                 self._check_from_first_tp(first_tp_cells, all_tps, result)
                 result.write_h5ad(output_file)
 
@@ -257,7 +257,7 @@ class BaseMethod:
 
         # this is the gex at timepoint tp
         gex_tp = test_ann_data.copy()
-        all_gex = sc.AnnData()
+        all_gex = None
 
         for t_idx in range(len(all_tps)):
             t = all_tps[t_idx]
@@ -265,10 +265,14 @@ class BaseMethod:
             # first we need to perturb the gex at timepoint t according to
             # the specified perturbations
             print(f"Applying perturbation for timepoint {t}...")
-            gex_tp = perturbation_set.apply_perturbation(gex_tp, t)
+            # let's print out the gene variable columns names:
+            gex_tp = perturbation_set.apply_perturbation(gex_tp, t_idx)
 
             # then we need to save this out to the final output file
-            all_gex = sc.concat([all_gex, gex_tp], axis=0)
+            if all_gex is None:
+                all_gex = gex_tp.copy()
+            else:
+                all_gex = sc.concat([all_gex, gex_tp], axis=0)
 
             # finally if we can (i.e. not the last step), we can project this perturbed state forward
             # otherwise we're done
@@ -279,6 +283,7 @@ class BaseMethod:
             print(f"Predicting cells from timepoint {t} to {t1}...")
             gex_tp = self.generate_gex_from_t_to_t1(gex_tp, t, t1)
 
+        print("Finished generating perturbation across all timepoints.")
         return all_gex
 
 
