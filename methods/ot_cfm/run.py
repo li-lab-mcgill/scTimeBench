@@ -12,6 +12,7 @@ import pickle
 import sys
 
 import numpy as np
+import scanpy as sc
 import torch
 from sklearn.decomposition import PCA
 from scipy.sparse import issparse
@@ -351,6 +352,37 @@ class OTCFM(BaseMethod):
             out[source_idx] = self._predict_one_step(source_x, tp, next_tp)
 
         return out.astype(np.float32)
+
+    def generate_zero_to_end_pred_gex(self, first_tp_cells, all_tps) -> sc.AnnData:
+        """Project first timepoint cells to every later timepoint and return a stacked AnnData.
+
+        The result keeps the original first timepoint cells unchanged and appends one
+        predicted block for each subsequent timepoint in `all_tps`.
+        """
+        time_col = ObservationColumns.TIMEPOINT.value
+        first_tp = all_tps[0]
+
+        first_gex = self._to_dense_float32(first_tp_cells.X)
+        if self.embedding_space == "PCA":
+            if self._pca_model is None:
+                raise RuntimeError("PCA model not available. Call train() first.")
+            source_x = self._pca_model.transform(first_gex).astype(np.float32)
+        else:
+            source_x = first_gex
+
+        pred_ann_data = first_tp_cells.copy()
+        for tp in all_tps[1:]:
+            predicted_x = self._predict_one_step(source_x, first_tp, tp)
+            if self.embedding_space == "PCA":
+                predicted_x = self._pca_model.inverse_transform(predicted_x)
+
+            tp_ann_data = first_tp_cells.copy()
+            tp_ann_data.X = np.asarray(predicted_x, dtype=np.float32)
+            tp_ann_data.obs[time_col] = tp
+            pred_ann_data = sc.concat([pred_ann_data, tp_ann_data], axis=0)
+            print(f"Shape of projected timepoint {tp}: {tp_ann_data.shape}")
+
+        return pred_ann_data
 
 
 if __name__ == "__main__":

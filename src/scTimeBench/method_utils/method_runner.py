@@ -119,9 +119,22 @@ class BaseMethod:
                     test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == first_tp
                 ].copy()
 
-                all_tps = sorted(
-                    test_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique()
-                )
+                # all timepoints will be chosen from uns if it exists, otherwise we will infer it from the test_ann_data.obs column
+                if ObservationColumns.FUTURE_TIMEPOINTS.value in test_ann_data.uns:
+                    all_tps = sorted(
+                        test_ann_data.uns[ObservationColumns.FUTURE_TIMEPOINTS.value]
+                    )
+                    print(
+                        f"Using future timepoints specified for perturbation: {all_tps}"
+                    )
+                else:
+                    all_tps = sorted(
+                        test_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique()
+                    )
+
+                assert (
+                    first_tp == all_tps[0]
+                ), f"Expected the first timepoint to be {all_tps[0]}, but got {first_tp}"
 
                 result = self.generate_zero_to_end_pred_gex(first_tp_cells, all_tps)
                 # result should be an AnnData object

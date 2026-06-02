@@ -11,6 +11,7 @@ class TestTimepointSelection(BaseDatasetPreprocessor):
         super().__init__(config)
         self.test_tps = test_tps
         self.splits = True
+        self.params = kwargs
 
     def _parameters(self):
         """
@@ -18,7 +19,7 @@ class TestTimepointSelection(BaseDatasetPreprocessor):
         """
         return {
             "test_tps": self.test_tps,
-            "use_time_indices": self.dataset_dict.get("use_time_indices", False),
+            "use_time_indices": self.params.get("use_time_indices", False),
         }
 
     def preprocess(self, ann_data, **kwargs):

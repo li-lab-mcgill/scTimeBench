@@ -3,7 +3,7 @@ from scTimeBench.metrics.ontology_based.graph_sim.base import (
     AdjacencyMatrixType,
     ThresholdCriteria,
 )
-from scTimeBench.shared.utils import load_test_dataset
+from scTimeBench.shared.utils import load_train_dataset, load_test_dataset
 from scTimeBench.shared.constants import ObservationColumns
 import os
 import logging
@@ -194,21 +194,22 @@ class StackedBarPlot(GraphSimMetric):
             self.output_path, per_tp=True
         )
 
+        # ** Builds the reference trajectory from the original training data **
         # need to get the original test-ann-data to build the proper last timepoint
-        test_ann_data = load_test_dataset(self.output_path)
+        train_ann_data = load_train_dataset(self.output_path)
         unique_tps = (
-            test_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique().tolist()
+            train_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique().tolist()
         )
         unique_tps.sort()
         last_tp = unique_tps[-1]
 
         logging.debug(f"Per-timepoint predicted trajectory: {per_tp_traj}")
 
-        # the source records should be from test_ann_data not from the predicted trajectory
+        # the source records should be from train_ann_data not from the predicted trajectory
         source_records = []
         for tp in unique_tps:
-            tp_data = test_ann_data.obs[
-                test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == tp
+            tp_data = train_ann_data.obs[
+                train_ann_data.obs[ObservationColumns.TIMEPOINT.value] == tp
             ]
             tp_counts = tp_data[ObservationColumns.CELL_TYPE.value].value_counts()
             for cell_type, count in tp_counts.items():
@@ -220,22 +221,44 @@ class StackedBarPlot(GraphSimMetric):
                     }
                 )
 
+        # ** Builds the predicted trajectory from the inferred trajectory **
         target_records = []
 
-        for tp, traj in per_tp_traj.items():
-            tp = float(tp)
+        # now we need to get the starting and ending timepoints as well
+        test_ann_data = load_test_dataset(self.output_path)
+        tps = sorted(test_ann_data.uns[ObservationColumns.FUTURE_TIMEPOINTS.value])
+
+        def populate_row(traj, populate_from_target=False):
+            src_cell_types = {}
             target_cell_types = {}
 
-            for _, target_distribution in traj.items():
+            for src_cell, target_distribution in traj.items():
+                src_cell_types[src_cell] = sum(target_distribution.values())
+
                 for target_cell_type, count in target_distribution.items():
                     if target_cell_type not in target_cell_types:
                         target_cell_types[target_cell_type] = 0
                     target_cell_types[target_cell_type] += count
 
-            if not self.params["from_tp_zero"]:
-                assert tp < last_tp, "Last timepoint should not have target cell types."
+            return target_cell_types if populate_from_target else src_cell_types
 
-            for cell_type, count in target_cell_types.items():
+        for tp in tps:
+            # store the row as target_cell_types
+            assert (
+                tp <= last_tp
+            ), f"Timepoint {tp} in the trajectory is not present in the training data timepoints {tps}."
+            if tp == last_tp:
+                # in this case, we get the source cells in the first tp
+                per_tp_traj_keys = sorted(list(per_tp_traj.keys()))
+                traj = per_tp_traj[
+                    per_tp_traj_keys[-1]
+                ]  # get the trajectory from second last to last
+                pred_cell_types = populate_row(traj, populate_from_target=True)
+            else:
+                traj = per_tp_traj[tp]
+                pred_cell_types = populate_row(traj, populate_from_target=False)
+
+            for cell_type, count in pred_cell_types.items():
                 target_records.append(
                     {
                         TIMEPOINT_COL: unique_tps[unique_tps.index(tp) + 1]

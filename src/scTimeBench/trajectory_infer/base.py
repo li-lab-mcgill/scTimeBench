@@ -8,6 +8,7 @@ Examples are the kNN graph-based methods, or the optimal transport based methods
 """
 from scTimeBench.shared.constants import ObservationColumns, RequiredOutputFiles
 from scTimeBench.shared.utils import (
+    load_train_dataset,
     load_test_dataset,
     load_output_file,
     get_dataset,
@@ -88,6 +89,7 @@ class BaseTrajectoryInferMethod:
             "random_state": self.traj_config.get("random_state", 42),
             "embedding_classifier": self.traj_config.get("embedding_classifier", False),
             "from_tp_zero": self.traj_config.get("from_tp_zero", False),
+            "infer_first_tp": self.traj_config.get("infer_first_tp", False),
             **self._subclass_parameters(),
         }
 
@@ -112,6 +114,9 @@ class BaseTrajectoryInferMethod:
     def _from_tp_zero(self):
         return self._parameters().get("from_tp_zero", False)
 
+    def _infer_first_tp(self):
+        return self._parameters().get("infer_first_tp", False)
+
     def _get_next_tp_tensors(self, output_path, test_ann_data):
         """
         Based on the embedding_classifier property, get the proper tensors for trajectory inference.
@@ -122,10 +127,12 @@ class BaseTrajectoryInferMethod:
         if self._from_tp_zero():
             # here we have different logic because we have the predicted timepoints
             # not the previous ones here
+            logging.debug(
+                "Loading from zero to end predicted gene expression for trajectory inference."
+            )
             next_tp_gex_anndata = load_output_file(
                 output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
             )
-            timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
             # we should be predicting on every single timepoint
             # the starting timepoint as well
             return next_tp_gex_anndata.X.toarray()
@@ -144,7 +151,7 @@ class BaseTrajectoryInferMethod:
             )
             return next_tp_embed[valid_timepoints]
 
-    def _get_cur_tp_tensors(self, output_path, test_ann_data):
+    def _get_cur_tp_tensors(self, output_path, ann_data):
         """
         Based on the embedding_classifier property, get the proper tensors for trajectory inference.
 
@@ -154,11 +161,11 @@ class BaseTrajectoryInferMethod:
         if self.uses_gene_expr():
             # first we check that X is normalized to counts as expected
             # because this should happen at the filter stage
-            assert is_log_normalized_to_counts(test_ann_data), (
+            assert is_log_normalized_to_counts(ann_data), (
                 "Data is not log-normalized to counts as expected for gene expression-based trajectory inference. "
                 "Please use LogNormPreprocessor to ensure that the data is properly normalized before running the trajectory inference model."
             )
-            return test_ann_data.X.toarray()
+            return ann_data.X.toarray()
         else:
             return load_output_file(output_path, RequiredOutputFiles.EMBEDDING)
 
@@ -190,10 +197,13 @@ class BaseTrajectoryInferMethod:
     def train_and_predict(self, output_path, train_only=False):
         """
         Trains and predicts using the trajectory inference model.
+
+        Note for this one here, we train on the train dataset subset instead of the test one.
+        The rest uses the test dataset.
         """
         # ** Note: we just redo the preparation so classifier_save_path can be used **
         # ** This is not a big deal because we already have caching in the first place **
-        test_ann_data = load_test_dataset(output_path)
+        train_ann_data = load_train_dataset(output_path)
         traj_infer_path, classifier_save_path = self._get_traj_infer_path(output_path)
 
         # now we also write the traj_config to file for future reference
@@ -207,10 +217,10 @@ class BaseTrajectoryInferMethod:
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = train_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, train_ann_data)
 
         X_train, X_test, y_train, y_test = train_test_split(
             embeddings,
@@ -236,7 +246,7 @@ class BaseTrajectoryInferMethod:
 
         We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
         """
-        test_ann_data = load_test_dataset(output_path)
+        train_ann_data = load_train_dataset(output_path)
         _, classifier_save_path = self._get_traj_infer_path(output_path)
         k_fold_path = os.path.join(classifier_save_path, f"k_fold_{k}")
         os.makedirs(k_fold_path, exist_ok=True)
@@ -244,10 +254,10 @@ class BaseTrajectoryInferMethod:
         # we use the same cached trajectory path so that way we can save classifiers
         # in the future if needed, as it takes time to fit
         # get the embeddings and timepoints
-        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value]
+        cell_types = train_ann_data.obs[ObservationColumns.CELL_TYPE.value]
 
         # filter next timepoint embeddings to only include the valid timepoints
-        embeddings = self._get_cur_tp_tensors(output_path, test_ann_data)
+        embeddings = self._get_cur_tp_tensors(output_path, train_ann_data)
 
         kf = KFold(
             n_splits=k, shuffle=True, random_state=self._parameters()["random_state"]
@@ -343,6 +353,10 @@ class BaseTrajectoryInferMethod:
             )
             with open(save_path, "r") as f:
                 inferred_traj = json.load(f)
+
+            if per_tp:
+                # make the keys floats
+                inferred_traj = {float(tp): traj for tp, traj in inferred_traj.items()}
             return inferred_traj
 
         # now we also write the traj_config to file for future reference
@@ -474,11 +488,13 @@ class BaseTrajectoryInferMethod:
 
         # if we are in the from_tp_zero case, then we need to get the cell types and cell tps for all the timepoints
         timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
-        start_tps = np.where(timepoints == timepoints.min())[0]
-        start_cell_type = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].iloc[
-            start_tps
-        ]
-        logging.debug(f"Start cell types: {start_cell_type}")
+
+        if not self._infer_first_tp():
+            start_tps = np.where(timepoints == timepoints.min())[0]
+            start_cell_type = test_ann_data.obs[
+                ObservationColumns.CELL_TYPE.value
+            ].iloc[start_tps]
+            logging.debug(f"Start cell types: {start_cell_type}")
 
         # then, the cell types are the first tp's real cell types
         # and for every timepoint after it's the predicted one
@@ -486,17 +502,34 @@ class BaseTrajectoryInferMethod:
             output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
         )
         timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
-        cell_type_valid_timepoints = np.where(
-            (timepoints < timepoints.max()) & (timepoints != timepoints.min())
-        )[0]
-        cell_types = np.array(next_cell_types)[cell_type_valid_timepoints]
-        cell_types = np.concatenate([start_cell_type, cell_types]).tolist()
+
+        if not self._infer_first_tp():
+            cell_type_valid_timepoints = np.where(
+                (timepoints < timepoints.max()) & (timepoints != timepoints.min())
+            )[0]
+            cell_types = np.array(next_cell_types)[cell_type_valid_timepoints]
+            cell_types = np.concatenate([start_cell_type, cell_types]).tolist()
+        else:
+            logging.debug(
+                "infer_first_tp is True, using predicted cell types for the first timepoint as well."
+            )
+            cell_type_valid_timepoints = np.where(timepoints < timepoints.max())[0]
+            cell_types = np.array(next_cell_types)[cell_type_valid_timepoints].tolist()
+            cells_besides_last = len(timepoints) - len(
+                np.where(timepoints == timepoints.max())[0]
+            )
+            assert (
+                len(cell_types) == cells_besides_last
+            ), f"Length of cell types: {len(cell_types)} should be equal to the number of cells: {len(timepoints)}."
 
         next_cell_type_valid_timepoints = np.where(timepoints > timepoints.min())[0]
         next_cell_types = np.array(next_cell_types)[
             next_cell_type_valid_timepoints
         ].tolist()
-        cell_tps = timepoints[next_cell_type_valid_timepoints]
+
+        # the cell timepoints we want to use are the source cell timepoints
+        valid_timepoints = np.where(timepoints < timepoints.max())[0]
+        cell_tps = timepoints[valid_timepoints]
         return cell_types, next_cell_types, cell_tps
 
     def __str__(self):

@@ -28,6 +28,8 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
         self.preprocess_type = PreprocessType(preprocess_type)
         self.PSEUDOTIME_FILE = self.label() + ".npy"
 
+        self.params = kwargs
+
     def label(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
@@ -40,12 +42,12 @@ class BasePseudotimePreprocessor(BaseDatasetPreprocessor):
         }
 
         if self.preprocess_type == PreprocessType.PCA:
-            params["pca_components"] = self.dataset_dict.get("pca_components", 50)
+            params["pca_components"] = self.params.get("pca_components", 50)
         elif self.preprocess_type == PreprocessType.HVG:
-            params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
-            params["n_cells_train"] = self.dataset_dict.get("n_cells_train", 1000)
+            params["n_top_genes"] = self.params.get("n_top_genes", 1000)
+            params["n_cells_train"] = self.params.get("n_cells_train", 1000)
         elif self.preprocess_type == PreprocessType.ZHENG_HVG:
-            params["n_top_genes"] = self.dataset_dict.get("n_top_genes", 1000)
+            params["n_top_genes"] = self.params.get("n_top_genes", 1000)
 
         return {
             **super()._parameters(),
@@ -171,7 +173,7 @@ class Psupertime(BasePseudotimePreprocessor):
         """
         return {
             **super()._parameters(),
-            "n_cpus": self.dataset_dict.get("n_cpus", 10),
+            "n_cpus": self.params.get("n_cpus", 10),
         }
 
     def _filter_pseudotime(self, preprocessed_ann_data):

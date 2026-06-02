@@ -1,0 +1,79 @@
+datasets:
+  ######################### PERTURBATION DATASETS #########################
+  # Promoting pre-spermatogonia
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+      - name: PerturbationPreprocessor
+        gene_col_name: gene_symbols
+        knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+        knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+        timepoint_idx: 4
+        cell_type: GC
+      - name: LogNormPreprocessor
+        filter_genes: false
+
+  # Avoiding pre-spermatogonia
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+      - name: PerturbationPreprocessor
+        gene_col_name: gene_symbols
+        knockin_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+        knockout_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+        timepoint_idx: 4
+        cell_type: GC
+      - name: LogNormPreprocessor
+        filter_genes: false
+
+  # Baseline with no perturbation
+  - name: GarciaAlonsoDataset
+    data_path: ./data/garcia-alonso/human_germ.h5ad
+    requires_caching: true
+    data_preprocessing_steps:
+      - name: LineageDatasetFilter
+        cell_lineage_file: ./cell_lineages/germ/cell_line.txt
+        cell_equivalence_file: ./cell_lineages/germ/equal_names.txt
+      - name: RoundCellsToTimepoint
+        min_cells_per_timepoint: 10
+      - name: Pseudotime
+        preprocess_type: zheng_hvg
+      - name: RoundCellsToTimepoint
+        num_tps: 15
+      - name: PerturbationPreprocessor
+        gene_col_name: gene_symbols
+        timepoint_idx: 4
+        cell_type: GC
+      - name: LogNormPreprocessor
+        filter_genes: false
+
+method:
+  name: ot_cfm
+  train_and_test_script: ./methods/ot_cfm/train_and_test.sh
+
+metrics:
+  - name: StackedBarPlot
+    from_tp_zero: True
+    trajectory_infer_model:
+      name: CellTypist
+      renormalize: True

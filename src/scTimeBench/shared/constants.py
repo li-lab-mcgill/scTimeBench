@@ -8,6 +8,7 @@ class ObservationColumns(Enum):
     # need to prefix it so that it does not conflict with user data
     CELL_TYPE = "scTimeBench_cell_type"
     TIMEPOINT = "scTimeBench_timepoint"
+    FUTURE_TIMEPOINTS = "scTimeBench_future_timepoints"
 
 
 class RequiredOutputFiles(Enum):

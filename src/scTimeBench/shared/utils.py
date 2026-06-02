@@ -56,6 +56,34 @@ def get_dataset(output_path):
     return dataset, dataset_pkl_path
 
 
+def load_dataset(output_path, cache_key_suffix, index):
+    """
+    Load the dataset from the pickled dataset file in output_path.
+
+    Args:
+        output_path: Path to the method output directory
+        cache_key_suffix: Optional key to use for caching the dataset in memory. If None, no caching will be used.
+        index: Optional index to specify which dataset to load if the pickled file contains multiple datasets. If None, the first dataset will be loaded.
+
+    Returns:
+        The dataset object loaded from the pickled file
+    """
+    dataset, dataset_pkl_path = get_dataset(output_path)
+    cache_key = f"{dataset_pkl_path}_{cache_key_suffix}"
+    ann_data = DATASET_IN_MEM_CACHE.get(cache_key, None)
+
+    if ann_data is None:
+        ann_data = dataset.load_data()[index]
+        DATASET_IN_MEM_CACHE[cache_key] = ann_data
+        if len(DATASET_IN_MEM_CACHE) > DATASET_CACHE_LIMIT:
+            # Remove an arbitrary item (not the most efficient, but simple)
+            DATASET_IN_MEM_CACHE.pop(next(iter(DATASET_IN_MEM_CACHE)))
+    else:
+        logging.debug(f"Loaded {cache_key_suffix} dataset from in-memory cache.")
+
+    return ann_data
+
+
 def load_test_dataset(output_path):
     """
     Load the test dataset from the pickled dataset file in output_path.
@@ -66,19 +94,20 @@ def load_test_dataset(output_path):
     Returns:
         The test AnnData object from the dataset
     """
-    dataset, dataset_pkl_path = get_dataset(output_path)
-    test_ann_data = DATASET_IN_MEM_CACHE.get(dataset_pkl_path, None)
+    return load_dataset(output_path, cache_key_suffix="test", index=1)
 
-    if test_ann_data is None:
-        _, test_ann_data = dataset.load_data()
-        DATASET_IN_MEM_CACHE[dataset_pkl_path] = test_ann_data
-        if len(DATASET_IN_MEM_CACHE) > DATASET_CACHE_LIMIT:
-            # Remove an arbitrary item (not the most efficient, but simple)
-            DATASET_IN_MEM_CACHE.pop(next(iter(DATASET_IN_MEM_CACHE)))
-    else:
-        logging.debug("Loaded test dataset from in-memory cache.")
 
-    return test_ann_data
+def load_train_dataset(output_path):
+    """
+    Load the train dataset from the pickled dataset file in output_path.
+
+    Args:
+        output_path: Path to the method output directory
+
+    Returns:
+        The train AnnData object from the dataset
+    """
+    return load_dataset(output_path, cache_key_suffix="train", index=0)
 
 
 def load_output_file(output_path, required_output: RequiredOutputFiles):

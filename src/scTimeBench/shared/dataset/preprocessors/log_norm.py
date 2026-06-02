@@ -10,8 +10,9 @@ class LogNormPreprocessor(BaseDatasetPreprocessor):
     and puts it into X.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, **kwargs):
         super().__init__(config)
+        self.params = kwargs
 
     def _parameters(self):
         """
@@ -19,6 +20,9 @@ class LogNormPreprocessor(BaseDatasetPreprocessor):
         """
         return {
             "counts": 10_000,  # default is 10^4
+            "filter_genes": self.params.get(
+                "filter_genes", True
+            ),  # whether to filter out genes that are not expressed in any cells
         }
 
     def preprocess(self, ann_data: sc.AnnData, **kwargs):
@@ -49,9 +53,11 @@ class LogNormPreprocessor(BaseDatasetPreprocessor):
             )
             data = ann_data.copy()
 
-        sc.pp.filter_genes(
-            data, min_cells=1
-        )  # filter out genes that are not expressed in any cells
+        if self._parameters()["filter_genes"]:
+            sc.pp.filter_genes(
+                data, min_cells=1
+            )  # filter out genes that are not expressed in any cells
+
         sc.pp.normalize_total(data, target_sum=self._parameters()["counts"])
         sc.pp.log1p(data)
         logging.debug(
