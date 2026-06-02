@@ -48,6 +48,9 @@ def check_yaml_optional(args=None):
                 args.to_csv is not None,
                 args.clear_tables,
                 args.plot_from_csv,
+                args.view_evals_by_method,
+                args.view_evals_by_metric,
+                args.clear_tables,
             ]
         )
 
