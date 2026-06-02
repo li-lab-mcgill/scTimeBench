@@ -26,6 +26,8 @@ from pathlib import Path
 
 import scTimeBench.database as database
 
+from scTimeBench.config import check_yaml_optional
+
 
 def print_available(config: Config):
     """
@@ -173,16 +175,6 @@ def main():
     """
     config = Config()
 
-    exit_on_output = [
-        config.available,
-        config.print_all,
-        config.to_csv is not None,
-        config.plot_from_csv,
-        config.view_evals_by_method,
-        config.view_evals_by_metric,
-        config.clear_tables,
-    ]
-
     if config.available:
         print_available(config)
 
@@ -208,7 +200,7 @@ def main():
         print("All database tables have been cleared.")
         db_manager.close()
 
-    if any(exit_on_output):
+    if check_yaml_optional(config):
         print(
             "Output generated based on provided flags. Exiting without running metrics."
         )

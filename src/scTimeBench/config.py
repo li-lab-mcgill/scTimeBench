@@ -37,6 +37,24 @@ class CsvWriteMode(Enum):
     SEPARATE = "separate"
 
 
+def check_yaml_optional(args=None):
+    if args is None:
+        return False  # Set to False to ensure config error is raised
+    else:
+        return any(
+            [
+                args.available,
+                args.print_all,
+                args.to_csv is not None,
+                args.clear_tables,
+                args.plot_from_csv,
+                args.view_evals_by_method,
+                args.view_evals_by_metric,
+                args.clear_tables,
+            ]
+        )
+
+
 class Config:
     """Config class for both yaml and cli arguments."""
 
@@ -198,26 +216,26 @@ class Config:
                 sys.stdout.write("\033[?25h")  # Re-show the cursor if you hid it
             exit()
 
+        # Utility flags that only need CLI options (see main.py early-exit paths).
+        yaml_optional = check_yaml_optional(args)
+
         # Get all config keys
         config_keys = list(args.__dict__.keys())
 
         # other keys to add from the yaml file
         config_keys.extend(["method", "datasets"])
 
-        # First read the config file if provided
-        assert (
-            args.config is not None
-        ), "Config file path must be provided with --config"
-        if not os.path.exists(args.config):
-            raise FileNotFoundError(f"Config file not found: {args.config}")
-
-        with open(args.config, "r") as file:
-            data = yaml.safe_load(file)
-
-        # Set attributes from YAML file
-        for key in config_keys:
-            if key in data.keys():
-                setattr(self, key, data[key])
+        data = {}
+        if args.config is not None:
+            if not os.path.exists(args.config):
+                raise FileNotFoundError(f"Config file not found: {args.config}")
+            with open(args.config, "r") as file:
+                data = yaml.safe_load(file) or {}
+            for key in config_keys:
+                if key in data:
+                    setattr(self, key, data[key])
+        elif not yaml_optional:
+            raise ValueError("Config file path must be provided with --config")
 
         # Override with command-line arguments
         for key, value in args._get_kwargs():
@@ -265,6 +283,12 @@ class Config:
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
             handlers=handlers,
         )
+
+        if yaml_optional:
+            logging.info(
+                "Config-independent operation selected; skipping YAML loading."
+            )
+            return
 
         # Validate required fields
         required_fields = ["method", "metrics"]
