@@ -8,6 +8,7 @@ from typing import List, Dict
 from scTimeBench.shared.utils import (
     is_raw,
     undo_log_normalization,
+    log_normalize_to_counts,
 )
 
 
@@ -94,6 +95,9 @@ class PerturbationSet:
                 f"Setting knockin gene {gene} with average expression {total_expression}, to {highest_gex}"
             )
             ann_data.X[:, gene_to_index[gene]] = highest_gex
+
+        if is_log_normalized:
+            ann_data = log_normalize_to_counts(ann_data)
 
         return ann_data
 

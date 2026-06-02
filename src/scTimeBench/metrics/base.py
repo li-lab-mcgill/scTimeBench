@@ -203,6 +203,9 @@ class BaseMetric:
 
             # this preprocessing step already happens during creation, skip this here!
             output_path = self.db_manager.get_method_output_path(method)
+            eval_output_path = os.path.join(
+                output_path, self._get_relative_output_path()
+            )
 
             if self.config.run_type == RunType.PREPROCESS:
                 logging.debug(
@@ -223,7 +226,7 @@ class BaseMetric:
                     # list of list case -- require all of them to exist
                     required_outputs_exist = all(
                         all(
-                            os.path.exists(os.path.join(output_path, output.value))
+                            os.path.exists(os.path.join(eval_output_path, output.value))
                             for output in output_set
                         )
                         for output_set in self.required_outputs
@@ -231,7 +234,7 @@ class BaseMetric:
                 else:
                     # list case
                     required_outputs_exist = all(
-                        os.path.exists(os.path.join(output_path, output.value))
+                        os.path.exists(os.path.join(eval_output_path, output.value))
                         for output in self.required_outputs
                     )
 
@@ -257,7 +260,7 @@ class BaseMetric:
                     )
                 else:
                     logging.info(
-                        f"Method output already exists at {output_path}. Skipping training and generation."
+                        f"Method output already exists at {eval_output_path}. Skipping training and generation."
                     )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
@@ -269,7 +272,7 @@ class BaseMetric:
                     # list of list case - check that at least one set exists
                     outputs_valid = any(
                         all(
-                            os.path.exists(os.path.join(output_path, output.value))
+                            os.path.exists(os.path.join(eval_output_path, output.value))
                             for output in output_set
                         )
                         for output_set in self.required_outputs
@@ -277,13 +280,13 @@ class BaseMetric:
                 else:
                     # list case - check all required outputs exist
                     outputs_valid = all(
-                        os.path.exists(os.path.join(output_path, output.value))
+                        os.path.exists(os.path.join(eval_output_path, output.value))
                         for output in self.required_outputs
                     )
 
                 assert (
                     outputs_valid
-                ), f"Required method output files not found in: {output_path}"
+                ), f"Required method output files not found in: {eval_output_path}"
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the method

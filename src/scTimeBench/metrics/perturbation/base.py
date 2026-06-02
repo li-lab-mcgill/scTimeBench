@@ -47,7 +47,7 @@ class PerturbationBasedMetrics(BaseMetric):
         """Skip this, as it's a higher level class."""
         # build the required outputs based on the perturbation set defined
         self.perturbation_set = PerturbationSet(
-            self.metric_config["perturbation_set_config"]
+            self.metric_config.get("perturbation_set_config", [])
         )
         self.required_outputs = [RequiredOutputFiles.PERTURBED_TEST_ANN_DATA]
 
@@ -73,4 +73,4 @@ class PerturbationBasedMetrics(BaseMetric):
             eval_output_path, PERTURBATION_SET_CONFIG_FILENAME
         )
         with open(perturbation_config_path, "w") as f:
-            yaml.safe_dump(self.metric_config["perturbation_set_config"], f)
+            yaml.safe_dump(self.metric_config.get("perturbation_set_config", []), f)
