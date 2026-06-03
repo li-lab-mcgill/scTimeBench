@@ -22,6 +22,8 @@ class RequiredOutputFiles(Enum):
     FROM_ZERO_TO_END_PRED_GEX = "from_zero_to_end_predicted_gene_expression.h5ad"
     # perturbation ann data
     PERTURBED_TEST_ANN_DATA = "perturbed_test_ann_data.h5ad"
+    # flag to make sure that the meta metric can run
+    META_FLAG = "meta_flag.txt"
 
 
 DATASET_DIR = "datasets"

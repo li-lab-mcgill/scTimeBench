@@ -137,6 +137,11 @@ class BaseMethod:
                 self._check_from_first_tp(first_tp_cells, all_tps, result)
                 result.write_h5ad(output_file)
 
+            elif required_output == RequiredOutputFiles.META_FLAG:
+                # this is just a placeholder file to indicate that the meta metric has been run
+                with open(output_file, "w") as f:
+                    f.write("This file indicates that the meta metric has been run.")
+
             else:
                 raise ValueError(f"Unknown required output: {required_output}")
 

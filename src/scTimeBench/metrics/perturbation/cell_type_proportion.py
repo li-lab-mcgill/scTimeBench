@@ -84,3 +84,5 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
         self.db_manager.insert_eval(
             method, self.__class__.__name__, self._get_param_encoding(), eval
         )
+
+        return cell_type_dist

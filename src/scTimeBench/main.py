@@ -16,7 +16,11 @@ if False:
     scTimeBench.metrics  # to avoid unused import warning
     scTimeBench.shared.dataset  # to avoid unused import warning
 
-from scTimeBench.metrics.base import METRIC_REGISTRY, BaseMetric
+from scTimeBench.metrics.base import (
+    METRIC_REGISTRY,
+    BaseMetric,
+    create_submetric_instance,
+)
 from scTimeBench.metrics.method_manager import MethodManager
 from scTimeBench.shared.dataset.base import DATASET_REGISTRY
 
@@ -53,13 +57,7 @@ def run_metrics(config: Config):
     db_manager = database.DatabaseManager(config)
 
     for metric in config.metrics:
-        metric_name = metric["name"]
-        if metric_name not in METRIC_REGISTRY:
-            raise ValueError(f"Metric {metric_name} not found in registry.")
-        metric_class = METRIC_REGISTRY[metric_name]
-        metric_instance = metric_class(
-            config=config, db_manager=db_manager, metric_config=metric
-        )
+        metric_instance = create_submetric_instance(config, db_manager, metric)
         metric_instance.eval()
 
     db_manager.close()

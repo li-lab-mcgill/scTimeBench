@@ -1,5 +1,5 @@
 """
-Ontology-Based Metrics.
+Perturbation-Based Metrics.
 """
 from scTimeBench.metrics.base import BaseMetric
 from scTimeBench.shared.constants import (
