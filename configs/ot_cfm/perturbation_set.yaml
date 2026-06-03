@@ -1,5 +1,5 @@
 datasets:
-  - tag: defaultGarciaAlonsoPseudotimeEvenCells
+  - tag: GarciaAlonsoGC
 
 method:
   name: ot_cfm
@@ -11,7 +11,7 @@ metrics:
       - gene_col_name: gene_symbols
         knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
         knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
-        timepoint_idx: 4
+        timepoint_idx: 0
     trajectory_infer_model:
       name: CellTypist
       renormalize: True
@@ -20,7 +20,7 @@ metrics:
       - gene_col_name: gene_symbols
         knockin_genes: ['STRA8', 'ZGLP1', 'ZIC1']
         knockout_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
-        timepoint_idx: 4
+        timepoint_idx: 0
     trajectory_infer_model:
       name: CellTypist
       renormalize: True

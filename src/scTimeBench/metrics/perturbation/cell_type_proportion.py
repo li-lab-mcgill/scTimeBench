@@ -28,6 +28,8 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
         self.params["trajectory_infer_model"] = str(self.trajectory_infer_model)
 
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
+        # TODO: change this as the training is currently the same!
+        # We need to modify this so it saves it to eval output path
         return {
             "trajectory": self.trajectory_infer_model.infer_trajectory(
                 output_path,

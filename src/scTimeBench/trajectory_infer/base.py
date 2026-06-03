@@ -202,12 +202,24 @@ class BaseTrajectoryInferMethod:
 
         Returns:
             - the path to save the trajectory inference path
-            - the path to save the classifier under (same as traj_infer_path if model classifier)
         """
         traj_infer_path = os.path.join(output_path, INFERRED_TRAJ_DIR, self.encode())
         os.makedirs(traj_infer_path, exist_ok=True)
+        return traj_infer_path
+
+    def _get_classifier_save_path(self, output_path):
+        """
+        Get the path to save the classifier under based on the hashed config.
+
+        This will depend on whether it's a model classifier or a dataset classifier.
+        Because if it's a dataset classifier we'll put the classifier in the datasets/
+        folder, otherwise, we put it in the model outputs folder.
+
+        Returns:
+            - the path to save the classifier under (same as traj_infer_path if model classifier)
+        """
         if self.embedding_classifier:
-            return traj_infer_path, traj_infer_path
+            return self._get_traj_infer_path(output_path)
 
         dataset, _ = get_dataset(output_path)
         classifier_save_path = os.path.join(
@@ -216,7 +228,7 @@ class BaseTrajectoryInferMethod:
             self.encode_for_classifier(),
         )
         os.makedirs(classifier_save_path, exist_ok=True)
-        return traj_infer_path, classifier_save_path
+        return classifier_save_path
 
     @final
     def train_and_predict(self, output_path, train_only=False):
@@ -229,7 +241,8 @@ class BaseTrajectoryInferMethod:
         # ** Note: we just redo the preparation so classifier_save_path can be used **
         # ** This is not a big deal because we already have caching in the first place **
         train_ann_data = load_train_dataset(output_path)
-        traj_infer_path, classifier_save_path = self._get_traj_infer_path(output_path)
+        traj_infer_path = self._get_traj_infer_path(output_path)
+        classifier_save_path = self._get_classifier_save_path(output_path)
 
         # now we also write the traj_config to file for future reference
         with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
@@ -272,7 +285,7 @@ class BaseTrajectoryInferMethod:
         We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
         """
         train_ann_data = load_train_dataset(output_path)
-        _, classifier_save_path = self._get_traj_infer_path(output_path)
+        classifier_save_path = self._get_classifier_save_path(output_path)
         k_fold_path = os.path.join(classifier_save_path, f"k_fold_{k}")
         os.makedirs(k_fold_path, exist_ok=True)
 
@@ -323,7 +336,9 @@ class BaseTrajectoryInferMethod:
         if test_ann_data is None:
             test_ann_data = load_test_dataset(output_path)
         if traj_infer_path is None:
-            traj_infer_path, _ = self._get_traj_infer_path(output_path)
+            traj_infer_path = self._get_traj_infer_path(
+                output_path if eval_output_path is None else eval_output_path
+            )
 
         logging.debug(
             f"Predicting next timepoint with method: {self.__class__.__name__} and config: {self.traj_config}"
@@ -362,7 +377,9 @@ class BaseTrajectoryInferMethod:
         embedding space.
         3. Finally, we consolidate the cell types per time point based on the kNN results.
         """
-        traj_infer_path, _ = self._get_traj_infer_path(output_path)
+        traj_infer_path = self._get_traj_infer_path(
+            output_path if eval_output_path is None else eval_output_path
+        )
         logging.debug(
             f"Inferring trajectory with method: {self.__class__.__name__} and config: {self.traj_config}"
         )
