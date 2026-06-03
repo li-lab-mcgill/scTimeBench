@@ -84,14 +84,22 @@ class BaseTrajectoryInferMethod:
         to return their custom fields. This keeps hashing consistent without
         requiring subclasses to remember to call `super()`.
         """
-        return {
+        params = {
             "test_size": self.traj_config.get("test_size", 0.2),
             "random_state": self.traj_config.get("random_state", 42),
             "embedding_classifier": self.traj_config.get("embedding_classifier", False),
             "from_tp_zero": self.traj_config.get("from_tp_zero", False),
             "infer_first_tp": self.traj_config.get("infer_first_tp", False),
+            "perturbation_data": self.traj_config.get("perturbation_data", False),
             **self._subclass_parameters(),
         }
+
+        # check that either from_tp_zero or perturbation_data is true or both false
+        assert not (
+            params["from_tp_zero"] and params["perturbation_data"]
+        ), "Both from_tp_zero and perturbation_data cannot be set at the same time."
+
+        return params
 
     def _subclass_parameters(self):
         """Override in subclasses to add method-specific parameters."""
@@ -117,13 +125,28 @@ class BaseTrajectoryInferMethod:
     def _infer_first_tp(self):
         return self._parameters().get("infer_first_tp", False)
 
-    def _get_next_tp_tensors(self, output_path, test_ann_data):
+    def _uses_perturbation(self):
+        return self._parameters().get("perturbation_data", False)
+
+    def _get_next_tp_tensors(self, output_path, test_ann_data, eval_output_path=None):
         """
         Based on the embedding_classifier property, get the proper tensors for trajectory inference.
 
         We want to return:
         - Predicted gene expr/embedding at time t (for (1, last t))
         """
+        if self._uses_perturbation():
+            # here we have different logic because we have the perturbation data
+            # not the previous ones here
+            logging.debug("Loading perturbation data for trajectory inference.")
+            assert (
+                eval_output_path is not None
+            ), "eval_output_path must be provided when using perturbation data for trajectory inference."
+            next_tp_gex_anndata = load_output_file(
+                eval_output_path, RequiredOutputFiles.PERTURBED_TEST_ANN_DATA
+            )
+            return next_tp_gex_anndata.X.toarray()
+
         if self._from_tp_zero():
             # here we have different logic because we have the predicted timepoints
             # not the previous ones here
@@ -179,12 +202,24 @@ class BaseTrajectoryInferMethod:
 
         Returns:
             - the path to save the trajectory inference path
-            - the path to save the classifier under (same as traj_infer_path if model classifier)
         """
         traj_infer_path = os.path.join(output_path, INFERRED_TRAJ_DIR, self.encode())
         os.makedirs(traj_infer_path, exist_ok=True)
+        return traj_infer_path
+
+    def _get_classifier_save_path(self, output_path):
+        """
+        Get the path to save the classifier under based on the hashed config.
+
+        This will depend on whether it's a model classifier or a dataset classifier.
+        Because if it's a dataset classifier we'll put the classifier in the datasets/
+        folder, otherwise, we put it in the model outputs folder.
+
+        Returns:
+            - the path to save the classifier under (same as traj_infer_path if model classifier)
+        """
         if self.embedding_classifier:
-            return traj_infer_path, traj_infer_path
+            return self._get_traj_infer_path(output_path)
 
         dataset, _ = get_dataset(output_path)
         classifier_save_path = os.path.join(
@@ -193,7 +228,7 @@ class BaseTrajectoryInferMethod:
             self.encode_for_classifier(),
         )
         os.makedirs(classifier_save_path, exist_ok=True)
-        return traj_infer_path, classifier_save_path
+        return classifier_save_path
 
     @final
     def train_and_predict(self, output_path, train_only=False):
@@ -206,7 +241,8 @@ class BaseTrajectoryInferMethod:
         # ** Note: we just redo the preparation so classifier_save_path can be used **
         # ** This is not a big deal because we already have caching in the first place **
         train_ann_data = load_train_dataset(output_path)
-        traj_infer_path, classifier_save_path = self._get_traj_infer_path(output_path)
+        traj_infer_path = self._get_traj_infer_path(output_path)
+        classifier_save_path = self._get_classifier_save_path(output_path)
 
         # now we also write the traj_config to file for future reference
         with open(os.path.join(traj_infer_path, TRAJ_CONFIG_FILE), "w") as f:
@@ -249,7 +285,7 @@ class BaseTrajectoryInferMethod:
         We store everything under traj_infer_path/k_fold_<k>/fold_<i>/
         """
         train_ann_data = load_train_dataset(output_path)
-        _, classifier_save_path = self._get_traj_infer_path(output_path)
+        classifier_save_path = self._get_classifier_save_path(output_path)
         k_fold_path = os.path.join(classifier_save_path, f"k_fold_{k}")
         os.makedirs(k_fold_path, exist_ok=True)
 
@@ -287,14 +323,22 @@ class BaseTrajectoryInferMethod:
 
         return predictions
 
-    def predict_next_tp(self, output_path, test_ann_data=None, traj_infer_path=None):
+    def predict_next_tp(
+        self,
+        output_path,
+        test_ann_data=None,
+        traj_infer_path=None,
+        eval_output_path=None,
+    ):
         """
         Predict the next timepoint cell types using the trajectory inference model.
         """
         if test_ann_data is None:
             test_ann_data = load_test_dataset(output_path)
         if traj_infer_path is None:
-            traj_infer_path, _ = self._get_traj_infer_path(output_path)
+            traj_infer_path = self._get_traj_infer_path(
+                output_path if eval_output_path is None else eval_output_path
+            )
 
         logging.debug(
             f"Predicting next timepoint with method: {self.__class__.__name__} and config: {self.traj_config}"
@@ -313,7 +357,9 @@ class BaseTrajectoryInferMethod:
 
         # get the embeddings and timepoints
         next_tp_embed_probs, idx_to_cell_types = self._subclass_predict_probs(
-            self._get_next_tp_tensors(output_path, test_ann_data)
+            self._get_next_tp_tensors(
+                output_path, test_ann_data, eval_output_path=eval_output_path
+            )
         )
         np.save(next_tp_probs_path, next_tp_embed_probs)
         with open(idx_to_celltype_path, "w") as f:
@@ -322,7 +368,7 @@ class BaseTrajectoryInferMethod:
         return next_tp_embed_probs, idx_to_cell_types
 
     @final
-    def infer_trajectory(self, output_path, per_tp=False):
+    def infer_trajectory(self, output_path, per_tp=False, eval_output_path=None):
         """
         Infer the trajectory using kNN graph-based method.
 
@@ -331,7 +377,9 @@ class BaseTrajectoryInferMethod:
         embedding space.
         3. Finally, we consolidate the cell types per time point based on the kNN results.
         """
-        traj_infer_path, _ = self._get_traj_infer_path(output_path)
+        traj_infer_path = self._get_traj_infer_path(
+            output_path if eval_output_path is None else eval_output_path
+        )
         logging.debug(
             f"Inferring trajectory with method: {self.__class__.__name__} and config: {self.traj_config}"
         )
@@ -366,7 +414,7 @@ class BaseTrajectoryInferMethod:
             f.write(str(self))
 
         cell_types, next_cell_types, cell_tps = self._get_next_cell_types(
-            output_path, traj_infer_path
+            output_path, traj_infer_path, eval_output_path=eval_output_path
         )
 
         inferred_traj = {}
@@ -410,7 +458,7 @@ class BaseTrajectoryInferMethod:
 
         return inferred_traj
 
-    def _get_next_cell_types(self, output_path, traj_infer_path):
+    def _get_next_cell_types(self, output_path, traj_infer_path, eval_output_path=None):
         """
         Gets the next cell types for us to use in trajectory inference.
         """
@@ -477,18 +525,23 @@ class BaseTrajectoryInferMethod:
         )
         # then we run the predict next timepoint to get the embeddings
         next_tp_embed_probs, idx_to_cell_types = self.predict_next_tp(
-            output_path, test_ann_data, traj_infer_path
+            output_path,
+            test_ann_data,
+            traj_infer_path,
+            eval_output_path=eval_output_path,
         )
         next_cell_types = [
             idx_to_cell_types[np.argmax(probs)] for probs in next_tp_embed_probs
         ]
 
         # at this point, the next cell types are defined correctly, it's just the cell types and cell_tps
-        if not self._from_tp_zero():
+        # only do sequential if it's not either of these two special cases
+        if not self._from_tp_zero() and not self._uses_perturbation():
             _, cell_tps, cell_types = sequential_tps()
             return cell_types, next_cell_types, cell_tps
 
         # if we are in the from_tp_zero case, then we need to get the cell types and cell tps for all the timepoints
+        # ** the reason why this is different is because cell_types cannot be taken from the anndata directly **
         timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
 
         if not self._infer_first_tp():
@@ -500,9 +553,15 @@ class BaseTrajectoryInferMethod:
 
         # then, the cell types are the first tp's real cell types
         # and for every timepoint after it's the predicted one
-        next_tp_gex_anndata = load_output_file(
-            output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
-        )
+        if self._uses_perturbation():
+            next_tp_gex_anndata = load_output_file(
+                eval_output_path, RequiredOutputFiles.PERTURBED_TEST_ANN_DATA
+            )
+        else:
+            next_tp_gex_anndata = load_output_file(
+                output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
+            )
+
         timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
 
         if not self._infer_first_tp():

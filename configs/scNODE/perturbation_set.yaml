@@ -1,0 +1,17 @@
+datasets:
+  - tag: defaultGarciaAlonsoPseudotimeEvenCells
+
+method:
+  name: scNODE
+  train_and_test_script: ./methods/scNODE/train_and_test.sh
+
+metrics:
+  - name: PerturbationCellTypeProportion
+    perturbation_set_config:
+      - gene_col_name: gene_symbols
+        knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+        knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+        timepoint_idx: 4
+    trajectory_infer_model:
+      name: CellTypist
+      renormalize: True

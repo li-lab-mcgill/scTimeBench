@@ -20,8 +20,11 @@ class RequiredOutputFiles(Enum):
     NEXT_CELLTYPE = "next_cell_type.parquet"
     PRED_GRAPH = "predicted_graph.npy"
     FROM_ZERO_TO_END_PRED_GEX = "from_zero_to_end_predicted_gene_expression.h5ad"
+    # perturbation ann data
+    PERTURBED_TEST_ANN_DATA = "perturbed_test_ann_data.h5ad"
 
 
 DATASET_DIR = "datasets"
 PICKLED_DATASET_FILENAME = "dataset.pkl"
 METHOD_CONFIG_FILENAME = "method_config.yaml"
+PERTURBATION_SET_CONFIG_FILENAME = "perturbation_config.yaml"

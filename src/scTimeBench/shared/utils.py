@@ -6,6 +6,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import scipy.sparse as sp
 import logging
 import yaml
 
@@ -156,6 +157,35 @@ def is_raw(ann_data: sc.AnnData):
     """
     gex = ann_data.X if isinstance(ann_data.X, np.ndarray) else ann_data.X.toarray()
     return np.all(gex >= 0) and np.all(np.mod(gex, 1) == 0)
+
+
+def undo_log_normalization(ann_data):
+    """
+    Undo log-normalization by applying the inverse of log1p, which is expm1.
+    This will convert log-normalized data back to raw counts.
+    """
+    if sp.issparse(ann_data.X):
+        ann_data.X = sp.csr_matrix(np.expm1(ann_data.X.toarray()))
+    else:
+        ann_data.X = np.expm1(ann_data.X)
+    return ann_data
+
+
+def log_normalize_to_counts(ann_data, counts=10_000):
+    """
+    Log-normalize the data to a certain counts threshold by applying log1p to the data after scaling it so that the total counts per cell equals the specified counts.
+
+    Args:
+        ann_data: The AnnData object to normalize
+        counts: The total counts threshold to normalize to (default is 10,000)
+    Returns:
+        The log-normalized AnnData object
+    """
+    data = ann_data.copy()
+    sc.pp.normalize_total(data, target_sum=counts)
+    sc.pp.log1p(data)
+    ann_data.X = data.X
+    return ann_data
 
 
 def is_log_normalized_to_counts(ann_data, counts=10_000):

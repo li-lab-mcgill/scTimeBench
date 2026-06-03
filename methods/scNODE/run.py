@@ -255,6 +255,35 @@ class scNODE(BaseMethod):
 
         return pred_ann_data
 
+    def generate_gex_from_t_to_t1(self, test_ann_data, t, t1):
+        """
+        Generate gene expression from time t to t + 1.
+        """
+        self.latent_ode_model.eval()
+
+        if sp.issparse(test_ann_data.X):
+            data = test_ann_data.X.toarray()
+        else:
+            data = test_ann_data.X
+        cell_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
+
+        # assert that all tps are of timepoint t
+        assert np.all(
+            cell_tps == t
+        ), f"All cells must be of timepoint {t}, but found cells with timepoints {np.unique(cell_tps)}."
+
+        _, _, recon_obs = self.latent_ode_model.predict(
+            torch.FloatTensor(data),
+            torch.FloatTensor([t, t1]),
+            n_cells=data.shape[0],
+        )
+        recon_obs = recon_obs.detach().numpy()
+
+        pred_ann_data = test_ann_data.copy()
+        pred_ann_data.X = recon_obs[:, 1, :]
+        pred_ann_data.obs[ObservationColumns.TIMEPOINT.value] = t1
+        return pred_ann_data
+
 
 if __name__ == "__main__":
     main(scNODE)

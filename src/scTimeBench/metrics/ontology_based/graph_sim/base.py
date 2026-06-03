@@ -183,8 +183,7 @@ class GraphSimMetric(OntologyBasedMetrics):
             return weighted_adjacency_matrix
 
         # otherwise, we need to go through the trajectory inference step
-        traj_dir, _ = self.trajectory_infer_model._get_traj_infer_path(output_path)
-        self.traj_dir = traj_dir
+        self.traj_dir = self.trajectory_infer_model._get_traj_infer_path(output_path)
 
         # first let's ensure that it's in the right format
         # we expect it to have the true embeddings and predicted embeddings

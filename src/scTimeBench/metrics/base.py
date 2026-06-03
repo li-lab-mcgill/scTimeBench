@@ -203,6 +203,9 @@ class BaseMetric:
 
             # this preprocessing step already happens during creation, skip this here!
             output_path = self.db_manager.get_method_output_path(method)
+            eval_output_path = os.path.join(
+                output_path, self._get_relative_output_path()
+            )
 
             if self.config.run_type == RunType.PREPROCESS:
                 logging.debug(
@@ -223,7 +226,7 @@ class BaseMetric:
                     # list of list case -- require all of them to exist
                     required_outputs_exist = all(
                         all(
-                            os.path.exists(os.path.join(output_path, output.value))
+                            os.path.exists(os.path.join(eval_output_path, output.value))
                             for output in output_set
                         )
                         for output_set in self.required_outputs
@@ -231,7 +234,7 @@ class BaseMetric:
                 else:
                     # list case
                     required_outputs_exist = all(
-                        os.path.exists(os.path.join(output_path, output.value))
+                        os.path.exists(os.path.join(eval_output_path, output.value))
                         for output in self.required_outputs
                     )
 
@@ -257,7 +260,7 @@ class BaseMetric:
                     )
                 else:
                     logging.info(
-                        f"Method output already exists at {output_path}. Skipping training and generation."
+                        f"Method output already exists at {eval_output_path}. Skipping training and generation."
                     )
 
             if self.config.run_type in [RunType.EVAL_ONLY, RunType.AUTO_TRAIN_TEST]:
@@ -269,7 +272,7 @@ class BaseMetric:
                     # list of list case - check that at least one set exists
                     outputs_valid = any(
                         all(
-                            os.path.exists(os.path.join(output_path, output.value))
+                            os.path.exists(os.path.join(eval_output_path, output.value))
                             for output in output_set
                         )
                         for output_set in self.required_outputs
@@ -277,13 +280,13 @@ class BaseMetric:
                 else:
                     # list case - check all required outputs exist
                     outputs_valid = all(
-                        os.path.exists(os.path.join(output_path, output.value))
+                        os.path.exists(os.path.join(eval_output_path, output.value))
                         for output in self.required_outputs
                     )
 
                 assert (
                     outputs_valid
-                ), f"Required method output files not found in: {output_path}"
+                ), f"Required method output files not found in: {eval_output_path}"
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the method
@@ -307,6 +310,24 @@ class BaseMetric:
         Subclasses can implement this method to evaluate submetrics.
         """
         raise NotImplementedError("Subclasses should implement this method.")
+
+    def _get_relative_output_path(self) -> str:
+        """
+        Subclasses can optionally implement this method to provide additional
+        subdirectories in case they want stratified output results, e.g.: perturbations.
+
+        Returns:
+            str: relative path to the method output directory where the required outputs are stored.
+        """
+        # by default we don't change the relative path
+        return "./"
+
+    def _submetric_eval_setup(self, eval_output_path):
+        """
+        Optional setup steps that give the output path to the submetric evaluation function,
+        in case there are some steps needed for training/evaluation specifically
+        e.g.: loading the perturbation set config.
+        """
 
     def _preprocess(self, dataset: BaseDataset):
         """
@@ -339,6 +360,8 @@ class BaseMetric:
         # to make our lives easier, we will also pickle our current dataset object
         # and store this in the output directory as well
         # so that the method can load this dataset object directly for training and testing
+
+        # this below forces the requiredoutputfiles to be of a certain format
         assert hasattr(
             self, "required_outputs"
         ), "Subclasses must define required_outputs attribute."
@@ -367,8 +390,14 @@ class BaseMetric:
 
         logging.debug(f"Required outputs serialized: {required_outputs_serialized}")
 
+        # note that this differs because it is the path to the evaluation outputs
+        # not just the method outputs
+        eval_output_path = os.path.join(output_path, self._get_relative_output_path())
+        os.makedirs(eval_output_path, exist_ok=True)
+
         yaml_config = {
-            "output_path": output_path,
+            # let submetrics decide the path
+            "output_path": eval_output_path,
             "train_output_path": train_output_path,
             "dataset_pkl_path": os.path.join(
                 dataset.get_test_dataset_dir(), PICKLED_DATASET_FILENAME
@@ -378,6 +407,9 @@ class BaseMetric:
             "datasets": dataset.encode_dataset_dict(),
             "preprocessors": dataset.encode_preprocessors(),
         }
+
+        # let submetrics do their own setup as well
+        self._submetric_eval_setup(eval_output_path)
 
         # write out the yaml config file for the method
         yaml_config_path = os.path.join(output_path, METHOD_CONFIG_FILENAME)
