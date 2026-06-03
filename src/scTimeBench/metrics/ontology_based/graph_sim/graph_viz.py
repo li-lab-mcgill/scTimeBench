@@ -3,7 +3,7 @@ from scTimeBench.metrics.ontology_based.graph_sim.base import (
     AdjacencyMatrixType,
     ThresholdCriteria,
 )
-from scTimeBench.shared.utils import load_train_dataset, load_test_dataset
+from scTimeBench.shared.utils import load_train_dataset
 from scTimeBench.shared.constants import ObservationColumns
 import os
 import logging
@@ -225,8 +225,7 @@ class StackedBarPlot(GraphSimMetric):
         target_records = []
 
         # now we need to get the starting and ending timepoints as well
-        test_ann_data = load_test_dataset(self.output_path)
-        tps = sorted(test_ann_data.uns[ObservationColumns.FUTURE_TIMEPOINTS.value])
+        tps = sorted(per_tp_traj.keys())
 
         def populate_row(traj, populate_from_target=False):
             src_cell_types = {}
@@ -249,10 +248,8 @@ class StackedBarPlot(GraphSimMetric):
             ), f"Timepoint {tp} in the trajectory is not present in the training data timepoints {tps}."
             if tp == last_tp:
                 # in this case, we get the source cells in the first tp
-                per_tp_traj_keys = sorted(list(per_tp_traj.keys()))
-                traj = per_tp_traj[
-                    per_tp_traj_keys[-1]
-                ]  # get the trajectory from second last to last
+                # get the trajectory from second last to last
+                traj = per_tp_traj[tps[-1]]
                 pred_cell_types = populate_row(traj, populate_from_target=True)
             else:
                 traj = per_tp_traj[tp]

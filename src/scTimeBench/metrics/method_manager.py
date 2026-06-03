@@ -1,6 +1,7 @@
 """
 Method Base Class.
 """
+import os
 import json
 import hashlib
 import subprocess
@@ -59,22 +60,60 @@ class MethodManager:
         """
         return json.dumps(self.config.method.get("metadata", {}), sort_keys=True)
 
-    def _encode_output_path(self) -> str:
+    def _encode_train_output_path(self) -> str:
         """
         Encode the output path based on:
         1) the dataset config
         2) the dataset preprocessors applied
         3) the output file name required by the metric
         and return the full output path as a hashed string.
+
+        This is used to cache the outputs of the method on the training dataset, which can be shared across multiple metrics.
         """
+        dataset_to_encode = (
+            self.dataset.cached_train_dataset
+            if self.dataset.cached_train_dataset is not None
+            else self.dataset
+        )
+
         unique_string = json.dumps(
             {
                 "name": self._get_name(),
                 "metadata": self._encode_metadata(),
-                "dataset_dict": self.dataset.encode_dataset_dict(),
-                "preprocessors": self.dataset.encode_preprocessors(),
+                # if the dataset has a cached_train_dataset,
+                # then we should only encode the dataset_dict and preprocessors
+                # of the cached_train_dataset, since that is what is used for training the model
+                "dataset_dict": dataset_to_encode.encode_dataset_dict(),
+                "preprocessors": dataset_to_encode.encode_preprocessors(),
             },
             sort_keys=True,
         )
         # Generate a base64 encoded string of the unique string
         return hashlib.sha256(unique_string.encode()).hexdigest()
+
+    def _encode_output_path(self) -> str:
+        """
+        Just like the train and test datasets will now be split,
+        so that the method can have a separate cache for the test dataset outputs,
+        we should also have a separate encoding for the test output path per model.
+        """
+        # if there is no cached_train_dataset, then we will just use the old way
+        # of encoding the output path, since the train and test datasets are not really separated
+        train_output_path = self._encode_train_output_path()
+        if self.dataset.cached_train_dataset is None:
+            return train_output_path
+
+        unique_string = json.dumps(
+            {
+                "name": self._get_name(),
+                "metadata": self._encode_metadata(),
+                # always encode the proper dataset, as the test is not shared
+                "dataset_dict": self.dataset.encode_dataset_dict(),
+                "preprocessors": self.dataset.encode_preprocessors(),
+            },
+            sort_keys=True,
+        )
+
+        # Generate a base64 encoded string of the unique string
+        test_hash = hashlib.sha256(unique_string.encode()).hexdigest()
+        return os.path.join(train_output_path, "test_outputs", test_hash)

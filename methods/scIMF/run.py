@@ -83,7 +83,9 @@ def _select_generated(gen, gen_pos, n_cells, rng):
 
 
 class scIMF(BaseMethod):
-    def _build_config(self, metadata: Dict, all_tps: Optional[List] = None):
+    def _build_config(
+        self, metadata: Dict, all_tps: Optional[List] = None, train_output_path=None
+    ):
         args = config_builder()
 
         if "epochs" in metadata and "train_epochs" not in metadata:
@@ -126,7 +128,7 @@ class scIMF(BaseMethod):
 
         config.task = "leaveout" if config.leaveouts else "fate"
         config.dataset = metadata.get("dataset", "AnnData")
-        config.out_dir = self.config["output_path"]
+        config.out_dir = train_output_path
         config.for_train = True
 
         config.split_type = (
@@ -171,11 +173,11 @@ class scIMF(BaseMethod):
 
         return device
 
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         """
         Training logic for scIMF.
         """
-        cache_path = os.path.join(self.config["output_path"], "trained_scIMF_model.pth")
+        cache_path = os.path.join(train_output_path, "trained_scIMF_model.pth")
         metadata = self.config.get("method", {}).get("metadata", {})
 
         self.device = self._resolve_device(metadata)
@@ -198,7 +200,9 @@ class scIMF(BaseMethod):
             self.model.to(self.device)
             return
 
-        config, mapping = self._build_config(metadata, all_tps=all_tps)
+        config, mapping = self._build_config(
+            metadata, all_tps=all_tps, train_output_path=train_output_path
+        )
         config.device = self.device
 
         time_col = ObservationColumns.TIMEPOINT.value

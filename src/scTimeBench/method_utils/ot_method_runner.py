@@ -34,7 +34,7 @@ class BaseOTMethod(BaseMethod):
         self._test_ann_data = None
         self._pca_model = None
 
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         print(
             f"OT-based model training not part of OT paradigm. Skipping training step."
         )
@@ -44,7 +44,7 @@ class BaseOTMethod(BaseMethod):
         By default we don't need to do anything here. Subclasses representing OT methods can override this method if needed.
         """
 
-    def _ensure_transport_plans(self, test_ann_data):
+    def _ensure_transport_plans(self, test_ann_data, train_output_path):
         """
         Compute and cache transport plans for all timepoint transitions.
         """
@@ -61,10 +61,12 @@ class BaseOTMethod(BaseMethod):
         for i, tp in enumerate(unique_tps[:-1]):
             next_tp = unique_tps[i + 1]
             print(f"Computing transport plan: {tp} -> {next_tp}")
-            transport_plan = self.get_transport_plan(test_ann_data, tp, next_tp)
+            transport_plan = self.get_transport_plan(
+                test_ann_data, tp, next_tp, train_output_path=train_output_path
+            )
             self._transport_plans_cache[(tp, next_tp)] = transport_plan
 
-    def get_transport_plan(self, source_data, target_data):
+    def get_transport_plan(self, source_data, target_data, train_output_path):
         """
         Given source and target data, compute the transport plan.
         Subclasses representing OT methods should implement this method.
@@ -101,7 +103,9 @@ class BaseOTMethod(BaseMethod):
         """
         Generate embeddings for the next timepoint using transport plan.
         """
-        self._ensure_transport_plans(test_ann_data)
+        self._ensure_transport_plans(
+            test_ann_data, train_output_path=self.train_output_path
+        )
 
         # First ensure we have next timepoint gene expression
         next_tp_gex = self.generate_next_tp_gex(test_ann_data)
@@ -130,7 +134,9 @@ class BaseOTMethod(BaseMethod):
         """
         Generate gene expression for the next timepoint using transport plan.
         """
-        self._ensure_transport_plans(test_ann_data)
+        self._ensure_transport_plans(
+            test_ann_data, train_output_path=self.train_output_path
+        )
 
         test_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
         unique_tps = sorted(np.unique(test_tps))
@@ -161,7 +167,9 @@ class BaseOTMethod(BaseMethod):
         """
         Generate next cell type predictions using transport plan.
         """
-        self._ensure_transport_plans(test_ann_data)
+        self._ensure_transport_plans(
+            test_ann_data, train_output_path=self.train_output_path
+        )
 
         test_tps = test_ann_data.obs[ObservationColumns.TIMEPOINT.value].to_numpy()
         unique_tps = sorted(np.unique(test_tps))

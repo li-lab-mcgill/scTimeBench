@@ -308,7 +308,7 @@ class BaseMetric:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def _preprocess(self, dataset):
+    def _preprocess(self, dataset: BaseDataset):
         """
         Preprocessing steps required before evaluating the metric.
         """
@@ -328,6 +328,11 @@ class BaseMetric:
         # (e.g., embedding.pkl, graph_sim.pkl, etc.)
         # we will first insert a yaml config file that the method can use to
         # train and test on this dataset
+        train_output_path = os.path.join(
+            self.config.output_dir, method._encode_train_output_path()
+        )
+        os.makedirs(train_output_path, exist_ok=True)
+
         output_path = os.path.join(self.config.output_dir, method._encode_output_path())
         os.makedirs(output_path, exist_ok=True)
 
@@ -364,8 +369,9 @@ class BaseMetric:
 
         yaml_config = {
             "output_path": output_path,
+            "train_output_path": train_output_path,
             "dataset_pkl_path": os.path.join(
-                dataset.get_dataset_dir(), PICKLED_DATASET_FILENAME
+                dataset.get_test_dataset_dir(), PICKLED_DATASET_FILENAME
             ),
             "method": self.config.method_yaml_data,
             "required_outputs": required_outputs_serialized,
@@ -387,9 +393,11 @@ class BaseMetric:
             # need to create a new database/clear the existing one or fix their path
             existing_output_path = self.db_manager.get_method_output_path(method)
             assert existing_output_path == output_path, (
-                f"Output path for method {method} already exists in database with a different path. "
-                f"Existing path: {existing_output_path}, New path: {output_path}. "
-                f"Please resolve this inconsistency by either clearing the database or fixing the output directory."
+                f"Output path for method {method._get_name()} already exists in database with a different path.\n"
+                f"Existing path: {existing_output_path}, New path: {output_path}.\n"
+                f"Please resolve this inconsistency by either clearing the database or fixing the output directory.\n"
+                f"Note: A potential cause can also be due to the dataset encoding changing, including adding or removing"
+                f'"equiv_train_tag" in the dataset definition.'
             )
 
         return output_path
@@ -427,6 +435,101 @@ class BaseMetric:
             self._eval()
 
     # ** PREPROCESSING DATASET SECTION **
+    def _resolve_tag(self, to_match, dataset_tag):
+        """
+        Resolves a dataset tag to a full dataset definition from the default or optional datasets.
+
+        Args:
+            dataset_tag (str): The tag of the dataset to resolve.
+        Returns:
+            dict: The full dataset definition corresponding to the provided tag.
+        """
+        # we need to find the matching dataset from the default datasets or optional datasets
+        matching_datasets = [d for d in to_match if d.get("tag", None) == dataset_tag]
+        assert (
+            len(matching_datasets) == 1
+        ), f"Dataset with tag {dataset_tag} not found or multiple found in default or optional datasets."
+        return matching_datasets[0]
+
+    def _provide_dataset_preprocessors_builders(self, dataset):
+        """
+        Provides the dataset preprocessor builders based on the dataset dictionary.
+
+        This function takes in a dataset dictionary and returns a list of dataset preprocessor builders
+        that can be used to create the dataset preprocessors for this dataset.
+
+        Args:
+            dataset_dict (dict): The dictionary containing the dataset information and preprocessing steps.
+        Returns:
+            list: A list of dataset preprocessor builders that can be used to create the dataset preprocessors for this dataset.
+        """
+
+        # for some reason, we need to create a wrapper function here, as lambdas don't work well...
+        # searching it up, it's because of late binding
+        def dataset_preprocessors_builder_wrapper(dataset_preprocessor):
+            def builder(dataset_dict):
+                return DATASET_PREPROCESSOR_REGISTRY[dataset_preprocessor["name"]](
+                    dataset_dict,
+                    **{k: v for k, v in dataset_preprocessor.items() if k != "name"},
+                )
+
+            return builder
+
+        builders = []
+        for dataset_preprocessor in dataset["data_preprocessing_steps"]:
+            builders.append(dataset_preprocessors_builder_wrapper(dataset_preprocessor))
+        return builders
+
+    def _build_dataset(self, dataset, preprocessor_builders, output_dir, to_match):
+        """
+        Builds the dataset based on the dataset definition and the dataset preprocessors.
+
+        This function applies the dataset preprocessors in sequence to the raw dataset
+        to produce the final processed dataset that will be used for training, testing, and evaluation.
+
+        Args:
+            dataset (dict): The dictionary containing the dataset information and preprocessing steps.
+            preprocessor_builders (list): A list of dataset preprocessor builders that can be used
+                to create the dataset preprocessors for this dataset.
+        Returns:
+            BaseDataset: The processed dataset that can be used for training, testing, and evaluation.
+        """
+        # 1) check if there exists the "equiv_train_dataset_tag" field,
+        # and if so, we will use that as the cached_train_dataset path.
+        # Otherwise we will not use any caching and it should work as normal.
+        cached_train_dataset = None
+        equiv_train_dataset_tag = dataset.get("equiv_train_dataset_tag", None)
+        if equiv_train_dataset_tag is not None:
+            cached_train_dataset = self._build_dataset_from_tag(
+                equiv_train_dataset_tag, to_match, output_dir
+            )
+
+        # 2) build the actual dataset
+        return DATASET_REGISTRY[dataset["name"]](
+            dataset,
+            [builder(dataset) for builder in preprocessor_builders],
+            output_dir,
+            cached_train_dataset=cached_train_dataset,
+        )
+
+    def _build_dataset_from_tag(self, dataset_tag, to_match, output_dir):
+        """
+        Builds a dataset from a dataset tag.
+
+        This function takes in a dataset tag, resolves it to a full dataset definition,
+        and then builds the dataset using the dataset preprocessors defined in the dataset definition.
+
+        Args:
+            dataset_tag (str): The tag of the dataset to build.
+            to_match (list): The list of datasets to match against.
+            output_dir (str): The directory where the processed dataset will be saved.
+        Returns:
+            BaseDataset: The processed dataset that can be used for training, testing, and evaluation.
+        """
+        dataset_def = self._resolve_tag(to_match=to_match, dataset_tag=dataset_tag)
+        builders = self._provide_dataset_preprocessors_builders(dataset_def)
+        return self._build_dataset(dataset_def, builders, output_dir, to_match)
+
     @final
     def _init_datasets(self):
         """
@@ -482,15 +585,10 @@ class BaseMetric:
         resolved_datasets = []
         for dataset in requested_datasets:
             if "tag" in dataset:
-                # we need to find the matching dataset from the default datasets or optional datasets
-                to_match = default_datasets + optional_datasets
-                matching_datasets = [
-                    d for d in to_match if d.get("tag", None) == dataset["tag"]
-                ]
-                assert (
-                    len(matching_datasets) == 1
-                ), f"Dataset with tag {dataset['tag']} not found or multiple found in default or optional datasets."
-                dataset_def = matching_datasets[0]
+                dataset_def = self._resolve_tag(
+                    to_match=default_datasets + optional_datasets,
+                    dataset_tag=dataset["tag"],
+                )
             else:
                 dataset_def = dataset
 
@@ -538,68 +636,53 @@ class BaseMetric:
         logging.debug("-" * 100)
 
         # 2) initialize the dataset and the dataset preprocessors based on the config
-        # for some reason, we need to create a wrapper function here, as lambdas don't work well...
-        # searching it up, it's because of late binding
-        def dataset_preprocessors_builder_wrapper(dataset_preprocessor):
-            def builder(dataset_dict):
-                return DATASET_PREPROCESSOR_REGISTRY[dataset_preprocessor["name"]](
-                    dataset_dict,
-                    **{k: v for k, v in dataset_preprocessor.items() if k != "name"},
-                )
-
-            return builder
-
         # start with a list of list of dataset preprocessor builders
         # where each inner list corresponds to the preprocessors for a dataset,
         # and the outer list corresponds to the datasets
-        self.dataset_preprocessors_builders_list = []
-
-        for dataset in dataset_for_metric:
-            builders = []
-            for dataset_preprocessor in dataset["data_preprocessing_steps"]:
-                builders.append(
-                    dataset_preprocessors_builder_wrapper(dataset_preprocessor)
-                )
-            self.dataset_preprocessors_builders_list.append(builders)
+        self.dataset_preprocessors_builders_list = [
+            self._provide_dataset_preprocessors_builders(dataset)
+            for dataset in dataset_for_metric
+        ]
 
         assert len(self.dataset_preprocessors_builders_list) == len(
             dataset_for_metric
         ), "Mismatch in number of datasets and dataset preprocessor builders."
 
         # 3) finally, with the dataset preprocessors built, we create all the preprocessors that we need
-        self.datasets: list[BaseDataset] = []
-        for dataset, builders in zip(
-            dataset_for_metric, self.dataset_preprocessors_builders_list
-        ):
-            # now we create a dataset instance with the appropriate preprocessors
-            self.datasets.append(
-                DATASET_REGISTRY[dataset["name"]](
-                    dataset,
-                    [builder(dataset) for builder in builders],
-                    self.config.output_dir,
-                )
+        # to build the final dataset objects that will be used for training, testing, and evaluation
+        self.datasets: list[BaseDataset] = [
+            self._build_dataset(
+                dataset,
+                builders,
+                self.config.output_dir,
+                to_match=default_datasets + optional_datasets,
             )
+            for dataset, builders in zip(
+                dataset_for_metric, self.dataset_preprocessors_builders_list
+            )
+        ]
 
         # 4) Then we insert these datasets into the database if they don't already exist,
         # and we also create their dataset directories
         for dataset in self.datasets:
             self.db_manager.insert_dataset(dataset)
             logging.debug(
-                f"Processing dataset: {dataset} to {dataset.get_dataset_dir()}"
+                f"Processing dataset: {dataset} to train dataset ({dataset.get_train_dataset_dir()}) and test dataset ({dataset.get_test_dataset_dir()}) directories."
             )
             dataset.create_dataset_dir()
             # TODO: in this dataset directory, we can then store the base metrics we have
             # such as the base visualization, etc.
             # for now, let's just store the dataset object itself, and the method can load this for its own use
             pickled_dataset_path = os.path.join(
-                dataset.get_dataset_dir(), PICKLED_DATASET_FILENAME
+                dataset.get_test_dataset_dir(), PICKLED_DATASET_FILENAME
             )
             with open(pickled_dataset_path, "wb") as f:
                 pickle.dump(dataset, f)
 
-            # write out the dataset information to the directory as well
+            # write out the dataset information to the directory as well, this should
+            # go into the test directory
             with open(
-                os.path.join(dataset.get_dataset_dir(), "dataset_info.yaml"), "w"
+                os.path.join(dataset.get_test_dataset_dir(), "dataset_info.yaml"), "w"
             ) as f:
                 yaml.safe_dump(
                     {

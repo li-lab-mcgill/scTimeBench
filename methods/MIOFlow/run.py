@@ -136,13 +136,11 @@ def model_training(
 
 
 class MIOFlow(BaseMethod):
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         """
         Training logic for MIOFlow.
         """
-        cache_path = os.path.join(
-            self.config["output_path"], "trained_mioflow_model.pth"
-        )
+        cache_path = os.path.join(train_output_path, "trained_mioflow_model.pth")
 
         metadata = self.config.get("method", {}).get("metadata", {})
         pca_dims = metadata.get("pca_dims", 50)
@@ -267,7 +265,7 @@ class MIOFlow(BaseMethod):
             if x.strip() != ""
         ]
 
-        metadata["output_path"] = self.config["output_path"]
+        metadata["output_path"] = train_output_path
         metadata["autoencoder"] = autoencoder
         metadata["use_gae"] = use_gae
         self.model = model_training(

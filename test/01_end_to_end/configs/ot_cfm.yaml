@@ -1,0 +1,18 @@
+datasets:
+  - tag: defaultGarciaAlonso
+  - tag: EasyZebrafish
+
+method:
+  name: ot_cfm
+  train_and_test_script: ./methods/ot_cfm/train_and_test.sh
+  metadata:
+    train_steps: 1
+
+metrics:
+  - name: ARI
+  - name: JaccardSimilarity
+    from_tp_zero: True
+    trajectory_infer_model:
+      name: CellTypist
+      renormalize: True
+  - name: WassersteinOTLoss

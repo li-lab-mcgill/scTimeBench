@@ -188,7 +188,9 @@ class BaseTrajectoryInferMethod:
 
         dataset, _ = get_dataset(output_path)
         classifier_save_path = os.path.join(
-            dataset.get_dataset_dir(), INFERRED_TRAJ_DIR, self.encode_for_classifier()
+            dataset.get_train_dataset_dir(),
+            INFERRED_TRAJ_DIR,
+            self.encode_for_classifier(),
         )
         os.makedirs(classifier_save_path, exist_ok=True)
         return traj_infer_path, classifier_save_path

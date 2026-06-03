@@ -190,11 +190,11 @@ def _select_checkpoint(config):
 
 
 class PISDE(BaseMethod):
-    def train(self, ann_data, all_tps: Optional[List] = None):
+    def train(self, ann_data, all_tps: Optional[List] = None, train_output_path=None):
         """
         Training logic for PI-SDE.
         """
-        cache_path = os.path.join(self.config["output_path"], "trained_pisde_model.pt")
+        cache_path = os.path.join(train_output_path, "trained_pisde_model.pt")
         metadata = self.config.get("method", {}).get("metadata", {})
 
         if os.path.exists(cache_path):
@@ -233,13 +233,13 @@ class PISDE(BaseMethod):
 
         data_dict = _build_pisde_data(ann_data, unique_tps_all, tp_to_idx, time_col)
 
-        data_path = os.path.join(self.config["output_path"], "pisde_data.pt")
+        data_path = os.path.join(train_output_path, "pisde_data.pt")
         torch.save({"xp": data_dict["xp"], "y": data_dict["y"]}, data_path)
 
         args = pisde_config()
         args.data_path = data_path
         args.data = metadata.get("dataset", "AnnData")
-        args.out_dir = self.config["output_path"]
+        args.out_dir = train_output_path
 
         args.train_epochs = int(metadata.get("train_epochs", args.train_epochs))
         args.train_lr = float(metadata.get("train_lr", args.train_lr))

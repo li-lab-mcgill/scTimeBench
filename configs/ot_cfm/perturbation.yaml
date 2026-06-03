@@ -4,6 +4,7 @@ datasets:
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
+    # equiv_train_dataset_tag: defaultGarciaAlonsoPseudotimeEvenCells
     data_preprocessing_steps:
       - name: LineageDatasetFilter
         cell_lineage_file: ./cell_lineages/germ/cell_line.txt
@@ -27,6 +28,7 @@ datasets:
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
+    # equiv_train_dataset_tag: defaultGarciaAlonsoPseudotimeEvenCells
     data_preprocessing_steps:
       - name: LineageDatasetFilter
         cell_lineage_file: ./cell_lineages/germ/cell_line.txt
@@ -50,6 +52,7 @@ datasets:
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
     requires_caching: true
+    # equiv_train_dataset_tag: defaultGarciaAlonsoPseudotimeEvenCells
     data_preprocessing_steps:
       - name: LineageDatasetFilter
         cell_lineage_file: ./cell_lineages/germ/cell_line.txt

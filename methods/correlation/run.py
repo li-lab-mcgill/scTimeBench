@@ -35,7 +35,7 @@ class Correlation(BaseMethod):
                 self.required_outputs = option
                 break
 
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         """
         For correlation, we don't actually train a model :)
         """

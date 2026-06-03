@@ -1,8 +1,12 @@
 datasets:
   ######################### PERTURBATION DATASETS #########################
-   # Promoting pre-spermatogonia
+  # train the original one
+  - tag: defaultGarciaAlonsoPseudotimeEvenCells
+
+  # Promoting pre-spermatogonia
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
+    equiv_train_dataset_tag: defaultGarciaAlonsoPseudotimeEvenCells
     requires_caching: true
     data_preprocessing_steps:
       - name: LineageDatasetFilter
@@ -26,6 +30,7 @@ datasets:
   # Avoiding pre-spermatogonia
   - name: GarciaAlonsoDataset
     data_path: ./data/garcia-alonso/human_germ.h5ad
+    # equiv_train_dataset_tag: defaultGarciaAlonsoPseudotimeEvenCells
     requires_caching: true
     data_preprocessing_steps:
       - name: LineageDatasetFilter

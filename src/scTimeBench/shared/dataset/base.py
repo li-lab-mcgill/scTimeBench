@@ -64,10 +64,25 @@ class BaseDataset:
         dataset_dict,
         dataset_preprocessors: list[BaseDatasetPreprocessor],
         output_dir,
+        cached_train_dataset=None,  # this should be BaseDataset, but Python 3.10 has no typing for this
     ):
+        """
+        Initialize the dataset.
+
+        Args:
+            dataset_dict (dict): The dictionary containing the dataset information.
+            dataset_preprocessors (list): A list of dataset preprocessors.
+            output_dir (str): The directory where the processed dataset will be saved.
+            cached_train_dataset (BaseDataset, optional):
+                The cached train dataset.
+
+                If this is provided, then this is what is used for training the model,
+                and the test dataset is generated from this using the dataset_preprocessors.
+        """
         self.dataset_dict = dataset_dict
         self.dataset_preprocessors = dataset_preprocessors
         self.output_dir = output_dir
+        self.cached_train_dataset = cached_train_dataset
         self.TRAIN_PROCESSED_DATA_FILE = "train_processed_data.h5ad"
         self.TEST_PROCESSED_DATA_FILE = "test_processed_data.h5ad"
 
@@ -117,7 +132,15 @@ class BaseDataset:
         # we also exclude requires_caching and preprocessors since
         # requires_caching should not affect the processing itself
         # and the preprocessors are encoded elsewhere
-        blocklist = ["data_path", "requires_caching", "data_preprocessing_steps", "tag"]
+        # then, whether the user decides to include the train dataset caching or not
+        # should not affect the hash of the dataset
+        blocklist = [
+            "data_path",
+            "requires_caching",
+            "data_preprocessing_steps",
+            "tag",
+            "equiv_train_dataset_tag",
+        ]
         return json.dumps(
             {
                 k: v
@@ -213,7 +236,7 @@ class BaseDataset:
             f"Applied preprocessors: {[type(f).__name__ + ', parameters: ' + str(f._parameters()) for f in self.dataset_preprocessors]}"
         )
 
-    def get_dataset_dir(self):
+    def _get_unique_dataset_dir(self, output_dir):
         """
         Get a unique directory name for this dataset configuration, which can be used for caching.
         This is based on the dataset name, the encoded dataset dictionary, and the encoded preprocessors.
@@ -231,10 +254,37 @@ class BaseDataset:
 
         # Generate a base64 encoded string of the unique string
         return os.path.join(
-            self.output_dir,
+            output_dir,
             DATASET_DIR,
             hashlib.sha256(unique_string.encode()).hexdigest(),
         )
+
+    def get_train_dataset_dir(self):
+        """
+        Get the directory where the processed train dataset is stored.
+
+        If train_output_dir is provided, we will use that directly, otherwise,
+        we will use the old way of generating a unique directory based on the dataset
+        configuration and preprocessors.
+        """
+        if self.cached_train_dataset is not None:
+            return self.cached_train_dataset.get_train_dataset_dir()
+        else:
+            return self._get_unique_dataset_dir(self.output_dir)
+
+    def get_test_dataset_dir(self):
+        """
+        Get the directory where the processed test dataset is stored.
+
+        If cached_train_dataset is provided, we will use a new output directory
+        which is <cached_train_dataset_dir>/tests/<hash>, where <hash> is a hash of the dataset configuration and preprocessors.
+        """
+        if self.cached_train_dataset is not None:
+            return self._get_unique_dataset_dir(
+                os.path.join(self.cached_train_dataset.get_train_dataset_dir(), "tests")
+            )
+        else:
+            return self._get_unique_dataset_dir(self.output_dir)
 
     def get_checkpoint_dir(self, i):
         """
@@ -259,4 +309,5 @@ class BaseDataset:
         """
         Create a directory for this dataset configuration under the given base path.
         """
-        os.makedirs(self.get_dataset_dir(), exist_ok=True)
+        os.makedirs(self.get_train_dataset_dir(), exist_ok=True)
+        os.makedirs(self.get_test_dataset_dir(), exist_ok=True)

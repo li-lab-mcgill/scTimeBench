@@ -52,7 +52,16 @@ def process_yaml(yaml_path):
 class BaseMethod:
     def __init__(self, yaml_config):
         self.config = yaml_config
+
+        # if we specify a separate test output path, e.g.: for different perturbations
+        # but has a shared training output path, then we will use that for generation outputs
+        # instead of the main output path
+        # Note: this should always be <output_path>/test_outputs/<hash>
+        # so that they are all grouped together
+        # this is already put into output_path, we just need to feed a different path to
+        # the train output path
         self.output_path = yaml_config["output_path"]
+        self.train_output_path = yaml_config.get("train_output_path", self.output_path)
 
         # normalize required outputs: list or list of lists
         raw_required_outputs = self.config["required_outputs"]
@@ -79,7 +88,7 @@ class BaseMethod:
 
         print(f"Required outputs: {self.required_outputs}")
 
-    def train(self, ann_data, all_tps=None):
+    def train(self, ann_data, all_tps=None, train_output_path=None):
         raise NotImplementedError("Subclasses should implement this method.")
 
     def generate(self, test_ann_data):
@@ -236,7 +245,9 @@ def main(method_class: BaseMethod):
 
     print(f"Training and/or loading the method: {method_class.__name__}", flush=True)
     # let's let the train() function handle the caching as well
-    method.train(train_ann_data, all_tps=all_tps)
+    method.train(
+        train_ann_data, all_tps=all_tps, train_output_path=method.train_output_path
+    )
     print("Training/loading complete.")
 
     # Generate outputs - each required output saved to its own file

@@ -125,10 +125,8 @@ def _resolve_device(metadata: Dict) -> torch.device:
 
 
 class CellMNNRunner(BaseMethod):
-    def train(self, ann_data, all_tps=None):
-        cache_path = os.path.join(
-            self.config["output_path"], "trained_CellMNN_model.pth"
-        )
+    def train(self, ann_data, all_tps=None, train_output_path=None):
+        cache_path = os.path.join(train_output_path, "trained_CellMNN_model.pth")
         metadata = self.config.get("method", {}).get("metadata", {})
 
         self.device = _resolve_device(metadata)
