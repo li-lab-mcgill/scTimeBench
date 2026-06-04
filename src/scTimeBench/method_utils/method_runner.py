@@ -11,9 +11,15 @@ import yaml
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import scipy as sp
 
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.constants import ObservationColumns
+from scTimeBench.shared.utils import (
+    is_raw,
+    undo_log_normalization,
+    log_normalize_to_counts,
+)
 
 
 def get_parser():
@@ -272,6 +278,14 @@ class BaseMethod:
             print(f"Applying perturbation for timepoint {t}...")
             # let's print out the gene variable columns names:
             gex_tp = perturbation_set.apply_perturbation(gex_tp, t_idx)
+
+            # data handling to ensure that the output gex is properly normalized
+            if not is_raw(gex_tp):
+                if sp.sparse.issparse(gex_tp.X):
+                    gex_tp.X.data = np.clip(gex_tp.X.data, a_min=0, a_max=20)
+                else:
+                    gex_tp.X = np.clip(gex_tp.X, a_min=0, a_max=20)
+                gex_tp = log_normalize_to_counts(undo_log_normalization(gex_tp))
 
             # then we need to save this out to the final output file
             if all_gex is None:

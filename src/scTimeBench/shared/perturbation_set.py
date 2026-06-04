@@ -54,6 +54,13 @@ class PerturbationSet:
             return ann_data
 
         perturb = self.perturbations[timepoint_idx]
+        knockout_genes = perturb["knockout_genes"]
+        knockin_genes = perturb["knockin_genes"]
+        if len(knockout_genes) == 0 and len(knockin_genes) == 0:
+            print(
+                f"Knockout and knockin genes are both empty for timepoint {timepoint_idx}, skipping perturbation."
+            )
+            return ann_data
 
         if perturb["gene_col_name"] is None:
             gene_names = list(ann_data.var_names)
@@ -69,8 +76,6 @@ class PerturbationSet:
             ann_data = undo_log_normalization(ann_data)
 
         # track average knockout change per gene for debugging
-        knockout_genes = perturb["knockout_genes"]
-        knockin_genes = perturb["knockin_genes"]
         for gene in knockout_genes:
             if gene not in gene_to_index:
                 continue

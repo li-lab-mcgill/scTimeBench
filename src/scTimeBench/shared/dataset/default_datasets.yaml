@@ -51,6 +51,7 @@ datasets:
         num_tps: 15
       - name: LogNormPreprocessor
       - name: CopyTrainTest
+    cell_lineage_genes_file: ./perturbation_lineages/garcia_alonso.yaml
 
   - name: SuoDataset
     tag: defaultSuoPseudotimeEvenCells

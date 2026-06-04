@@ -40,6 +40,7 @@ where = ["src"]  # Tells Python: "The actual code lives inside the src folder"
 scTimeBench = [
     "shared/dataset/*.yaml",
     "shared/dataset/cell_lineages/**/*.txt",
+    "shared/dataset/perturbation_lineages/**/*.yaml",
 ]
 
 [project.optional-dependencies]

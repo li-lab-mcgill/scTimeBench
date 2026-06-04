@@ -3,9 +3,11 @@ Base preprocessor for datasets. Every metric will likely require different split
 data, so this base class will define the necessary interface for dataset preprocessing.
 """
 from scTimeBench.shared.constants import ObservationColumns, DATASET_DIR
+from scTimeBench.shared.helpers import _resolve_shared_resource_path
 import json
 import hashlib
 import os
+import yaml
 
 # ** DATASET PREPROCESSOR SECTION **
 DATASET_PREPROCESSOR_REGISTRY = {}
@@ -86,6 +88,18 @@ class BaseDataset:
         self.TRAIN_PROCESSED_DATA_FILE = "train_processed_data.h5ad"
         self.TEST_PROCESSED_DATA_FILE = "test_processed_data.h5ad"
 
+        # load into this the cell lineages genes if it exists
+        # which specify the genes involved in the lineage transitions
+        if "cell_lineage_genes_file" in self.dataset_dict:
+            with open(
+                _resolve_shared_resource_path(
+                    self.dataset_dict["cell_lineage_genes_file"]
+                )
+            ) as f:
+                self.cell_lineage_genes = yaml.safe_load(f)
+        else:
+            self.cell_lineage_genes = None
+
     def __init_subclass__(cls):
         register_dataset(cls)
 
@@ -134,12 +148,17 @@ class BaseDataset:
         # and the preprocessors are encoded elsewhere
         # then, whether the user decides to include the train dataset caching or not
         # should not affect the hash of the dataset
+        # same goes for the cell lineage genes file
+
+        # TODO: consider changing the blocklist to an includes list
+        # TODO: I really think it should be the other way around...
         blocklist = [
             "data_path",
             "requires_caching",
             "data_preprocessing_steps",
             "tag",
             "equiv_train_dataset_tag",
+            "cell_lineage_genes_file",
         ]
         return json.dumps(
             {

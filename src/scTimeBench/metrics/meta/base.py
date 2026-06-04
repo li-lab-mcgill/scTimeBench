@@ -11,7 +11,9 @@ by running it multiple times with different seeds, or also for calculating
 the perturbation's baselines as well.
 """
 from scTimeBench.metrics.base import BaseMetric, create_submetric_instance
-from scTimeBench.shared.constants import RequiredOutputFiles
+from scTimeBench.shared.constants import RequiredOutputFiles, ObservationColumns
+from scTimeBench.shared.utils import load_test_dataset
+from scTimeBench.shared.dataset.registry import GarciaAlonsoDataset
 
 import logging
 import json
@@ -23,10 +25,10 @@ class MetaMetric(BaseMetric):
         # ** NOTE: must define the following two attributes, though each subclass **
         # ** Must also define required_feature_specs and output_path_name individually, as they likely require **
         # ** different output files. **
-        self.supported_datasets = self.metric_config.get("supported_datasets", [])
-        self.default_dataset_group = self.metric_config.get(
-            "default_dataset_group", None
-        )
+        self.supported_datasets = [
+            GarciaAlonsoDataset.__name__,
+        ]
+        self.default_dataset_group = "ontology_based"
 
         # get the path to the shared default datasets config
         self.default_datasets_path = os.path.join(
@@ -47,7 +49,7 @@ class MetaMetric(BaseMetric):
         self.required_outputs = [RequiredOutputFiles.META_FLAG]
 
     def _prep_kwargs_for_submetric_eval(self, output_path, dataset, method):
-        return {"method": method}
+        return {"output_path": output_path, "dataset": dataset, "method": method}
 
     def _run_submetric(self, submetric_config):
         """
@@ -64,42 +66,185 @@ class MetaMetric(BaseMetric):
 
 
 class MetaPerturbation(MetaMetric):
-    def _submetric_eval(self, method):
-        # for each submetric, we need to run it and get the result
-        submetric_results = {}
+    def _handle_transition(self, transition, cell_type_to_timepoint, gene_col_name):
+        """
+        Given transition of the format:
+          - start: 'GC'
+            targets:
+            - end: 'oogonia'
+                genes: ['STRA8', 'ZGLP1', 'ZIC1']
+            - end: 'pre_spermatogonia'
+                genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
 
+        We run and get the difference in the submetric for each of these targets
+        and return the submetric configuration which should look like:
+            name: PerturbationCellTypeProportion
+            perturbation_set_config:
+            - gene_col_name: gene_symbols
+                knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+                knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+                timepoint_idx: 0
+            trajectory_infer_model:
+                name: CellTypist
+                renormalize: True
+        except we infer the timepoint_idx to be the timepoint of the start cell type,
+        with the largest number of cells in the test dataset.
+
+        We also return the cell types that are used.
+
+        TODO: ^ figure out how to change the dataset itself to reflect this.
+        We likely need to somehow introduce something to the metric which allows
+        for separately constructing the dataset based on the metric params.
+        """
+        # should have start and targets
+        start = transition["start"]
+        targets = transition["targets"]
+
+        submetrics = []
+        timepoint_idx = cell_type_to_timepoint.get(start)
         assert (
-            "cell_type" in self.metric_config
-        ), "Cell type must be specified in the config for MetaPerturbation metrics."
-        cell_type = self.metric_config["cell_type"]
+            timepoint_idx is not None
+        ), f"Could not infer timepoint idx for cell type {start}."
 
-        aliases = ["production", "elimination", "control"]
+        cell_types = []
 
-        for submetric_config in self.metric_config.get("submetrics", []):
-            # check to make sure this is a valid submetric, i.e. of the form
-            # PerturbationCellTypeProportion
-            submetric_alias = submetric_config.get("alias", None)
-            assert (
-                submetric_alias is not None
-            ), "Submetric must have an alias defined in the config."
-            assert (
-                submetric_alias in aliases
-            ), f"Submetric alias must be one of {aliases}."
+        for target in targets:
+            logging.debug(f"Running submetric for transition {start} -> {target}")
+            end = target["end"]
+            cell_types.append(end)
+            knockin_genes = target["genes"]
+            logging.debug(f"Genes for transition {start} -> {end}: {knockin_genes}")
 
-            result = self._run_submetric(submetric_config)
-            logging.debug(f"Result of submetric {submetric_alias}: {result}")
-            submetric_results[submetric_alias] = result[cell_type]
+            # knockout genes should be the ones not included here, but are in other targets
+            # for example, if we have A to B: [g1, g2], A to C: [g3, g4],
+            # then A to B knockout genes should be [g3, g4], and A to C knockout genes should be [g1, g2]
+            knockout_genes = []
+            for other_target in targets:
+                if other_target["end"] != end:
+                    knockout_genes.extend(other_target["genes"])
+            logging.debug(
+                f"Knockout genes for transition {start} -> {end}: {knockout_genes}"
+            )
 
-        # now we have the submetric results, we can calculate the final result based on the submetric results
-        eval = {
-            "increase_from_baseline": submetric_results["production"]
-            - submetric_results["control"],
-            "decrease_from_baseline": submetric_results["elimination"]
-            - submetric_results["control"],
-            "production_elimination_delta": submetric_results["production"]
-            - submetric_results["elimination"],
-            "results": submetric_results,
-        }
+            submetrics.append(
+                {
+                    "name": "PerturbationCellTypeProportion",
+                    "alias": end,
+                    "perturbation_set_config": [
+                        {
+                            "gene_col_name": gene_col_name,
+                            "knockin_genes": knockin_genes,
+                            "knockout_genes": knockout_genes,
+                            "timepoint_idx": timepoint_idx,
+                        }
+                    ],
+                    "trajectory_infer_model": {
+                        "name": "CellTypist",
+                        "renormalize": True,
+                    },
+                }
+            )
+
+        # add a baseline one
+        submetrics.append(
+            {
+                "name": "PerturbationCellTypeProportion",
+                "alias": "baseline",
+                "trajectory_infer_model": {"name": "CellTypist", "renormalize": True},
+            }
+        )
+
+        return submetrics, cell_types
+
+    def _cell_type_to_timepoint_idx(self, test_ann_data):
+        """
+        Returns a mapping of the cell type to the inferred timepoint idx, which is the timepoint with the largest number of cells for that cell type.
+        """
+        cell_types = test_ann_data.obs[ObservationColumns.CELL_TYPE.value].unique()
+        timepoint_mapping = {}
+        tps = sorted(test_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique())
+        for cell_type in cell_types:
+            cells = test_ann_data[
+                test_ann_data.obs[ObservationColumns.CELL_TYPE.value] == cell_type
+            ]
+            timepoint_counts = cells.obs[
+                ObservationColumns.TIMEPOINT.value
+            ].value_counts()
+            # get the timepoint with the largest number of cells
+            inferred_timepoint = timepoint_counts.idxmax()
+            logging.debug(
+                f"Inferred timepoint for cell type {cell_type}: {inferred_timepoint}"
+            )
+            timepoint_idx = tps.index(inferred_timepoint)
+            logging.debug(
+                f"Inferred timepoint idx for cell type {cell_type}: {timepoint_idx}"
+            )
+            timepoint_mapping[cell_type] = timepoint_idx
+        return timepoint_mapping
+
+    def _submetric_eval(self, output_path, dataset, method):
+        logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
+
+        test_ann_data = load_test_dataset(output_path)
+        cell_type_to_timepoint = self._cell_type_to_timepoint_idx(test_ann_data)
+
+        eval = {}
+
+        for transition in dataset.cell_lineage_genes["cell_lineage_genes"]:
+            logging.debug(f"Handling transition: {transition}")
+            submetrics, cell_types = self._handle_transition(
+                transition,
+                cell_type_to_timepoint,
+                dataset.cell_lineage_genes["gene_col_name"],
+            )
+            logging.debug(
+                f"Submetrics for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {submetrics}"
+            )
+
+            results = {}
+            # now let's run the submetric
+            for submetric in submetrics:
+                result = self._run_submetric(submetric)
+                logging.debug(f"Result of submetric {submetric['alias']}: {result}")
+                results[submetric["alias"]] = result
+
+            # now we do for each cell type, we're going to calculate
+            # 1. difference to baseline
+            # 2. average difference to others
+            # which is the average of the difference for the same cell type
+            # for the baseline, we'll report the raw score
+
+            # here we calculate the differences of percentage for a specific cell type
+            # as described above
+            for cell_type in cell_types:
+                logging.debug(
+                    f"Results for cell type {cell_type}: {results[cell_type]}"
+                )
+                baseline_result = results["baseline"][cell_type]
+
+                increase_cell_type_result = results[cell_type][cell_type]
+                baseline_delta = increase_cell_type_result - baseline_result
+
+                # actually let's not create the average but instead have each difference be calculated
+                other_cells_delta = {}
+
+                for other_cell_type in cell_types:
+                    if other_cell_type == cell_type:
+                        continue
+                    other_cells_delta[other_cell_type] = (
+                        results[other_cell_type][cell_type] - increase_cell_type_result
+                    )
+
+                eval[cell_type] = {
+                    "baseline": baseline_result,
+                    "baseline_delta": baseline_delta,
+                    "other_cells_delta": other_cells_delta,
+                }
+
+        # now we can try to aggregate this information to get an overall score
+        # we can do:
+        # 1. Accuracy of predicting the correct direction
+        # 2. Average increase in the perturbed cell type proportion compared to baseline
 
         logging.debug(f"Results of evaluation: {eval}")
 
