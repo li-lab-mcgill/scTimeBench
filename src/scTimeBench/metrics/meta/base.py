@@ -18,6 +18,7 @@ from scTimeBench.shared.dataset.registry import GarciaAlonsoDataset
 import logging
 import json
 import os
+import random
 
 
 class MetaMetric(BaseMetric):
@@ -66,7 +67,9 @@ class MetaMetric(BaseMetric):
 
 
 class MetaPerturbation(MetaMetric):
-    def _handle_transition(self, transition, cell_type_to_timepoint, gene_col_name):
+    def _handle_transition(
+        self, transition, cell_type_to_timepoint, gene_col_name, gene_list
+    ):
         """
         Given transition of the format:
           - start: 'GC'
@@ -107,12 +110,14 @@ class MetaPerturbation(MetaMetric):
         ), f"Could not infer timepoint idx for cell type {start}."
 
         cell_types = []
+        all_genes = set()
 
         for target in targets:
             logging.debug(f"Running submetric for transition {start} -> {target}")
             end = target["end"]
             cell_types.append(end)
             knockin_genes = target["genes"]
+            all_genes.update(knockin_genes)
             logging.debug(f"Genes for transition {start} -> {end}: {knockin_genes}")
 
             # knockout genes should be the ones not included here, but are in other targets
@@ -132,7 +137,9 @@ class MetaPerturbation(MetaMetric):
                     "alias": end,
                     "perturbation_set_config": [
                         {
-                            "gene_col_name": gene_col_name,
+                            "gene_col_name": gene_col_name
+                            if gene_col_name is not None
+                            else None,
                             "knockin_genes": knockin_genes,
                             "knockout_genes": knockout_genes,
                             "timepoint_idx": timepoint_idx,
@@ -150,6 +157,35 @@ class MetaPerturbation(MetaMetric):
             {
                 "name": "PerturbationCellTypeProportion",
                 "alias": "baseline",
+                "trajectory_infer_model": {"name": "CellTypist", "renormalize": True},
+            }
+        )
+
+        # finally, also add a random one to check, where we perturb 5 random genes on
+        # and 5 random genes off, that are not in the original perturbation set
+        # we need to sort it so that the random genes are the same across different runs
+        random_genes = sorted(list(set(gene_list) - all_genes))
+        random_knockin_genes = random.sample(random_genes, min(5, len(random_genes)))
+        remaining_genes = sorted(list(set(random_genes) - set(random_knockin_genes)))
+        random_knockout_genes = random.sample(
+            remaining_genes, min(5, len(remaining_genes))
+        )
+        logging.debug(f"Random knockin genes: {random_knockin_genes}")
+        logging.debug(f"Random knockout genes: {random_knockout_genes}")
+        submetrics.append(
+            {
+                "name": "PerturbationCellTypeProportion",
+                "alias": "random",
+                "perturbation_set_config": [
+                    {
+                        "gene_col_name": gene_col_name
+                        if gene_col_name is not None
+                        else None,
+                        "knockin_genes": random_knockin_genes,
+                        "knockout_genes": random_knockout_genes,
+                        "timepoint_idx": timepoint_idx,
+                    }
+                ],
                 "trajectory_infer_model": {"name": "CellTypist", "renormalize": True},
             }
         )
@@ -190,12 +226,20 @@ class MetaPerturbation(MetaMetric):
 
         eval = {}
 
+        gene_col_name = dataset.cell_lineage_genes.get("gene_col_name", None)
+
+        if gene_col_name is not None:
+            gene_list = test_ann_data.var[gene_col_name].tolist()
+        else:
+            gene_list = test_ann_data.var_names.tolist()
+
         for transition in dataset.cell_lineage_genes["cell_lineage_genes"]:
             logging.debug(f"Handling transition: {transition}")
             submetrics, cell_types = self._handle_transition(
                 transition,
                 cell_type_to_timepoint,
-                dataset.cell_lineage_genes["gene_col_name"],
+                gene_col_name,
+                gene_list,
             )
             logging.debug(
                 f"Submetrics for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {submetrics}"
@@ -232,13 +276,14 @@ class MetaPerturbation(MetaMetric):
                     if other_cell_type == cell_type:
                         continue
                     other_cells_delta[other_cell_type] = (
-                        results[other_cell_type][cell_type] - increase_cell_type_result
+                        results[other_cell_type][cell_type] - baseline_result
                     )
 
                 eval[cell_type] = {
                     "baseline": baseline_result,
                     "baseline_delta": baseline_delta,
                     "other_cells_delta": other_cells_delta,
+                    "random_delta": results["random"][cell_type] - baseline_result,
                 }
 
         # now we can try to aggregate this information to get an overall score

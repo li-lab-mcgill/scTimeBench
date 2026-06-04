@@ -8,6 +8,8 @@ Handles both YAML file loading and command-line argument parsing.
 import argparse
 import logging
 import os
+import random
+import numpy as np
 import yaml
 
 from enum import Enum
@@ -108,6 +110,13 @@ class Config:
             type=str,
             default="plots",
             help="Directory to save generated plots (default: plots)",
+        )
+
+        parser.add_argument(
+            "--random_seed",
+            type=int,
+            default=42,
+            help="Random seed for reproducibility (default: 42)",
         )
 
         parser.add_argument(
@@ -367,6 +376,10 @@ class Config:
             metric if isinstance(metric, str) else metric.get("name", "")
             for metric in self.metrics_skiplist
         ]
+
+        # finally set the random seed
+        random.seed(self.random_seed)
+        np.random.seed(self.random_seed)
 
         logging.info("Configuration successfully loaded")
         logging.debug("Configuration details: %s", self.__dict__)
