@@ -69,7 +69,7 @@ class MetaMetric(BaseMetric):
 class MetaPerturbation(MetaMetric):
     def _defaults(self):
         return {
-            "random_trials": 3,
+            "random_trials": 1,
         }
 
     def _handle_transition(
@@ -117,6 +117,33 @@ class MetaPerturbation(MetaMetric):
         cell_types = []
         all_genes = set()
 
+        def generate_submetric(alias, knockin_genes=[], knockout_genes=[]):
+            perturbations = []
+            if len(knockin_genes) > 0 or len(knockout_genes) > 0:
+                perturbations.append(
+                    {
+                        "gene_col_name": gene_col_name
+                        if gene_col_name is not None
+                        else None,
+                        "knockin_genes": knockin_genes,
+                        "knockout_genes": knockout_genes,
+                        "timepoint_idx": 0,
+                    }
+                )
+            return {
+                "name": "PerturbationCellTypeProportion",
+                "alias": alias,
+                "perturbation_set_config": {
+                    "filter_cell_type": start,
+                    "filter_tp_idx": timepoint_idx,
+                    "perturbations": perturbations,
+                },
+                "trajectory_infer_model": {
+                    "name": "CellTypist",
+                    "renormalize": True,
+                },
+            }
+
         for target in targets:
             logging.debug(f"Running submetric for transition {start} -> {target}")
             end = target["end"]
@@ -136,35 +163,10 @@ class MetaPerturbation(MetaMetric):
                 f"Knockout genes for transition {start} -> {end}: {knockout_genes}"
             )
 
-            submetrics.append(
-                {
-                    "name": "PerturbationCellTypeProportion",
-                    "alias": end,
-                    "perturbation_set_config": [
-                        {
-                            "gene_col_name": gene_col_name
-                            if gene_col_name is not None
-                            else None,
-                            "knockin_genes": knockin_genes,
-                            "knockout_genes": knockout_genes,
-                            "timepoint_idx": timepoint_idx,
-                        }
-                    ],
-                    "trajectory_infer_model": {
-                        "name": "CellTypist",
-                        "renormalize": True,
-                    },
-                }
-            )
+            submetrics.append(generate_submetric(end, knockin_genes, knockout_genes))
 
         # add a baseline one
-        submetrics.append(
-            {
-                "name": "PerturbationCellTypeProportion",
-                "alias": "baseline",
-                "trajectory_infer_model": {"name": "CellTypist", "renormalize": True},
-            }
-        )
+        submetrics.append(generate_submetric("baseline"))
 
         # finally, also add a random one to check, where we perturb 5 random genes on
         # and 5 random genes off, that are not in the original perturbation set
@@ -186,24 +188,9 @@ class MetaPerturbation(MetaMetric):
             logging.debug(f"Random knockin genes: {random_knockin_genes}")
             logging.debug(f"Random knockout genes: {random_knockout_genes}")
             submetrics.append(
-                {
-                    "name": "PerturbationCellTypeProportion",
-                    "alias": f"random_{i}",
-                    "perturbation_set_config": [
-                        {
-                            "gene_col_name": gene_col_name
-                            if gene_col_name is not None
-                            else None,
-                            "knockin_genes": random_knockin_genes,
-                            "knockout_genes": random_knockout_genes,
-                            "timepoint_idx": timepoint_idx,
-                        }
-                    ],
-                    "trajectory_infer_model": {
-                        "name": "CellTypist",
-                        "renormalize": True,
-                    },
-                }
+                generate_submetric(
+                    f"random_{i}", random_knockin_genes, random_knockout_genes
+                )
             )
 
         return submetrics, cell_types
