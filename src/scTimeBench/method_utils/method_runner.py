@@ -137,10 +137,7 @@ class BaseMethod:
                 result.write_h5ad(output_file)
 
             elif required_output == RequiredOutputFiles.PERTURBED_TEST_ANN_DATA:
-                # here we generate the perturbation set
-                first_tp_cells, all_tps = self._prep_from_first_tp(test_ann_data)
-                result = self._generate_perturbation(first_tp_cells, all_tps)
-                self._check_from_first_tp(first_tp_cells, all_tps, result)
+                result = self._generate_perturbation(test_ann_data)
                 result.write_h5ad(output_file)
 
             elif required_output == RequiredOutputFiles.META_FLAG:
@@ -249,12 +246,12 @@ class BaseMethod:
         raise NotImplementedError("Subclasses should implement this method.")
 
     # ** NOTE: DO NOT OVERWRITE THIS FUNCTION **
-    def _generate_perturbation(self, test_ann_data, all_tps) -> sc.AnnData:
+    def _generate_perturbation(self, test_ann_data) -> sc.AnnData:
         """
         Generate predicted gene expression across all timepoints for a perturbation.
         Returns: AnnData object with predicted gene expression across all timepoints.
         """
-        # now we need to read from the perturbation config to create the perturbation set
+        # here we generate the perturbation set
         from scTimeBench.shared.perturbation_set import PerturbationSet
         from scTimeBench.shared.constants import PERTURBATION_SET_CONFIG_FILENAME
 
@@ -266,8 +263,9 @@ class BaseMethod:
             perturbation_set_config = yaml.safe_load(f)
         perturbation_set = PerturbationSet(perturbation_set_config)
 
-        # this is the gex at timepoint tp
-        gex_tp = test_ann_data.copy()
+        # then do the initial filtering
+        first_tp_cells, all_tps = perturbation_set.apply_intial_filter(test_ann_data)
+        gex_tp = first_tp_cells.copy()
         all_gex = None
 
         for t_idx in range(len(all_tps)):
@@ -303,6 +301,7 @@ class BaseMethod:
             gex_tp = self.generate_gex_from_t_to_t1(gex_tp, t, t1)
 
         print("Finished generating perturbation across all timepoints.")
+        self._check_from_first_tp(first_tp_cells, all_tps, all_gex)
         return all_gex
 
 
