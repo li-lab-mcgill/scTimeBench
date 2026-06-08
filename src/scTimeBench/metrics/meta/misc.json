@@ -1,0 +1,38 @@
+{
+    "oogonia": {
+        "baseline": 0.26397042835399,
+        "baseline_delta": 0.09067188519243313,
+        "other_cells_delta": {
+            "pre_spermatogonia": 0.05859969558599698
+        },
+        "avg_random_delta": 0.0760310212365007,
+        "min_random_delta": 0.07523374646662317,
+        "max_random_delta": 0.07686453576864538
+    },
+    "pre_spermatogonia": {
+        "baseline": 0.053816046966731895,
+        "baseline_delta": 0.0017395085888236572,
+        "other_cells_delta": {
+            "oogonia": -0.0027179821700369644
+        },
+        "avg_random_delta": -0.003297818366311517,
+        "min_random_delta": -0.0034790171776473144,
+        "max_random_delta": -0.0030441400304414
+    },
+    "pre_oocyte": {
+        "baseline": 0.010110893672537508,
+        "baseline_delta": 0.006523157208088715,
+        "other_cells_delta": {},
+        "avg_random_delta": 0.005907081249547003,
+        "min_random_delta": 0.004783648619265057,
+        "max_random_delta": 0.00684931506849315
+    },
+    "oocyte": {
+        "baseline": 0.15764296586214394,
+        "baseline_delta": 0.021743857360295715,
+        "other_cells_delta": {},
+        "avg_random_delta": 0.04044357469015003,
+        "min_random_delta": 0.039356381822135245,
+        "max_random_delta": 0.041639486844966295
+    }
+}

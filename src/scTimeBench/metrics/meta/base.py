@@ -67,6 +67,11 @@ class MetaMetric(BaseMetric):
 
 
 class MetaPerturbation(MetaMetric):
+    def _defaults(self):
+        return {
+            "random_trials": 3,
+        }
+
     def _handle_transition(
         self, transition, cell_type_to_timepoint, gene_col_name, gene_list
     ):
@@ -164,31 +169,42 @@ class MetaPerturbation(MetaMetric):
         # finally, also add a random one to check, where we perturb 5 random genes on
         # and 5 random genes off, that are not in the original perturbation set
         # we need to sort it so that the random genes are the same across different runs
-        random_genes = sorted(list(set(gene_list) - all_genes))
-        random_knockin_genes = random.sample(random_genes, min(5, len(random_genes)))
-        remaining_genes = sorted(list(set(random_genes) - set(random_knockin_genes)))
-        random_knockout_genes = random.sample(
-            remaining_genes, min(5, len(remaining_genes))
-        )
-        logging.debug(f"Random knockin genes: {random_knockin_genes}")
-        logging.debug(f"Random knockout genes: {random_knockout_genes}")
-        submetrics.append(
-            {
-                "name": "PerturbationCellTypeProportion",
-                "alias": "random",
-                "perturbation_set_config": [
-                    {
-                        "gene_col_name": gene_col_name
-                        if gene_col_name is not None
-                        else None,
-                        "knockin_genes": random_knockin_genes,
-                        "knockout_genes": random_knockout_genes,
-                        "timepoint_idx": timepoint_idx,
-                    }
-                ],
-                "trajectory_infer_model": {"name": "CellTypist", "renormalize": True},
-            }
-        )
+        # redo the random seed to ensure consistency across multiple runs
+        random.seed(self.config.random_seed)
+
+        for i in range(self.params["random_trials"]):
+            random_genes = sorted(list(set(gene_list) - all_genes))
+            random_knockin_genes = random.sample(
+                random_genes, min(5, len(random_genes))
+            )
+            remaining_genes = sorted(
+                list(set(random_genes) - set(random_knockin_genes))
+            )
+            random_knockout_genes = random.sample(
+                remaining_genes, min(5, len(remaining_genes))
+            )
+            logging.debug(f"Random knockin genes: {random_knockin_genes}")
+            logging.debug(f"Random knockout genes: {random_knockout_genes}")
+            submetrics.append(
+                {
+                    "name": "PerturbationCellTypeProportion",
+                    "alias": f"random_{i}",
+                    "perturbation_set_config": [
+                        {
+                            "gene_col_name": gene_col_name
+                            if gene_col_name is not None
+                            else None,
+                            "knockin_genes": random_knockin_genes,
+                            "knockout_genes": random_knockout_genes,
+                            "timepoint_idx": timepoint_idx,
+                        }
+                    ],
+                    "trajectory_infer_model": {
+                        "name": "CellTypist",
+                        "renormalize": True,
+                    },
+                }
+            )
 
         return submetrics, cell_types
 
@@ -279,21 +295,73 @@ class MetaPerturbation(MetaMetric):
                         results[other_cell_type][cell_type] - baseline_result
                     )
 
+                # now we get the random baseline delta, which is the average of the random trials
+                random_deltas = []
+                for i in range(self.params["random_trials"]):
+                    random_delta = results[f"random_{i}"][cell_type] - baseline_result
+                    random_deltas.append(random_delta)
+                avg_random_delta = sum(random_deltas) / len(random_deltas)
+                min_random_delta = min(random_deltas)
+                max_random_delta = max(random_deltas)
+
                 eval[cell_type] = {
                     "baseline": baseline_result,
                     "baseline_delta": baseline_delta,
                     "other_cells_delta": other_cells_delta,
-                    "random_delta": results["random"][cell_type] - baseline_result,
+                    "avg_random_delta": avg_random_delta,
+                    "min_random_delta": min_random_delta,
+                    "max_random_delta": max_random_delta,
                 }
-
-        # now we can try to aggregate this information to get an overall score
-        # we can do:
-        # 1. Accuracy of predicting the correct direction
-        # 2. Average increase in the perturbed cell type proportion compared to baseline
 
         logging.debug(f"Results of evaluation: {eval}")
 
-        eval_json = json.dumps(eval, sort_keys=True)
+        # now we can try to aggregate this information to get an overall score
+        # we can do:
+        # 1. a) Accuracy of predicting the correct direction for increase
+        #    b) Accuracy of predicting correct direction for decrease
+        # 2. Average increase in the perturbed cell type proportion compared to baseline
+        # 3. Average percentage increase compared to the random baseline
+        # 4. Accuracy of better increase compared to random baseline
+        aggregate_scores = {
+            "pos_direction_accuracy": 0,
+            "neg_direction_accuracy": 0,
+            "avg_increase": 0,
+            "avg_increase_random_baseline": 0,
+            "beat_random_accuracy": 0,
+        }
+        total_other_cells = 0
+        for cell_type, result in eval.items():
+            if result["baseline_delta"] > 0:
+                aggregate_scores["pos_direction_accuracy"] += 1
+
+            # now we iterate through all the other cells
+            for other_cell_type, delta in result["other_cells_delta"].items():
+                if delta < 0:
+                    aggregate_scores["neg_direction_accuracy"] += 1
+                total_other_cells += 1
+
+            aggregate_scores["avg_increase"] += result["baseline_delta"]
+            aggregate_scores["avg_increase_random_baseline"] += (
+                result["baseline_delta"] - result["avg_random_delta"]
+            )
+            if result["baseline_delta"] > result["avg_random_delta"]:
+                aggregate_scores["beat_random_accuracy"] += 1
+
+        num_cell_types = len(eval)
+        aggregate_scores = {
+            k: v
+            / (total_other_cells if k == "neg_direction_accuracy" else num_cell_types)
+            for k, v in aggregate_scores.items()
+        }
+
+        logging.debug(f"Aggregate scores: {aggregate_scores}")
+
+        final_result = {
+            "aggregate": aggregate_scores,
+            "eval": eval,
+        }
+
+        final_json = json.dumps(final_result, sort_keys=True)
         self.db_manager.insert_eval(
-            method, self.__class__.__name__, self._get_param_encoding(), eval_json
+            method, self.__class__.__name__, self._get_param_encoding(), final_json
         )
