@@ -140,12 +140,16 @@ class MetaPerturbation(MetaMetric):
                 },
             }
 
+        max_knockin = 0
+        max_knockout = 0
+
         for target in targets:
             logging.debug(f"Running submetric for transition {start} -> {target}")
             end = target["end"]
             cell_types.append(end)
             knockin_genes = target["genes"]
             all_genes.update(knockin_genes)
+            max_knockin = max(max_knockin, len(knockin_genes))
             logging.debug(f"Genes for transition {start} -> {end}: {knockin_genes}")
 
             # knockout genes should be the ones not included here, but are in other targets
@@ -155,6 +159,7 @@ class MetaPerturbation(MetaMetric):
             for other_target in targets:
                 if other_target["end"] != end:
                     knockout_genes.extend(other_target["genes"])
+            max_knockout = max(max_knockout, len(knockout_genes))
             logging.debug(
                 f"Knockout genes for transition {start} -> {end}: {knockout_genes}"
             )
@@ -173,13 +178,13 @@ class MetaPerturbation(MetaMetric):
         for i in range(self.params["random_trials"]):
             random_genes = sorted(list(set(gene_list) - all_genes))
             random_knockin_genes = random.sample(
-                random_genes, min(5, len(random_genes))
+                random_genes, min(max_knockin, len(random_genes))
             )
             remaining_genes = sorted(
                 list(set(random_genes) - set(random_knockin_genes))
             )
             random_knockout_genes = random.sample(
-                remaining_genes, min(5, len(remaining_genes))
+                remaining_genes, min(max_knockout, len(remaining_genes))
             )
             logging.debug(f"Random knockin genes: {random_knockin_genes}")
             logging.debug(f"Random knockout genes: {random_knockout_genes}")
