@@ -11,9 +11,15 @@ import yaml
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import scipy as sp
 
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.constants import ObservationColumns
+from scTimeBench.shared.utils import (
+    is_raw,
+    undo_log_normalization,
+    log_normalize_to_counts,
+)
 
 
 def get_parser():
@@ -131,11 +137,13 @@ class BaseMethod:
                 result.write_h5ad(output_file)
 
             elif required_output == RequiredOutputFiles.PERTURBED_TEST_ANN_DATA:
-                # here we generate the perturbation set
-                first_tp_cells, all_tps = self._prep_from_first_tp(test_ann_data)
-                result = self._generate_perturbation(first_tp_cells, all_tps)
-                self._check_from_first_tp(first_tp_cells, all_tps, result)
+                result = self._generate_perturbation(test_ann_data)
                 result.write_h5ad(output_file)
+
+            elif required_output == RequiredOutputFiles.META_FLAG:
+                # this is just a placeholder file to indicate that the meta metric has been run
+                with open(output_file, "w") as f:
+                    f.write("This file indicates that the meta metric has been run.")
 
             else:
                 raise ValueError(f"Unknown required output: {required_output}")
@@ -238,12 +246,12 @@ class BaseMethod:
         raise NotImplementedError("Subclasses should implement this method.")
 
     # ** NOTE: DO NOT OVERWRITE THIS FUNCTION **
-    def _generate_perturbation(self, test_ann_data, all_tps) -> sc.AnnData:
+    def _generate_perturbation(self, test_ann_data) -> sc.AnnData:
         """
         Generate predicted gene expression across all timepoints for a perturbation.
         Returns: AnnData object with predicted gene expression across all timepoints.
         """
-        # now we need to read from the perturbation config to create the perturbation set
+        # here we generate the perturbation set
         from scTimeBench.shared.perturbation_set import PerturbationSet
         from scTimeBench.shared.constants import PERTURBATION_SET_CONFIG_FILENAME
 
@@ -255,8 +263,9 @@ class BaseMethod:
             perturbation_set_config = yaml.safe_load(f)
         perturbation_set = PerturbationSet(perturbation_set_config)
 
-        # this is the gex at timepoint tp
-        gex_tp = test_ann_data.copy()
+        # then do the initial filtering
+        first_tp_cells, all_tps = perturbation_set.apply_intial_filter(test_ann_data)
+        gex_tp = first_tp_cells.copy()
         all_gex = None
 
         for t_idx in range(len(all_tps)):
@@ -267,6 +276,14 @@ class BaseMethod:
             print(f"Applying perturbation for timepoint {t}...")
             # let's print out the gene variable columns names:
             gex_tp = perturbation_set.apply_perturbation(gex_tp, t_idx)
+
+            # data handling to ensure that the output gex is properly normalized
+            if not is_raw(gex_tp):
+                if sp.sparse.issparse(gex_tp.X):
+                    gex_tp.X.data = np.clip(gex_tp.X.data, a_min=0, a_max=20)
+                else:
+                    gex_tp.X = np.clip(gex_tp.X, a_min=0, a_max=20)
+                gex_tp = log_normalize_to_counts(undo_log_normalization(gex_tp))
 
             # then we need to save this out to the final output file
             if all_gex is None:
@@ -284,6 +301,7 @@ class BaseMethod:
             gex_tp = self.generate_gex_from_t_to_t1(gex_tp, t, t1)
 
         print("Finished generating perturbation across all timepoints.")
+        self._check_from_first_tp(first_tp_cells, all_tps, all_gex)
         return all_gex
 
 

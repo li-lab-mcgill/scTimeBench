@@ -290,7 +290,7 @@ class BaseMetric:
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the method
-                self._submetric_eval(
+                return self._submetric_eval(
                     **self._prep_kwargs_for_submetric_eval(output_path, dataset, method)
                 )
 
@@ -464,7 +464,7 @@ class BaseMetric:
                 )
                 submetric_instance.eval()
         else:
-            self._eval()
+            return self._eval()
 
     # ** PREPROCESSING DATASET SECTION **
     def _resolve_tag(self, to_match, dataset_tag):
@@ -735,3 +735,18 @@ class BaseMetric:
         for dataset in self.datasets:
             logging.debug("-" * 100)
             logging.debug(dataset)
+
+
+def create_submetric_instance(
+    config: Config, db_manager: DatabaseManager, metric_config: dict
+) -> BaseMetric:
+    """
+    Factory that creates an instance of a submetric.
+    """
+    metric_name = metric_config["name"]
+    if metric_name not in METRIC_REGISTRY:
+        raise ValueError(f"Metric {metric_name} not found in registry.")
+
+    return METRIC_REGISTRY[metric_name](
+        config=config, db_manager=db_manager, metric_config=metric_config
+    )
