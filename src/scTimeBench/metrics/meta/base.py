@@ -99,10 +99,6 @@ class MetaPerturbation(MetaMetric):
         with the largest number of cells in the test dataset.
 
         We also return the cell types that are used.
-
-        TODO: ^ figure out how to change the dataset itself to reflect this.
-        We likely need to somehow introduce something to the metric which allows
-        for separately constructing the dataset based on the metric params.
         """
         # should have start and targets
         start = transition["start"]
@@ -291,7 +287,7 @@ class MetaPerturbation(MetaMetric):
                 min_random_delta = min(random_deltas)
                 max_random_delta = max(random_deltas)
 
-                eval[cell_type] = {
+                eval[f'{transition["start"]}->{cell_type}'] = {
                     "baseline": baseline_result,
                     "baseline_delta": baseline_delta,
                     "other_cells_delta": other_cells_delta,
@@ -317,7 +313,7 @@ class MetaPerturbation(MetaMetric):
             "beat_random_accuracy": 0,
         }
         total_other_cells = 0
-        for cell_type, result in eval.items():
+        for _, result in eval.items():
             if result["baseline_delta"] > 0:
                 aggregate_scores["pos_direction_accuracy"] += 1
 

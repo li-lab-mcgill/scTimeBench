@@ -1,5 +1,12 @@
 gene_col_name: "gene_symbols"
 cell_lineage_genes:
+  - start: 'PGC'
+    targets:
+      - end: 'oogonia'
+        genes: ['STRA8', 'ZGLP1', 'ZIC1']
+      - end: 'pre_spermatogonia'
+        genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+
   - start: 'GC'
     targets:
       - end: 'oogonia'
