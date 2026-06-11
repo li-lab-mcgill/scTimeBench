@@ -268,9 +268,9 @@ class MetaPerturbation(MetaMetric):
                 logging.debug(
                     f"Results for cell type {cell_type}: {results[cell_type]}"
                 )
-                baseline_result = results["baseline"][cell_type]
+                baseline_result = results["baseline"].get(cell_type, 0)
 
-                increase_cell_type_result = results[cell_type][cell_type]
+                increase_cell_type_result = results[cell_type].get(cell_type, 0)
                 baseline_delta = increase_cell_type_result - baseline_result
 
                 # actually let's not create the average but instead have each difference be calculated
@@ -280,13 +280,15 @@ class MetaPerturbation(MetaMetric):
                     if other_cell_type == cell_type:
                         continue
                     other_cells_delta[other_cell_type] = (
-                        results[other_cell_type][cell_type] - baseline_result
+                        results[other_cell_type].get(cell_type, 0) - baseline_result
                     )
 
                 # now we get the random baseline delta, which is the average of the random trials
                 random_deltas = []
                 for i in range(self.params["random_trials"]):
-                    random_delta = results[f"random_{i}"][cell_type] - baseline_result
+                    random_delta = (
+                        results[f"random_{i}"].get(cell_type, 0) - baseline_result
+                    )
                     random_deltas.append(random_delta)
                 avg_random_delta = sum(random_deltas) / len(random_deltas)
                 min_random_delta = min(random_deltas)
