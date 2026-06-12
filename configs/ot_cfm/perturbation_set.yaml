@@ -13,9 +13,9 @@ metrics:
     perturbation_set_config:
       filter_cell_type: 'GC'
       filter_tp_idx: 5
+      gene_col_name: gene_symbols
       perturbations:
-        - gene_col_name: gene_symbols
-          knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+        - knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
           knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
           timepoint_idx: 0 # this should be building off of filter_tp_idx
     trajectory_infer_model:
@@ -25,9 +25,9 @@ metrics:
     perturbation_set_config:
       filter_cell_type: 'GC'
       filter_tp_idx: 5
+      gene_col_name: gene_symbols
       perturbations:
-        - gene_col_name: gene_symbols
-          knockin_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+        - knockin_genes: ['STRA8', 'ZGLP1', 'ZIC1']
           knockout_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
           timepoint_idx: 0
     trajectory_infer_model:

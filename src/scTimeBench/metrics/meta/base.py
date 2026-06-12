@@ -88,10 +88,11 @@ class MetaPerturbation(MetaMetric):
         and return the submetric configuration which should look like:
             name: PerturbationCellTypeProportion
             perturbation_set_config:
-            - gene_col_name: gene_symbols
-                knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
-                knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
-                timepoint_idx: 0
+                gene_col_name: gene_symbols
+                perturbations:
+                    - knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+                      knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
+                      timepoint_idx: 0
             trajectory_infer_model:
                 name: CellTypist
                 renormalize: True
@@ -118,9 +119,6 @@ class MetaPerturbation(MetaMetric):
             if len(knockin_genes) > 0 or len(knockout_genes) > 0:
                 perturbations.append(
                     {
-                        "gene_col_name": gene_col_name
-                        if gene_col_name is not None
-                        else None,
                         "knockin_genes": knockin_genes,
                         "knockout_genes": knockout_genes,
                         "timepoint_idx": 0,
@@ -132,6 +130,9 @@ class MetaPerturbation(MetaMetric):
                 "perturbation_set_config": {
                     "filter_cell_type": start,
                     "filter_tp_idx": timepoint_idx,
+                    "gene_col_name": gene_col_name
+                    if gene_col_name is not None
+                    else None,
                     "perturbations": perturbations,
                 },
                 "trajectory_infer_model": {

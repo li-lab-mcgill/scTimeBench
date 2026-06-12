@@ -20,22 +20,24 @@ class PerturbationSet:
     to the data at each timepoint.
 
     The yaml should look like this:
+    filter_cell_type: ...
+    filter_tp: ...
+    gene_col_name: ...
     perturbations:
         - timepoint_idx: ...
           knockin_genes: [...]
           knockout_genes: [...]
-          gene_col_name: ...
         ...
 
     Which we should convert to a dictionary of the form:
     {
         "filter_cell_type": ...,
         "filter_tp": ...,
+        "gene_col_name": ...,
         "perturbations": [
             "timepoint_idx": {
             "knockin_genes": [...],
             "knockout_genes": [...],
-            "gene_col_name": ...
             },
             ...
         ]
@@ -50,13 +52,13 @@ class PerturbationSet:
         self.perturbations = {}
         self.filter_cell_type = perturbation_config.get("filter_cell_type", None)
         self.filter_tp_idx = perturbation_config.get("filter_tp_idx", 0)
+        self.gene_col_name = perturbation_config.get("gene_col_name", None)
 
         for perturbation in self.perturbation_config.get("perturbations", []):
             timepoint_idx = perturbation["timepoint_idx"]
             self.perturbations[timepoint_idx] = {
                 "knockin_genes": perturbation.get("knockin_genes", []),
                 "knockout_genes": perturbation.get("knockout_genes", []),
-                "gene_col_name": perturbation.get("gene_col_name", None),
             }
 
     def apply_intial_filter(self, ann_data) -> sc.AnnData:
@@ -111,10 +113,10 @@ class PerturbationSet:
             )
             return ann_data
 
-        if perturb["gene_col_name"] is None:
+        if self.gene_col_name is None:
             gene_names = list(ann_data.var_names)
         else:
-            gene_names = list(ann_data.var[perturb["gene_col_name"]])
+            gene_names = list(ann_data.var[self.gene_col_name])
 
         gene_to_index = {gene: idx for idx, gene in enumerate(gene_names)}
 
@@ -127,7 +129,10 @@ class PerturbationSet:
         # track average knockout change per gene for debugging
         for gene in knockout_genes:
             if gene not in gene_to_index:
-                continue
+                # error out
+                raise ValueError(
+                    f"Knockout gene {gene} not found in the data. Double check your gene_col_name and gene names used."
+                )
             total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
             logging.debug(
                 f"Setting knockout gene {gene} with average expression {total_expression}"
@@ -143,7 +148,9 @@ class PerturbationSet:
         )
         for gene in knockin_genes:
             if gene not in gene_to_index:
-                continue
+                raise ValueError(
+                    f"Knockin gene {gene} not found in the data. Double check your gene_col_name and gene names used."
+                )
             total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
             logging.debug(
                 f"Setting knockin gene {gene} with average expression {total_expression}, to {highest_gex}"
@@ -165,3 +172,13 @@ class PerturbationSet:
 
     def perturbation_path(self):
         return os.path.join("perturbations", self.encode())
+
+    def get_genes(self):
+        """
+        Get the list of all genes that are perturbed in this perturbation set.
+        """
+        genes = set()
+        for perturb in self.perturbations.values():
+            genes.update(perturb["knockin_genes"])
+            genes.update(perturb["knockout_genes"])
+        return list(genes)

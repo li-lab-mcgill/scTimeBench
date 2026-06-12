@@ -22,6 +22,8 @@ outputs/
 logs/
 data
 data/
+grn_data
+grn_data/
 
 # UV stuff
 .python-version
