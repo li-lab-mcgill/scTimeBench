@@ -11,12 +11,7 @@ import json
 import os
 
 
-class PerturbationCellTypeProportion(PerturbationBasedMetrics):
-    def _defaults(self):
-        return {
-            "return_trajectory": False,
-        }
-
+class PerturbationCellTypeProportionBase(PerturbationBasedMetrics):
     def _setup_trajectory_inference_model(self):
         traj_infer_config = self.metric_config.get("trajectory_infer_model", {})
 
@@ -49,20 +44,10 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
             "method": method,
         }
 
+
+class PerturbationCellTypeProportion(PerturbationCellTypeProportionBase):
     def _submetric_eval(self, output_path, trajectory, method):
         logging.debug(f"Trajectory for method {method}: {trajectory}")
-
-        # finally, we want to get all the timepoints from the output file
-        perturbed_data = load_output_file(
-            os.path.join(output_path, self._get_relative_output_path()),
-            RequiredOutputFiles.PERTURBED_TEST_ANN_DATA,
-        )
-        all_tps = sorted(
-            list(perturbed_data.obs[ObservationColumns.TIMEPOINT.value].unique())
-        )
-
-        if self.params["return_trajectory"]:
-            return trajectory, all_tps
 
         # now let's recalculate the total number of cells of each cell type
         # we have a dictionary of:
@@ -105,4 +90,20 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
             method, self.__class__.__name__, self._get_param_encoding(), eval
         )
 
-        return cell_type_dist, all_tps
+        return cell_type_dist
+
+
+class PerturbationCellTypeProportionPerTp(PerturbationCellTypeProportionBase):
+    def _submetric_eval(self, output_path, trajectory, method):
+        logging.debug(f"Trajectory for method {method}: {trajectory}")
+
+        # finally, we want to get all the timepoints from the output file
+        perturbed_data = load_output_file(
+            os.path.join(output_path, self._get_relative_output_path()),
+            RequiredOutputFiles.PERTURBED_TEST_ANN_DATA,
+        )
+        all_tps = sorted(
+            list(perturbed_data.obs[ObservationColumns.TIMEPOINT.value].unique())
+        )
+
+        return trajectory, all_tps

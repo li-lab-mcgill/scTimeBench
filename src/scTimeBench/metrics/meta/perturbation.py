@@ -25,6 +25,11 @@ class MetaPerturbation(MetaMetric):
             "random_trials": 1,
         }
 
+    def _submetric_dict(self):
+        raise NotImplementedError(
+            "Subclasses of MetaPerturbation must implement the _submetric_dict method to specify the submetric to run."
+        )
+
     def _handle_transition(
         self, transition, cell_type_to_timepoint, gene_col_name, gene_list
     ):
@@ -78,11 +83,7 @@ class MetaPerturbation(MetaMetric):
                     }
                 )
             return {
-                "name": "PerturbationCellTypeProportion",
                 "alias": alias,
-                "return_trajectory": self.return_trajectory
-                if hasattr(self, "return_trajectory")
-                else None,
                 "perturbation_set_config": {
                     "filter_cell_type": start,
                     "filter_tp_idx": timepoint_idx,
@@ -95,6 +96,7 @@ class MetaPerturbation(MetaMetric):
                     "name": "CellTypist",
                     "renormalize": True,
                 },
+                **self._submetric_dict(),
             }
 
         max_knockin = 0
@@ -179,12 +181,6 @@ class MetaPerturbation(MetaMetric):
             timepoint_mapping[cell_type] = timepoint_idx
         return timepoint_mapping
 
-    def _meta_perturb_setup(self):
-        """
-        This is a placeholder function for other meta perturbation metrics,
-        such as per timepoint.
-        """
-
     def _generate_submetric_result(self, output_path, dataset):
         """
         A generator to create the submetric results as required.
@@ -214,19 +210,22 @@ class MetaPerturbation(MetaMetric):
             results = {}
             # now let's run the submetric
             for submetric in submetrics:
-                result, all_tps = self._run_submetric(submetric)
+                result = self._run_submetric(submetric)
                 results[submetric["alias"]] = result
 
-            yield results, cell_types, transition, all_tps
+            yield results, cell_types, transition
+
+
+class MetaPerturbationCellType(MetaPerturbation):
+    def _submetric_dict(self):
+        return {
+            "name": "PerturbationCellTypeProportion",
+        }
 
     def _submetric_eval(self, output_path, dataset, method):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
-        self._meta_perturb_setup()
-        self._perturbation_submetric_eval(output_path, dataset, method)
-
-    def _perturbation_submetric_eval(self, output_path, dataset, method):
         eval = {}
-        for results, cell_types, transition, _ in self._generate_submetric_result(
+        for results, cell_types, transition in self._generate_submetric_result(
             output_path, dataset
         ):
             # now we do for each cell type, we're going to calculate
@@ -330,13 +329,15 @@ class MetaPerturbation(MetaMetric):
         )
 
 
-class MetaPerturbationPerTimepoint(MetaPerturbation):
+class MetaPerturbationCellTypePerTimepoint(MetaPerturbation):
     """
     Meta submetric for perturbation analyses that are per timepoint.
     """
 
-    def _meta_perturb_setup(self):
-        self.return_trajectory = True
+    def _submetric_dict(self):
+        return {
+            "name": "PerturbationCellTypeProportionPerTp",
+        }
 
     def _trajectory_to_normalized_proportions(self, results, all_tps):
         # first let's normalize each timepoint to be percentage instead
@@ -360,15 +361,18 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
 
         return normalized_results
 
-    def _perturbation_submetric_eval(self, output_path, dataset, method):
+    def _submetric_eval(self, output_path, dataset, method):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
 
-        for results, cell_types, transition, all_tps in self._generate_submetric_result(
+        for results, cell_types, transition in self._generate_submetric_result(
             output_path, dataset
         ):
             for key, traj in results.items():
                 logging.debug(f"Trajectory for {key}: {traj}")
-                results[key] = self._trajectory_to_normalized_proportions(traj, all_tps)
+                key_result, all_tps = traj
+                results[key] = self._trajectory_to_normalized_proportions(
+                    key_result, all_tps
+                )
 
             logging.getLogger("matplotlib").setLevel(logging.WARNING)
 

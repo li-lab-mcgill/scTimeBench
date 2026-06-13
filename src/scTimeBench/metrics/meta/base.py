@@ -14,6 +14,7 @@ from scTimeBench.metrics.base import BaseMetric, create_submetric_instance
 from scTimeBench.shared.constants import RequiredOutputFiles
 from scTimeBench.shared.dataset.registry import GarciaAlonsoDataset
 
+import logging
 import os
 
 
@@ -58,5 +59,8 @@ class MetaMetric(BaseMetric):
         self.config.force_rerun = True
         submetric_instance = create_submetric_instance(
             self.config, self.db_manager, submetric_config
+        )
+        logging.debug(
+            f"Running submetric {submetric_config['name']} with config: {submetric_config}"
         )
         return submetric_instance.eval()
