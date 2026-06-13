@@ -1,11 +1,18 @@
 from scTimeBench.metrics.meta.base import MetaMetric
 from scTimeBench.shared.constants import ObservationColumns
 from scTimeBench.shared.utils import load_test_dataset
-from scTimeBench.trajectory_infer.base import per_tp_trajectory_to_cell_type_proportions
+from scTimeBench.trajectory_infer.base import (
+    per_tp_trajectory_to_cell_type_proportions,
+    TrajectoryOutputConstants,
+)
+
+import pandas as pd
 
 import logging
 import json
 import random
+import matplotlib.pyplot as plt
+import os
 
 
 class MetaPerturbation(MetaMetric):
@@ -331,6 +338,32 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
     def _meta_perturb_setup(self):
         self.return_trajectory = True
 
+    def _trajectory_to_normalized_proportions(self, results, all_tps):
+        # first let's normalize each timepoint to be percentage instead
+        # let's do this by first transforming it to the proper timepoint -> { celltype: count } format
+        normalized_results = pd.DataFrame(
+            per_tp_trajectory_to_cell_type_proportions(results, all_tps)
+        )
+
+        logging.debug(f"Unnormalized trajectory: {normalized_results}")
+
+        # now let's normalize the results per timepoint:
+        normalized_results[
+            TrajectoryOutputConstants.PERCENTAGE_COL.value
+        ] = normalized_results[
+            TrajectoryOutputConstants.COUNT_COL.value
+        ] / normalized_results.groupby(
+            TrajectoryOutputConstants.TIMEPOINT_COL.value
+        )[
+            TrajectoryOutputConstants.COUNT_COL.value
+        ].transform(
+            "sum"
+        )
+
+        # log out the baseline first:
+        logging.debug(f"Normalized trajectory: {normalized_results}")
+        return normalized_results
+
     def _perturbation_submetric_eval(self, output_path, dataset, method):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
 
@@ -342,33 +375,77 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
                 f'Results for transition {transition["start"]} -> {[t["end"] for t in transition["targets"]]}'
             )
 
-            # first let's normalize each timepoint to be percentage instead
-            # let's do this by first transforming it to the proper timepoint -> { celltype: count } format
-            baseline_results = per_tp_trajectory_to_cell_type_proportions(
-                results["baseline"], all_tps
-            )
+            for key, traj in results.items():
+                logging.debug(f"Trajectory for {key}: {traj}")
+                results[key] = self._trajectory_to_normalized_proportions(traj, all_tps)
 
             logging.debug(
-                f"Baseline trajectory for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {baseline_results}"
+                f"Normalized trajectories for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {results}"
             )
 
-            for key in results:
-                trajectory = results[key]
-                for tp in trajectory:
-                    total = sum(trajectory[tp].values())
-                    if total > 0:
-                        for cell_type in trajectory[tp]:
-                            trajectory[tp][cell_type] /= total
-
-            # log out the baseline first:
-
-            exit()
+            logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
             # now we plot this where we have cell_types number of graphs
             # where we have cell_types + random lines for the percentage of wanted cell type
             # over the baseline
+            def gen_query(sub_df, cell_type):
+                return sub_df[
+                    sub_df[TrajectoryOutputConstants.CELLTYPE_COL.value] == cell_type
+                ]
+
             for cell_type in cell_types:
                 # now we plot the trajectory for this cell type
-                baseline_trajectory = results["baseline"]
-                increase_cell_type_trajectory = results[cell_type]
-            exit()
+                baseline_trajectory = gen_query(results["baseline"], cell_type)
+                increase_cell_type_trajectory = gen_query(results[cell_type], cell_type)
+
+                other_cell_type_trajectories = {}
+                for other_cell_type in cell_types:
+                    if other_cell_type == cell_type:
+                        continue
+                    other_cell_type_trajectories[other_cell_type] = gen_query(
+                        results[other_cell_type], cell_type
+                    )
+
+                # now let's plot them all on the same graph, over time
+                # let's use matplotlib
+                plt.figure(figsize=(10, 6))
+                plt.plot(
+                    baseline_trajectory[TrajectoryOutputConstants.TIMEPOINT_COL.value],
+                    baseline_trajectory[TrajectoryOutputConstants.PERCENTAGE_COL.value],
+                    label="Baseline",
+                )
+                plt.plot(
+                    increase_cell_type_trajectory[
+                        TrajectoryOutputConstants.TIMEPOINT_COL.value
+                    ],
+                    increase_cell_type_trajectory[
+                        TrajectoryOutputConstants.PERCENTAGE_COL.value
+                    ],
+                    label=f"Increase {cell_type}",
+                )
+                for (
+                    other_cell_type,
+                    other_trajectory,
+                ) in other_cell_type_trajectories.items():
+                    plt.plot(
+                        other_trajectory[TrajectoryOutputConstants.TIMEPOINT_COL.value],
+                        other_trajectory[
+                            TrajectoryOutputConstants.PERCENTAGE_COL.value
+                        ],
+                        label=f"{other_cell_type}",
+                    )
+                plt.xlabel("Timepoint")
+                plt.ylabel("Percentage of cell type")
+                plt.title(
+                    f"Trajectory for cell type {cell_type} for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}"
+                )
+                plt.legend()
+                os.makedirs(os.path.join(output_path, "trajectories"), exist_ok=True)
+                plt.savefig(
+                    os.path.join(
+                        output_path,
+                        "trajectories",
+                        f"trajectory_{transition['start']}_to_{cell_type}.png",
+                    )
+                )
+                plt.close()

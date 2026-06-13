@@ -643,6 +643,7 @@ class TrajectoryOutputConstants(Enum):
     TIMEPOINT_COL = "Time Point"
     CELLTYPE_COL = "Cell Type"
     COUNT_COL = "Count"
+    PERCENTAGE_COL = "Percentage"
 
 
 def per_tp_trajectory_to_cell_type_proportions(per_tp_traj, unique_tps):

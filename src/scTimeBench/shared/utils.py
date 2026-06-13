@@ -15,10 +15,10 @@ from scTimeBench.shared.constants import (
     METHOD_CONFIG_FILENAME,
 )
 
-DATASET_CACHE_LIMIT = 3  # max number of datasets to cache in memory
+DATASET_CACHE_LIMIT = 5  # max number of datasets to cache in memory
 DATASET_IN_MEM_CACHE = {}
 
-OUTPUT_FILE_CACHE_LIMIT = 3  # max number of output files to cache in memory
+OUTPUT_FILE_CACHE_LIMIT = 10  # max number of output files to cache in memory
 OUTPUT_FILE_CACHE = {}
 
 
