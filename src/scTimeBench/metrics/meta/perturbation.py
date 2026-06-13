@@ -345,8 +345,6 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
             per_tp_trajectory_to_cell_type_proportions(results, all_tps)
         )
 
-        logging.debug(f"Unnormalized trajectory: {normalized_results}")
-
         # now let's normalize the results per timepoint:
         normalized_results[
             TrajectoryOutputConstants.PERCENTAGE_COL.value
@@ -360,8 +358,6 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
             "sum"
         )
 
-        # log out the baseline first:
-        logging.debug(f"Normalized trajectory: {normalized_results}")
         return normalized_results
 
     def _perturbation_submetric_eval(self, output_path, dataset, method):
@@ -370,18 +366,9 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
         for results, cell_types, transition, all_tps in self._generate_submetric_result(
             output_path, dataset
         ):
-            # this should be the per-timepoint trajectory
-            logging.debug(
-                f'Results for transition {transition["start"]} -> {[t["end"] for t in transition["targets"]]}'
-            )
-
             for key, traj in results.items():
                 logging.debug(f"Trajectory for {key}: {traj}")
                 results[key] = self._trajectory_to_normalized_proportions(traj, all_tps)
-
-            logging.debug(
-                f"Normalized trajectories for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {results}"
-            )
 
             logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
@@ -405,6 +392,21 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
                     other_cell_type_trajectories[other_cell_type] = gen_query(
                         results[other_cell_type], cell_type
                     )
+
+                # now let's average the random trajectory and get that as well
+                random_trajectories = []
+                for i in range(self.params["random_trials"]):
+                    random_trajectory = gen_query(results[f"random_{i}"], cell_type)
+                    random_trajectories.append(random_trajectory)
+
+                avg_random_trajectory = (
+                    pd.concat(random_trajectories)
+                    .groupby(TrajectoryOutputConstants.TIMEPOINT_COL.value)[
+                        TrajectoryOutputConstants.PERCENTAGE_COL.value
+                    ]
+                    .mean()
+                    .reset_index()
+                )
 
                 # now let's plot them all on the same graph, over time
                 # let's use matplotlib
@@ -434,6 +436,16 @@ class MetaPerturbationPerTimepoint(MetaPerturbation):
                         ],
                         label=f"{other_cell_type}",
                     )
+                plt.plot(
+                    avg_random_trajectory[
+                        TrajectoryOutputConstants.TIMEPOINT_COL.value
+                    ],
+                    avg_random_trajectory[
+                        TrajectoryOutputConstants.PERCENTAGE_COL.value
+                    ],
+                    label="Random Baseline",
+                    linestyle="--",
+                )
                 plt.xlabel("Timepoint")
                 plt.ylabel("Percentage of cell type")
                 plt.title(
