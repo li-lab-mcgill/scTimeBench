@@ -16,6 +16,7 @@ from scTimeBench.shared.utils import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+from enum import Enum
 from typing import final
 import numpy as np
 import pandas as pd
@@ -540,19 +541,6 @@ class BaseTrajectoryInferMethod:
             _, cell_tps, cell_types = sequential_tps()
             return cell_types, next_cell_types, cell_tps
 
-        # if we are in the from_tp_zero case, then we need to get the cell types and cell tps for all the timepoints
-        # ** the reason why this is different is because cell_types cannot be taken from the anndata directly **
-        timepoints = test_ann_data.obs[ObservationColumns.TIMEPOINT.value]
-
-        if not self._infer_first_tp():
-            start_tps = np.where(timepoints == timepoints.min())[0]
-            start_cell_type = test_ann_data.obs[
-                ObservationColumns.CELL_TYPE.value
-            ].iloc[start_tps]
-            logging.debug(f"Start cell types: {start_cell_type}")
-
-        # then, the cell types are the first tp's real cell types
-        # and for every timepoint after it's the predicted one
         if self._uses_perturbation():
             next_tp_gex_anndata = load_output_file(
                 eval_output_path, RequiredOutputFiles.PERTURBED_TEST_ANN_DATA
@@ -562,9 +550,19 @@ class BaseTrajectoryInferMethod:
                 output_path, RequiredOutputFiles.FROM_ZERO_TO_END_PRED_GEX
             )
 
+        # if we are in the from_tp_zero case, then we need to get the cell types and cell tps for all the timepoints
+        # ** the reason why this is different is because cell_types cannot be taken from the anndata directly **
+        # Fix: instead of timepoints from test ann data, it should be from the generated output
         timepoints = next_tp_gex_anndata.obs[ObservationColumns.TIMEPOINT.value]
 
+        # then, the cell types are the first tp's real cell types
+        # and for every timepoint after it's the predicted one
         if not self._infer_first_tp():
+            start_tps = np.where(timepoints == timepoints.min())[0]
+            start_cell_type = next_tp_gex_anndata.obs[
+                ObservationColumns.CELL_TYPE.value
+            ].iloc[start_tps]
+            logging.debug(f"Start cell types: {start_cell_type}")
             cell_type_valid_timepoints = np.where(
                 (timepoints < timepoints.max()) & (timepoints != timepoints.min())
             )[0]
@@ -638,3 +636,66 @@ class TrajectoryInferenceMethodFactory:
         return method_class(
             traj_config=traj_config,
         )
+
+
+# Helper functions for preprocessing the trajectory
+class TrajectoryOutputConstants(Enum):
+    TIMEPOINT_COL = "Time Point"
+    CELLTYPE_COL = "Cell Type"
+    COUNT_COL = "Count"
+
+
+def per_tp_trajectory_to_cell_type_proportions(per_tp_traj, unique_tps):
+    """
+    Helper function to trajectory the per timepoint trajectory
+    into the cell type proportions per timepoint.
+
+    Args:
+    - per_tp_traj: the trajectory inferred per timepoint, in the format of {tp: {source_cell_type: {target_cell_type: count}}}
+    - unique_tps: the unique timepoints in the train data, sorted
+    """
+
+    def populate_row(traj, populate_from_target=False):
+        src_cell_types = {}
+        target_cell_types = {}
+
+        for src_cell, target_distribution in traj.items():
+            src_cell_types[src_cell] = sum(target_distribution.values())
+
+            for target_cell_type, count in target_distribution.items():
+                if target_cell_type not in target_cell_types:
+                    target_cell_types[target_cell_type] = 0
+                target_cell_types[target_cell_type] += count
+
+        return target_cell_types if populate_from_target else src_cell_types
+
+    tps = sorted(per_tp_traj.keys())
+    last_tp = unique_tps[-1]
+    target_records = []
+    for tp in unique_tps:
+        # store the row as target_cell_types
+        assert (
+            tp == last_tp or tp in tps
+        ), f"Timepoint {tp} given by unique_tps is not present in the trajectory data timepoints {tps}."
+        if tp == last_tp:
+            # in this case, we get the source cells in the first tp
+            # get the trajectory from second last to last
+            traj = per_tp_traj[tps[-1]]
+            pred_cell_types = populate_row(traj, populate_from_target=True)
+        else:
+            traj = per_tp_traj[tp]
+            pred_cell_types = populate_row(traj, populate_from_target=False)
+
+        for cell_type, count in pred_cell_types.items():
+            target_records.append(
+                {
+                    # we need to do this weird shifting logic because
+                    # in the from_tp_zero, the timepoint shows the exact timepoint,
+                    # but in the non from_tp_zero, the timepoint shows the source timepoint, so we need to shift it to the target timepoint
+                    TrajectoryOutputConstants.TIMEPOINT_COL.value: tp,
+                    TrajectoryOutputConstants.CELLTYPE_COL.value: cell_type,
+                    TrajectoryOutputConstants.COUNT_COL.value: count,
+                }
+            )
+
+    return target_records

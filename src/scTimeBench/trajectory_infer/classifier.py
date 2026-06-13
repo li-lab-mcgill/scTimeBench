@@ -101,7 +101,7 @@ class CellTypist(BaseTrajectoryInferMethod):
             "mini_batch": self.traj_config.get("mini_batch", True),
             # decides whether or not to take the gex from the original data and renormalize it for CellTypist, or to just use the predicted values as they are
             # by default we turn it off because the model itself should be providing gex that's close to it
-            "renormalize": self.traj_config.get("renormalize", False),
+            "renormalize": self.traj_config.get("renormalize", True),
         }
 
     def _preprocess(self, data):

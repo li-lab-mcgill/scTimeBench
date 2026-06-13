@@ -87,9 +87,14 @@ class StackedBarPlot(GraphSimMetric):
         import matplotlib.pyplot as plt
         import pandas as pd
 
-        TIMEPOINT_COL = "Time Point"
-        CELLTYPE_COL = "Cell Type"
-        COUNT_COL = "Count"
+        from scTimeBench.trajectory_infer.base import (
+            TrajectoryOutputConstants,
+            per_tp_trajectory_to_cell_type_proportions,
+        )
+
+        TIMEPOINT_COL = TrajectoryOutputConstants.TIMEPOINT_COL.value
+        CELLTYPE_COL = TrajectoryOutputConstants.CELLTYPE_COL.value
+        COUNT_COL = TrajectoryOutputConstants.COUNT_COL.value
 
         def topo_sort(cell_lineage):
             from collections import defaultdict, deque
@@ -201,7 +206,6 @@ class StackedBarPlot(GraphSimMetric):
             train_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique().tolist()
         )
         unique_tps.sort()
-        last_tp = unique_tps[-1]
 
         logging.debug(f"Per-timepoint predicted trajectory: {per_tp_traj}")
 
@@ -222,49 +226,10 @@ class StackedBarPlot(GraphSimMetric):
                 )
 
         # ** Builds the predicted trajectory from the inferred trajectory **
-        target_records = []
-
         # now we need to get the starting and ending timepoints as well
-        tps = sorted(per_tp_traj.keys())
-
-        def populate_row(traj, populate_from_target=False):
-            src_cell_types = {}
-            target_cell_types = {}
-
-            for src_cell, target_distribution in traj.items():
-                src_cell_types[src_cell] = sum(target_distribution.values())
-
-                for target_cell_type, count in target_distribution.items():
-                    if target_cell_type not in target_cell_types:
-                        target_cell_types[target_cell_type] = 0
-                    target_cell_types[target_cell_type] += count
-
-            return target_cell_types if populate_from_target else src_cell_types
-
-        for tp in tps:
-            # store the row as target_cell_types
-            assert (
-                tp <= last_tp
-            ), f"Timepoint {tp} in the trajectory is not present in the training data timepoints {tps}."
-            if tp == last_tp:
-                # in this case, we get the source cells in the first tp
-                # get the trajectory from second last to last
-                traj = per_tp_traj[tps[-1]]
-                pred_cell_types = populate_row(traj, populate_from_target=True)
-            else:
-                traj = per_tp_traj[tp]
-                pred_cell_types = populate_row(traj, populate_from_target=False)
-
-            for cell_type, count in pred_cell_types.items():
-                target_records.append(
-                    {
-                        TIMEPOINT_COL: unique_tps[unique_tps.index(tp) + 1]
-                        if not self.params["from_tp_zero"]
-                        else tp,
-                        CELLTYPE_COL: cell_type,
-                        COUNT_COL: count,
-                    }
-                )
+        target_records = per_tp_trajectory_to_cell_type_proportions(
+            per_tp_traj, unique_tps
+        )
 
         # then let's create DataFrames
         source_df = pd.DataFrame(source_records)

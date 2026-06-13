@@ -1,6 +1,7 @@
 from scTimeBench.metrics.meta.base import MetaMetric
 from scTimeBench.shared.constants import ObservationColumns
 from scTimeBench.shared.utils import load_test_dataset
+from scTimeBench.trajectory_infer.base import per_tp_trajectory_to_cell_type_proportions
 
 import logging
 import json
@@ -72,6 +73,9 @@ class MetaPerturbation(MetaMetric):
             return {
                 "name": "PerturbationCellTypeProportion",
                 "alias": alias,
+                "return_trajectory": self.return_trajectory
+                if hasattr(self, "return_trajectory")
+                else None,
                 "perturbation_set_config": {
                     "filter_cell_type": start,
                     "filter_tp_idx": timepoint_idx,
@@ -203,18 +207,19 @@ class MetaPerturbation(MetaMetric):
             results = {}
             # now let's run the submetric
             for submetric in submetrics:
-                result = self._run_submetric(submetric)
-                logging.debug(f"Result of submetric {submetric['alias']}: {result}")
+                result, all_tps = self._run_submetric(submetric)
                 results[submetric["alias"]] = result
 
-            yield results, cell_types, transition
+            yield results, cell_types, transition, all_tps
 
     def _submetric_eval(self, output_path, dataset, method):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
         self._meta_perturb_setup()
+        self._perturbation_submetric_eval(output_path, dataset, method)
 
+    def _perturbation_submetric_eval(self, output_path, dataset, method):
         eval = {}
-        for results, cell_types, transition in self._generate_submetric_result(
+        for results, cell_types, transition, _ in self._generate_submetric_result(
             output_path, dataset
         ):
             # now we do for each cell type, we're going to calculate
@@ -316,3 +321,54 @@ class MetaPerturbation(MetaMetric):
         self.db_manager.insert_eval(
             method, self.__class__.__name__, self._get_param_encoding(), final_json
         )
+
+
+class MetaPerturbationPerTimepoint(MetaPerturbation):
+    """
+    Meta submetric for perturbation analyses that are per timepoint.
+    """
+
+    def _meta_perturb_setup(self):
+        self.return_trajectory = True
+
+    def _perturbation_submetric_eval(self, output_path, dataset, method):
+        logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
+
+        for results, cell_types, transition, all_tps in self._generate_submetric_result(
+            output_path, dataset
+        ):
+            # this should be the per-timepoint trajectory
+            logging.debug(
+                f'Results for transition {transition["start"]} -> {[t["end"] for t in transition["targets"]]}'
+            )
+
+            # first let's normalize each timepoint to be percentage instead
+            # let's do this by first transforming it to the proper timepoint -> { celltype: count } format
+            baseline_results = per_tp_trajectory_to_cell_type_proportions(
+                results["baseline"], all_tps
+            )
+
+            logging.debug(
+                f"Baseline trajectory for transition {transition['start']} -> {[t['end'] for t in transition['targets']]}: {baseline_results}"
+            )
+
+            for key in results:
+                trajectory = results[key]
+                for tp in trajectory:
+                    total = sum(trajectory[tp].values())
+                    if total > 0:
+                        for cell_type in trajectory[tp]:
+                            trajectory[tp][cell_type] /= total
+
+            # log out the baseline first:
+
+            exit()
+
+            # now we plot this where we have cell_types number of graphs
+            # where we have cell_types + random lines for the percentage of wanted cell type
+            # over the baseline
+            for cell_type in cell_types:
+                # now we plot the trajectory for this cell type
+                baseline_trajectory = results["baseline"]
+                increase_cell_type_trajectory = results[cell_type]
+            exit()
