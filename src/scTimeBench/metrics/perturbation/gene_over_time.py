@@ -2,7 +2,7 @@
 Measures average gene expression over time for perturbation analyses.
 """
 from scTimeBench.metrics.perturbation.base import PerturbationBasedMetrics
-from scTimeBench.shared.utils import load_output_file
+from scTimeBench.shared.utils import load_output_file, load_test_dataset
 from scTimeBench.shared.constants import RequiredOutputFiles, ObservationColumns
 
 import logging
@@ -47,14 +47,16 @@ class PerturbationGeneExpression(PerturbationBasedMetrics):
             list(perturbed_data.obs[ObservationColumns.TIMEPOINT.value].unique())
         )
 
-        for gene in genes:
-            if self.perturbation_set.gene_col_name is None:
-                gene_col_idx = perturbed_data.var_names.get_loc(gene)
-            else:
-                gene_col_idx = perturbed_data.var[
-                    self.perturbation_set.gene_col_name
-                ].get_loc(gene)
+        test_ann_data = load_test_dataset(output_path)
+        if self.perturbation_set.gene_col_name is None:
+            gene_names_list = test_ann_data.var_names.tolist()
+        else:
+            gene_names_list = test_ann_data.var[
+                self.perturbation_set.gene_col_name
+            ].tolist()
 
+        for gene in genes:
+            gene_col_idx = gene_names_list.index(gene)
             gene_expression_over_time[gene] = {}
 
             # now let's calculate the average expression for this gene across samples
@@ -65,9 +67,12 @@ class PerturbationGeneExpression(PerturbationBasedMetrics):
                 ]
                 gene_expression_over_time[gene][tp] = tp_data[:, gene_col_idx].X.mean()
 
-        logging.debug(f"Gene expression over time: {gene_expression_over_time}")
-        eval = json.dumps(gene_expression_over_time, sort_keys=True)
+        gene_expr_to_json_friendly = {
+            gene: {float(tp): float(expr) for tp, expr in tp_expr.items()}
+            for gene, tp_expr in gene_expression_over_time.items()
+        }
 
+        eval = json.dumps(gene_expr_to_json_friendly, sort_keys=True)
         self.db_manager.insert_eval(
             method, self.__class__.__name__, self._get_param_encoding(), eval
         )
