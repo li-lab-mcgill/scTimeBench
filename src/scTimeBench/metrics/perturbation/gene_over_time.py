@@ -2,7 +2,12 @@
 Measures average gene expression over time for perturbation analyses.
 """
 from scTimeBench.metrics.perturbation.base import PerturbationBasedMetrics
-from scTimeBench.shared.utils import load_output_file, load_test_dataset
+from scTimeBench.shared.utils import (
+    load_output_file,
+    load_test_dataset,
+    is_raw,
+    undo_log_normalization,
+)
 from scTimeBench.shared.constants import RequiredOutputFiles, ObservationColumns
 
 import logging
@@ -43,6 +48,11 @@ class PerturbationGeneExpression(PerturbationBasedMetrics):
         perturbed_data = load_output_file(
             eval_output_path, RequiredOutputFiles.PERTURBED_TEST_ANN_DATA
         )
+
+        # then let's first un-log normalize the data
+        if not is_raw(perturbed_data):
+            perturbed_data = undo_log_normalization(perturbed_data)
+
         tps = sorted(
             list(perturbed_data.obs[ObservationColumns.TIMEPOINT.value].unique())
         )

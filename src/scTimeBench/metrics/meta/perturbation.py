@@ -9,6 +9,7 @@ from scTimeBench.trajectory_infer.base import (
 import pandas as pd
 
 import logging
+import math
 import json
 import random
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ class MetaPerturbation(MetaMetric):
             "random_trials": 1,
         }
 
-    def _submetric_dict(self):
+    def _submetric_dict(self, **kwargs):
         raise NotImplementedError(
             "Subclasses of MetaPerturbation must implement the _submetric_dict method to specify the submetric to run."
         )
@@ -72,7 +73,9 @@ class MetaPerturbation(MetaMetric):
         cell_types = []
         all_genes = set()
 
-        def generate_submetric(alias, knockin_genes=[], knockout_genes=[]):
+        def generate_submetric(
+            alias, knockin_genes=[], knockout_genes=[], all_genes=[]
+        ):
             perturbations = []
             if len(knockin_genes) > 0 or len(knockout_genes) > 0:
                 perturbations.append(
@@ -96,7 +99,7 @@ class MetaPerturbation(MetaMetric):
                     "name": "CellTypist",
                     "renormalize": True,
                 },
-                **self._submetric_dict(),
+                **self._submetric_dict(all_genes=all_genes),
             }
 
         max_knockin = 0
@@ -118,15 +121,18 @@ class MetaPerturbation(MetaMetric):
             for other_target in targets:
                 if other_target["end"] != end:
                     knockout_genes.extend(other_target["genes"])
+            all_genes.update(knockout_genes)
             max_knockout = max(max_knockout, len(knockout_genes))
             logging.debug(
                 f"Knockout genes for transition {start} -> {end}: {knockout_genes}"
             )
 
-            submetrics.append(generate_submetric(end, knockin_genes, knockout_genes))
+            submetrics.append(
+                generate_submetric(end, knockin_genes, knockout_genes, all_genes)
+            )
 
         # add a baseline one
-        submetrics.append(generate_submetric("baseline"))
+        submetrics.append(generate_submetric("baseline", all_genes=all_genes))
 
         # finally, also add a random one to check, where we perturb 5 random genes on
         # and 5 random genes off, that are not in the original perturbation set
@@ -149,7 +155,10 @@ class MetaPerturbation(MetaMetric):
             logging.debug(f"Random knockout genes: {random_knockout_genes}")
             submetrics.append(
                 generate_submetric(
-                    f"random_{i}", random_knockin_genes, random_knockout_genes
+                    f"random_{i}",
+                    random_knockin_genes,
+                    random_knockout_genes,
+                    all_genes,
                 )
             )
 
@@ -217,7 +226,7 @@ class MetaPerturbation(MetaMetric):
 
 
 class MetaPerturbationCellType(MetaPerturbation):
-    def _submetric_dict(self):
+    def _submetric_dict(self, **kwargs):
         return {
             "name": "PerturbationCellTypeProportion",
         }
@@ -334,7 +343,7 @@ class MetaPerturbationCellTypePerTimepoint(MetaPerturbation):
     Meta submetric for perturbation analyses that are per timepoint.
     """
 
-    def _submetric_dict(self):
+    def _submetric_dict(self, **kwargs):
         return {
             "name": "PerturbationCellTypeProportionPerTp",
         }
@@ -465,3 +474,126 @@ class MetaPerturbationCellTypePerTimepoint(MetaPerturbation):
                     )
                 )
                 plt.close()
+
+
+class MetaGenePerturbationOverTime(MetaPerturbation):
+    """
+    Meta submetric for perturbation analyses to calculate the
+    gene expression over time for the perturbed genes.
+    """
+
+    def _submetric_dict(self, all_genes=[], **kwargs):
+        return {
+            "name": "PerturbationGeneExpression",
+            "perturbed_genes": list(all_genes),
+        }
+
+    def _submetric_eval(self, output_path, dataset, method):
+        logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
+
+        logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+        for results, cell_types, transition in self._generate_submetric_result(
+            output_path, dataset
+        ):
+            genes = results["baseline"].keys()
+
+            for cell_type in cell_types:
+                # now we plot the trajectory for this cell type
+
+                # We have:
+                # 'baseline': { gene -> timepoint -> average expression }
+                # 'cell_type_1': { gene -> timepoint -> average expression }
+                # Now let's plot this as the x axis being the timepoint
+                # the y axis being the average expression
+                # and we plot together all genes for each cell type
+
+                # --- 1. Set up the grid layout BEFORE the loop ---
+                num_genes = len(genes)
+                ncols = 3  # Choose how many small plots you want per row
+                nrows = math.ceil(num_genes / ncols)
+
+                # squeeze=False ensures 'axes' is always a 2D array, even for 1x1 grids
+                fig, axes = plt.subplots(
+                    nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False
+                )
+                axes = (
+                    axes.flatten()
+                )  # Flatten into a 1D array to easily loop through them
+
+                for i, gene in enumerate(genes):
+                    ax = axes[i]  # Get the corresponding subplot axis
+
+                    baseline_trajectory = results["baseline"][gene]
+                    increase_cell_type_trajectory = results[cell_type][gene]
+
+                    other_cell_type_trajectories = {}
+                    for other_cell_type in cell_types:
+                        if other_cell_type == cell_type:
+                            continue
+                        other_cell_type_trajectories[other_cell_type] = results[
+                            other_cell_type
+                        ][gene]
+
+                    random_trajectories = []
+                    for i in range(self.params["random_trials"]):
+                        random_trajectory = results[f"random_{i}"][gene]
+
+                        # Assuming random_trajectory is a dict: {time: expression}
+                        s = pd.Series(random_trajectory)
+                        random_trajectories.append(s)
+
+                    # Combine all trajectories (missing timepoints will initially be NaN)
+                    df = pd.concat(random_trajectories, axis=1)
+
+                    # Sort timepoints and fill any missing values (NaN) with 0
+                    df = df.sort_index().fillna(0)
+
+                    # Compute the average expression across all trials at each timepoint
+                    average_trajectory_series = df.mean(axis=1)
+
+                    # Convert back to a dictionary: {timepoint: average_expression}
+                    average_random_trajectory = average_trajectory_series.to_dict()
+
+                    # now we can plot all of them to the same graph
+                    def get_sorted_xy(d):
+                        sorted_items = sorted(d.items())
+                        return zip(*sorted_items) if sorted_items else ([], [])
+
+                    # Plot Baseline
+                    x, y = get_sorted_xy(baseline_trajectory)
+                    ax.plot(x, y, label="Baseline", color="black", linestyle="--")
+
+                    # Plot Target Cell Type
+                    x, y = get_sorted_xy(increase_cell_type_trajectory)
+                    ax.plot(
+                        x, y, label=f"{cell_type} (Target)", color="red", linewidth=2
+                    )
+
+                    # Plot Other Cell Types
+                    for other_ct, traj in other_cell_type_trajectories.items():
+                        x, y = get_sorted_xy(traj)
+                        ax.plot(x, y, label=other_ct, alpha=0.5)
+
+                    # Plot Average Random Trajectory
+                    x, y = get_sorted_xy(average_random_trajectory)
+                    ax.plot(x, y, label="Random Avg", color="gray", linestyle=":")
+
+                    # Add titles and labels to the individual small plot
+                    ax.set_title(f"Gene: {gene}", fontsize=12)
+                    ax.set_xlabel("Timepoint")
+                    ax.set_ylabel("Avg Expression")
+
+                    # Place a legend only on the first subplot to keep the figure clean
+                    if i == 0:
+                        ax.legend(loc="best")
+
+                plt.tight_layout()
+                os.makedirs(os.path.join(output_path, "genes"), exist_ok=True)
+                plt.savefig(
+                    os.path.join(
+                        output_path,
+                        "genes",
+                        f"gene_{transition['start']}_to_{cell_type}.png",
+                    )
+                )
