@@ -36,7 +36,7 @@ class VisualizeEmbeds(AggregateEmbeddingMetrics):
     def _defaults(self):
         return {
             "n_neighbors": 15,
-            "type": VisualizeType.UMAP,
+            "type": VisualizeType.UMAP.value,
         }
 
     def _embedding_eval(self, output_path, dataset):

@@ -8,13 +8,15 @@ This implementation intentionally stays simple:
 """
 
 from pathlib import Path
-import pickle
 import sys
 
 import numpy as np
 import scanpy as sc
 import torch
-from sklearn.decomposition import PCA
+from scTimeBench.method_utils.embedding_space import (
+    EmbeddingType,
+    generate_embedding_space,
+)
 from scipy.sparse import issparse
 from tqdm import tqdm
 
@@ -91,16 +93,15 @@ class OTCFM(BaseMethod):
         self.mlp_width = int(metadata.get("mlp_width", 64))
         self.ode_solver = str(metadata.get("ode_solver", "dopri5"))
         self.ode_sensitivity = str(metadata.get("ode_sensitivity", "adjoint"))
-        self.embedding_space = str(metadata.get("embedding_space", "PCA")).upper()
-        if self.embedding_space not in {"GEX", "PCA"}:
-            raise ValueError("metadata.embedding_space must be either 'GEX' or 'PCA'.")
-        self.pca_components = int(metadata.get("pca_components", 50))
+        self.embedding_space = EmbeddingType(
+            str(metadata.get("embedding_space", "PCA")).upper()
+        )
+        self.embedding_dim = int(metadata.get("embedding_dim", 50))
 
         self._unique_train_tps = []
         self._tp_to_index = {}
         self._x_by_time = []
         self._model = None
-        self._pca_model = None
         self._node = None
 
     def _to_dense_float32(self, X):
@@ -117,31 +118,19 @@ class OTCFM(BaseMethod):
 
         output_dir = Path(train_output_path)
         cache_path = (
-            output_dir / f"trained_ot_cfm_model_{self.embedding_space.lower()}.pth"
+            output_dir
+            / f"trained_ot_cfm_model_{self.embedding_space.value.lower()}.pth"
         )
-        pca_cache_path = output_dir / "trained_ot_cfm_pca_model.pkl"
 
-        train_gex = self._to_dense_float32(ann_data.X)
-        if self.embedding_space == "PCA":
-            if pca_cache_path.exists():
-                with open(pca_cache_path, "rb") as f:
-                    self._pca_model = pickle.load(f)
-            else:
-                n_components = min(
-                    self.pca_components,
-                    train_gex.shape[0],
-                    train_gex.shape[1],
-                )
-                if n_components < 1:
-                    raise ValueError("PCA requires at least one component.")
-                self._pca_model = PCA(n_components=n_components)
-                self._pca_model.fit(train_gex)
-                with open(pca_cache_path, "wb") as f:
-                    pickle.dump(self._pca_model, f)
+        self.embedder = generate_embedding_space(
+            embedding_type=self.embedding_space,
+            embedding_dim=self.embedding_dim,
+            cache_dir=train_output_path,
+        )
 
-            train_x = self._pca_model.transform(train_gex).astype(np.float32)
-        else:
-            train_x = train_gex
+        self.embedder.train(ann_data)
+
+        train_x = self.embedder.encode(ann_data)
 
         self._x_by_time = [
             train_x[np.where(train_tps == tp)[0], :] for tp in self._unique_train_tps
@@ -265,19 +254,8 @@ class OTCFM(BaseMethod):
         test_tps = test_ann_data.obs[time_col].to_numpy()
         unique_test_tps = sorted(np.unique(test_tps))
 
-        test_gex = self._to_dense_float32(test_ann_data.X)
-        if self.embedding_space == "PCA":
-            if self._pca_model is None:
-                raise RuntimeError("PCA model not available. Call train() first.")
-            test_x = self._pca_model.transform(test_gex).astype(np.float32)
-            out = np.full(
-                (test_ann_data.n_obs, test_x.shape[1]), np.nan, dtype=np.float32
-            )
-        else:
-            test_x = test_gex
-            out = np.full(
-                (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
-            )
+        test_x = self.embedder.encode(test_ann_data).astype(np.float32)
+        out = np.full((test_ann_data.n_obs, test_x.shape[1]), np.nan, dtype=np.float32)
 
         for tp in unique_test_tps:
             candidate_next_tps = [x for x in unique_test_tps if x > tp]
@@ -290,16 +268,13 @@ class OTCFM(BaseMethod):
 
             out[source_idx] = self._predict_one_step(source_x, tp, next_tp)
 
-        if self.embedding_space == "PCA":
-            out_gex = np.full(
-                (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
-            )
-            valid_rows = ~np.isnan(out).any(axis=1)
-            if np.any(valid_rows):
-                out_gex[valid_rows] = self._pca_model.inverse_transform(out[valid_rows])
-            return out_gex.astype(np.float32)
-
-        return out
+        out_gex = np.full(
+            (test_ann_data.n_obs, test_ann_data.n_vars), np.nan, dtype=np.float32
+        )
+        valid_rows = ~np.isnan(out).any(axis=1)
+        if np.any(valid_rows):
+            out_gex[valid_rows] = self.embedder.decode(out[valid_rows])
+        return out_gex.astype(np.float32)
 
     def generate_embedding(self, test_ann_data) -> np.ndarray:
         """Generate embeddings for the current timepoint using the configured embedding space.
@@ -307,15 +282,13 @@ class OTCFM(BaseMethod):
         If embedding_space is "PCA", returns PCA-transformed embeddings.
         Otherwise returns the gene expression directly.
         """
-        test_gex = self._to_dense_float32(test_ann_data.X)
+        valid_space = [EmbeddingType.PCA]
 
-        if self.embedding_space == "PCA":
-            if self._pca_model is None:
-                raise RuntimeError("PCA model not available. Call train() first.")
-            return self._pca_model.transform(test_gex).astype(np.float32)
+        if self.embedding_space in valid_space:
+            return self.embedder.encode(test_ann_data).astype(np.float32)
         else:
             raise NotImplementedError(
-                "generate_embedding is only implemented for PCA embedding space."
+                f"generate_embedding is only implemented for {valid_space} embedding spaces."
             )
 
     def generate_next_tp_embedding(self, test_ann_data) -> np.ndarray:
@@ -327,17 +300,15 @@ class OTCFM(BaseMethod):
         test_tps = test_ann_data.obs[time_col].to_numpy()
         unique_test_tps = sorted(np.unique(test_tps))
 
-        test_gex = self._to_dense_float32(test_ann_data.X)
-        if self.embedding_space == "PCA":
-            if self._pca_model is None:
-                raise RuntimeError("PCA model not available. Call train() first.")
-            test_x = self._pca_model.transform(test_gex).astype(np.float32)
+        valid_space = [EmbeddingType.PCA]
+        if self.embedding_space in valid_space:
+            test_x = self.embedder.encode(test_ann_data).astype(np.float32)
             out = np.full(
                 (test_ann_data.n_obs, test_x.shape[1]), np.nan, dtype=np.float32
             )
         else:
             raise NotImplementedError(
-                "generate_next_tp_embedding is only implemented for PCA embedding space."
+                f"generate_next_tp_embedding is only implemented for {valid_space} embedding spaces."
             )
 
         for tp in unique_test_tps:
@@ -362,19 +333,12 @@ class OTCFM(BaseMethod):
         time_col = ObservationColumns.TIMEPOINT.value
         first_tp = all_tps[0]
 
-        first_gex = self._to_dense_float32(first_tp_cells.X)
-        if self.embedding_space == "PCA":
-            if self._pca_model is None:
-                raise RuntimeError("PCA model not available. Call train() first.")
-            source_x = self._pca_model.transform(first_gex).astype(np.float32)
-        else:
-            source_x = first_gex
+        source_x = self.embedder.encode(first_tp_cells).astype(np.float32)
 
         pred_ann_data = first_tp_cells.copy()
         for tp in all_tps[1:]:
             predicted_x = self._predict_one_step(source_x, first_tp, tp)
-            if self.embedding_space == "PCA":
-                predicted_x = self._pca_model.inverse_transform(predicted_x)
+            predicted_x = self.embedder.decode(predicted_x)
 
             tp_ann_data = first_tp_cells.copy()
             tp_ann_data.X = np.asarray(predicted_x, dtype=np.float32)
@@ -391,18 +355,10 @@ class OTCFM(BaseMethod):
         assert np.all(
             test_tps == t
         ), f"All cells must be from timepoint {t}, but found timepoints: {np.unique(test_tps)}"
-        first_gex = self._to_dense_float32(test_ann_data.X)
-
-        if self.embedding_space == "PCA":
-            if self._pca_model is None:
-                raise RuntimeError("PCA model not available. Call train() first.")
-            source_x = self._pca_model.transform(first_gex).astype(np.float32)
-        else:
-            source_x = first_gex
+        source_x = self.embedder.encode(test_ann_data).astype(np.float32)
 
         t1_cells = self._predict_one_step(source_x, t, t1)
-        if self.embedding_space == "PCA":
-            t1_cells = self._pca_model.inverse_transform(t1_cells)
+        t1_cells = self.embedder.decode(t1_cells)
 
         pred_ann_data = test_ann_data.copy()
         pred_ann_data.X = t1_cells
