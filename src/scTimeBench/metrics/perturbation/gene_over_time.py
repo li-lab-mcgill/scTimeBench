@@ -11,7 +11,6 @@ from scTimeBench.shared.utils import (
 from scTimeBench.shared.constants import RequiredOutputFiles, ObservationColumns
 
 import logging
-import json
 import os
 
 
@@ -40,9 +39,9 @@ class PerturbationGeneExpression(PerturbationBasedMetrics):
 
         logging.debug(f"Evaluating genes: {genes}")
 
-        # now we will get the average gene expression for each of the perturbed genes across time
+        # now we will get the gene expression for each of the perturbed genes across time
         # we will return a dictionary of the form:
-        # gene -> timepoint -> average expression
+        # gene -> timepoint -> expression data (list of expression values across cells)
         gene_expression_over_time = {}
         eval_output_path = os.path.join(output_path, self._get_relative_output_path())
         perturbed_data = load_output_file(
@@ -75,16 +74,6 @@ class PerturbationGeneExpression(PerturbationBasedMetrics):
                 tp_data = perturbed_data[
                     perturbed_data.obs[ObservationColumns.TIMEPOINT.value] == tp
                 ]
-                gene_expression_over_time[gene][tp] = tp_data[:, gene_col_idx].X.mean()
-
-        gene_expr_to_json_friendly = {
-            gene: {float(tp): float(expr) for tp, expr in tp_expr.items()}
-            for gene, tp_expr in gene_expression_over_time.items()
-        }
-
-        eval = json.dumps(gene_expr_to_json_friendly, sort_keys=True)
-        self.db_manager.insert_eval(
-            method, self.__class__.__name__, self._get_param_encoding(), eval
-        )
+                gene_expression_over_time[gene][tp] = tp_data[:, gene_col_idx].X
 
         return gene_expression_over_time

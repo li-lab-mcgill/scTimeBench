@@ -5,6 +5,7 @@ from scTimeBench.trajectory_infer.base import (
     per_tp_trajectory_to_cell_type_proportions,
     TrajectoryOutputConstants,
 )
+from scipy.sparse import issparse
 
 import pandas as pd
 
@@ -488,6 +489,11 @@ class MetaGenePerturbationOverTime(MetaPerturbation):
             "perturbed_genes": list(all_genes),
         }
 
+    def _build_df(self, dict_data):
+        df = pd.Series(dict_data)
+        df.sort_index().fillna(0)
+        return df
+
     def _submetric_eval(self, output_path, dataset, method):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
 
@@ -502,98 +508,120 @@ class MetaGenePerturbationOverTime(MetaPerturbation):
                 # now we plot the trajectory for this cell type
 
                 # We have:
-                # 'baseline': { gene -> timepoint -> average expression }
-                # 'cell_type_1': { gene -> timepoint -> average expression }
+                # 'baseline': { gene -> timepoint -> expression }
+                # 'cell_type_1': { gene -> timepoint -> expression }
                 # Now let's plot this as the x axis being the timepoint
-                # the y axis being the average expression
+                # the y axis being the expression
                 # and we plot together all genes for each cell type
+                def _plot_fn(fn, title="Average"):
+                    # --- 1. Set up the grid layout BEFORE the loop ---
+                    num_genes = len(genes)
+                    ncols = 3  # Choose how many small plots you want per row
+                    nrows = math.ceil(num_genes / ncols)
 
-                # --- 1. Set up the grid layout BEFORE the loop ---
-                num_genes = len(genes)
-                ncols = 3  # Choose how many small plots you want per row
-                nrows = math.ceil(num_genes / ncols)
+                    # squeeze=False ensures 'axes' is always a 2D array, even for 1x1 grids
+                    fig, axes = plt.subplots(
+                        nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False
+                    )
+                    # Flatten into a 1D array to easily loop through them
+                    axes = axes.flatten()
 
-                # squeeze=False ensures 'axes' is always a 2D array, even for 1x1 grids
-                fig, axes = plt.subplots(
-                    nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False
-                )
-                axes = (
-                    axes.flatten()
-                )  # Flatten into a 1D array to easily loop through them
+                    for i, gene in enumerate(genes):
+                        ax = axes[i]  # Get the corresponding subplot axis
 
-                for i, gene in enumerate(genes):
-                    ax = axes[i]  # Get the corresponding subplot axis
+                        baseline_df = self._build_df(results["baseline"][gene])
+                        increase_cell_type_df = self._build_df(results[cell_type][gene])
 
-                    baseline_trajectory = results["baseline"][gene]
-                    increase_cell_type_trajectory = results[cell_type][gene]
+                        other_cell_type_trajectories = {}
+                        for other_cell_type in cell_types:
+                            if other_cell_type == cell_type:
+                                continue
+                            other_cell_type_trajectories[
+                                other_cell_type
+                            ] = self._build_df(results[other_cell_type][gene])
 
-                    other_cell_type_trajectories = {}
-                    for other_cell_type in cell_types:
-                        if other_cell_type == cell_type:
-                            continue
-                        other_cell_type_trajectories[other_cell_type] = results[
-                            other_cell_type
-                        ][gene]
+                        random_trajectories = []
+                        for i in range(self.params["random_trials"]):
+                            random_trajectory = results[f"random_{i}"][gene]
 
-                    random_trajectories = []
-                    for i in range(self.params["random_trials"]):
-                        random_trajectory = results[f"random_{i}"][gene]
+                            # Assuming random_trajectory is a dict: {time: expression}
+                            s = pd.Series(random_trajectory)
+                            # first apply fn to s
+                            s = s.apply(
+                                lambda gex: fn(gex.toarray() if issparse(gex) else gex)
+                            )
+                            random_trajectories.append(s)
 
-                        # Assuming random_trajectory is a dict: {time: expression}
-                        s = pd.Series(random_trajectory)
-                        random_trajectories.append(s)
+                        # Combine all trajectories (missing timepoints will initially be NaN)
+                        random_df = pd.concat(random_trajectories, axis=1)
 
-                    # Combine all trajectories (missing timepoints will initially be NaN)
-                    df = pd.concat(random_trajectories, axis=1)
+                        # Sort timepoints and fill any missing values (NaN) with 0
+                        random_df = random_df.sort_index().fillna(0)
 
-                    # Sort timepoints and fill any missing values (NaN) with 0
-                    df = df.sort_index().fillna(0)
+                        # now we can plot all of them to the same graph
+                        def get_sorted_xy(df):
+                            x = df.index.tolist()
+                            y = [
+                                fn(gex.toarray() if issparse(gex) else gex)
+                                for gex in df.values.tolist()
+                            ]
+                            return x, y
 
-                    # Compute the average expression across all trials at each timepoint
-                    average_trajectory_series = df.mean(axis=1)
+                        # Plot Baseline
+                        x, y = get_sorted_xy(baseline_df)
+                        ax.plot(x, y, label="Baseline", color="black", linestyle="--")
 
-                    # Convert back to a dictionary: {timepoint: average_expression}
-                    average_random_trajectory = average_trajectory_series.to_dict()
+                        # Plot Target Cell Type
+                        x, y = get_sorted_xy(increase_cell_type_df)
+                        ax.plot(
+                            x,
+                            y,
+                            label=f"{cell_type} (Target)",
+                            color="red",
+                            linewidth=2,
+                        )
 
-                    # now we can plot all of them to the same graph
-                    def get_sorted_xy(d):
-                        sorted_items = sorted(d.items())
-                        return zip(*sorted_items) if sorted_items else ([], [])
+                        # Plot Other Cell Types
+                        for other_ct, traj in other_cell_type_trajectories.items():
+                            x, y = get_sorted_xy(traj)
+                            ax.plot(x, y, label=other_ct, alpha=0.5)
 
-                    # Plot Baseline
-                    x, y = get_sorted_xy(baseline_trajectory)
-                    ax.plot(x, y, label="Baseline", color="black", linestyle="--")
+                        # Plot Average Random Trajectory
+                        x, y = get_sorted_xy(random_df)
+                        ax.plot(x, y, label="Random", color="gray", linestyle=":")
 
-                    # Plot Target Cell Type
-                    x, y = get_sorted_xy(increase_cell_type_trajectory)
-                    ax.plot(
-                        x, y, label=f"{cell_type} (Target)", color="red", linewidth=2
+                        # Add titles and labels to the individual small plot
+                        ax.set_title(f"Gene: {gene}", fontsize=12)
+                        ax.set_xlabel("Timepoint")
+                        ax.set_ylabel(f"{title} Expression")
+
+                        # Place a legend only on the first subplot to keep the figure clean
+                        if i == 0:
+                            ax.legend(loc="best")
+
+                    plt.tight_layout()
+                    os.makedirs(
+                        os.path.join(output_path, "genes", title), exist_ok=True
+                    )
+                    plt.savefig(
+                        os.path.join(
+                            output_path,
+                            "genes",
+                            title,
+                            f"gene_{transition['start']}_to_{cell_type}.png",
+                        )
                     )
 
-                    # Plot Other Cell Types
-                    for other_ct, traj in other_cell_type_trajectories.items():
-                        x, y = get_sorted_xy(traj)
-                        ax.plot(x, y, label=other_ct, alpha=0.5)
+                def avg(gex):
+                    # decompress the gex if needed (can be compressed sparse vector):
+                    return sum(gex) / len(gex) if len(gex) > 0 else 0
 
-                    # Plot Average Random Trajectory
-                    x, y = get_sorted_xy(average_random_trajectory)
-                    ax.plot(x, y, label="Random Avg", color="gray", linestyle=":")
+                def max_fn(gex):
+                    return max(gex) if len(gex) > 0 else 0
 
-                    # Add titles and labels to the individual small plot
-                    ax.set_title(f"Gene: {gene}", fontsize=12)
-                    ax.set_xlabel("Timepoint")
-                    ax.set_ylabel("Avg Expression")
+                def min_fn(gex):
+                    return min(gex) if len(gex) > 0 else 0
 
-                    # Place a legend only on the first subplot to keep the figure clean
-                    if i == 0:
-                        ax.legend(loc="best")
-
-                plt.tight_layout()
-                os.makedirs(os.path.join(output_path, "genes"), exist_ok=True)
-                plt.savefig(
-                    os.path.join(
-                        output_path,
-                        "genes",
-                        f"gene_{transition['start']}_to_{cell_type}.png",
-                    )
-                )
+                _plot_fn(avg, title="Average")
+                _plot_fn(max_fn, title="Max")
+                _plot_fn(min_fn, title="Min")
