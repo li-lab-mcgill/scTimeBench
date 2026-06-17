@@ -13,6 +13,62 @@ from scTimeBench.shared.constants import ObservationColumns
 import scanpy as sc
 
 
+def apply_perturbation_to_anndata(
+    ann_data, gene_col_name, knockout_genes, knockin_genes
+):
+    """
+    Apply the perturbation specified to ann_data
+    """
+    if gene_col_name is None:
+        gene_names = list(ann_data.var_names)
+    else:
+        gene_names = list(ann_data.var[gene_col_name])
+
+    gene_to_index = {gene: idx for idx, gene in enumerate(gene_names)}
+
+    # first let's un-log normalize the data if it's log-normalized
+    # and then apply the perturbation, and then log-normalize it back
+    is_log_normalized = not is_raw(ann_data)
+    if is_log_normalized:
+        ann_data = undo_log_normalization(ann_data)
+
+    # track average knockout change per gene for debugging
+    for gene in knockout_genes:
+        if gene not in gene_to_index:
+            # error out
+            raise ValueError(
+                f"Knockout gene {gene} not found in the data. Double check your gene_col_name and gene names used."
+            )
+        total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
+        logging.debug(
+            f"Setting knockout gene {gene} with average expression {total_expression}"
+        )
+        ann_data.X[:, gene_to_index[gene]] = 0
+
+    # for the knockin gene, we take the highest count of all genes
+    # in the selected cells and set the knockin gene to that value,
+    # to simulate a strong overexpression
+    highest_gex = ann_data.X.max()
+    logging.debug(
+        f"Setting knockin genes {knockin_genes} to have expression value {highest_gex} in the perturbed cells."
+    )
+    for gene in knockin_genes:
+        if gene not in gene_to_index:
+            raise ValueError(
+                f"Knockin gene {gene} not found in the data. Double check your gene_col_name and gene names used."
+            )
+        total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
+        logging.debug(
+            f"Setting knockin gene {gene} with average expression {total_expression}, to {highest_gex}"
+        )
+        ann_data.X[:, gene_to_index[gene]] = highest_gex
+
+    if is_log_normalized:
+        ann_data = log_normalize_to_counts(ann_data)
+
+    return ann_data
+
+
 class PerturbationSet:
     """
     This defines the PerturbationSet class, which is used to store a set of perturbations.
@@ -113,53 +169,9 @@ class PerturbationSet:
             )
             return ann_data
 
-        if self.gene_col_name is None:
-            gene_names = list(ann_data.var_names)
-        else:
-            gene_names = list(ann_data.var[self.gene_col_name])
-
-        gene_to_index = {gene: idx for idx, gene in enumerate(gene_names)}
-
-        # first let's un-log normalize the data if it's log-normalized
-        # and then apply the perturbation, and then log-normalize it back
-        is_log_normalized = not is_raw(ann_data)
-        if is_log_normalized:
-            ann_data = undo_log_normalization(ann_data)
-
-        # track average knockout change per gene for debugging
-        for gene in knockout_genes:
-            if gene not in gene_to_index:
-                # error out
-                raise ValueError(
-                    f"Knockout gene {gene} not found in the data. Double check your gene_col_name and gene names used."
-                )
-            total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
-            logging.debug(
-                f"Setting knockout gene {gene} with average expression {total_expression}"
-            )
-            ann_data.X[:, gene_to_index[gene]] = 0
-
-        # for the knockin gene, we take the highest count of all genes
-        # in the selected cells and set the knockin gene to that value,
-        # to simulate a strong overexpression
-        highest_gex = ann_data.X.max()
-        logging.debug(
-            f"Setting knockin genes {knockin_genes} to have expression value {highest_gex} in the perturbed cells."
+        ann_data = apply_perturbation_to_anndata(
+            ann_data, self.gene_col_name, knockout_genes, knockin_genes
         )
-        for gene in knockin_genes:
-            if gene not in gene_to_index:
-                raise ValueError(
-                    f"Knockin gene {gene} not found in the data. Double check your gene_col_name and gene names used."
-                )
-            total_expression = ann_data.X[:, gene_to_index[gene]].sum() / ann_data.n_obs
-            logging.debug(
-                f"Setting knockin gene {gene} with average expression {total_expression}, to {highest_gex}"
-            )
-            ann_data.X[:, gene_to_index[gene]] = highest_gex
-
-        if is_log_normalized:
-            ann_data = log_normalize_to_counts(ann_data)
-
         return ann_data
 
     def encode(self):
@@ -182,3 +194,50 @@ class PerturbationSet:
             genes.update(perturb["knockin_genes"])
             genes.update(perturb["knockout_genes"])
         return list(genes)
+
+
+class GlobalPerturbationSet:
+    """
+    This defines a global perturbation set, which applies the same perturbation
+    to all timepoints, this is useful for testing the effect of things such as
+    GRNs which should affect everything similarly across time.
+
+    The yaml should look like:
+    gene_col_name: ...
+    knockin_genes: [...]
+    knockout_genes: [...]
+    """
+
+    def __init__(self, perturbation_config: Dict):
+        self.perturbation_config = perturbation_config
+        logging.debug(f"Global Perturbation config: {self.perturbation_config}")
+
+        self.gene_col_name = perturbation_config.get("gene_col_name", None)
+        self.knockin_genes = perturbation_config.get("knockin_genes", [])
+        self.knockout_genes = perturbation_config.get("knockout_genes", [])
+
+    def get_genes(self):
+        """
+        Get the list of all genes that are perturbed in this perturbation set.
+        """
+        genes = set()
+        genes.update(self.knockin_genes)
+        genes.update(self.knockout_genes)
+        return list(genes)
+
+    def encode(self):
+        """
+        Encode the perturbation set into a unique hash string that will be saved
+        under <method>/perturbations/<perturbation_set_hash>.yaml.
+        """
+        unique_string = json.dumps(self.perturbation_config, sort_keys=True)
+        return hashlib.sha256(unique_string.encode()).hexdigest()
+
+    def perturbation_path(self):
+        return os.path.join("perturbations", self.encode())
+
+    def apply_perturbation(self, ann_data):
+        # this applies the same perturbation to all timepoints, so we just call the PerturbationSet's apply_perturbation
+        return apply_perturbation_to_anndata(
+            ann_data, self.gene_col_name, self.knockout_genes, self.knockin_genes
+        )

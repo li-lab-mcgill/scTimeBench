@@ -53,3 +53,10 @@ metrics:
     trajectory_infer_model:
       name: CellTypist
       renormalize: True
+
+  - name: GlobalPerturbationGeneExpression
+    affected_genes: ['HDAC8', 'JUND']
+    perturbation_set_config:
+      gene_col_name: gene_symbols
+      knockin_genes: ['SOX4', 'EGR4', 'KLF6', 'KLF7']
+      knockout_genes: ['STRA8', 'ZGLP1', 'ZIC1']
