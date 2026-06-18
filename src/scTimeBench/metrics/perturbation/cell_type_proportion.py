@@ -3,13 +3,15 @@ Cell type proportion perturbation metric.
 """
 from scTimeBench.metrics.perturbation.base import PerturbationBasedMetrics
 from scTimeBench.trajectory_infer.base import TrajectoryInferenceMethodFactory
+from scTimeBench.shared.utils import load_output_file
+from scTimeBench.shared.constants import RequiredOutputFiles, ObservationColumns
 
 import logging
 import json
 import os
 
 
-class PerturbationCellTypeProportion(PerturbationBasedMetrics):
+class PerturbationCellTypeProportionBase(PerturbationBasedMetrics):
     def _setup_trajectory_inference_model(self):
         traj_infer_config = self.metric_config.get("trajectory_infer_model", {})
 
@@ -31,6 +33,7 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
         # TODO: change this as the training is currently the same!
         # We need to modify this so it saves it to eval output path
         return {
+            "output_path": output_path,
             "trajectory": self.trajectory_infer_model.infer_trajectory(
                 output_path,
                 per_tp=True,
@@ -41,7 +44,9 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
             "method": method,
         }
 
-    def _submetric_eval(self, trajectory, method):
+
+class PerturbationCellTypeProportion(PerturbationCellTypeProportionBase):
+    def _submetric_eval(self, output_path, trajectory, method):
         logging.debug(f"Trajectory for method {method}: {trajectory}")
 
         # now let's recalculate the total number of cells of each cell type
@@ -86,3 +91,19 @@ class PerturbationCellTypeProportion(PerturbationBasedMetrics):
         )
 
         return cell_type_dist
+
+
+class PerturbationCellTypeProportionPerTp(PerturbationCellTypeProportionBase):
+    def _submetric_eval(self, output_path, trajectory, method):
+        logging.debug(f"Trajectory for method {method}: {trajectory}")
+
+        # finally, we want to get all the timepoints from the output file
+        perturbed_data = load_output_file(
+            os.path.join(output_path, self._get_relative_output_path()),
+            RequiredOutputFiles.PERTURBED_TEST_ANN_DATA,
+        )
+        all_tps = sorted(
+            list(perturbed_data.obs[ObservationColumns.TIMEPOINT.value].unique())
+        )
+
+        return trajectory, all_tps

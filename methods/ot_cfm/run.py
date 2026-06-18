@@ -20,6 +20,10 @@ from tqdm import tqdm
 
 from scTimeBench.method_utils.method_runner import BaseMethod, main
 from scTimeBench.shared.constants import ObservationColumns
+from scTimeBench.shared.utils import (
+    undo_log_normalization,
+    log_normalize_to_counts,
+)
 
 try:
     from torchcfm.conditional_flow_matching import (
@@ -375,6 +379,15 @@ class OTCFM(BaseMethod):
             predicted_x = self._predict_one_step(source_x, first_tp, tp)
             if self.embedding_space == "PCA":
                 predicted_x = self._pca_model.inverse_transform(predicted_x)
+
+            # now let's clip this and re-log normalize
+            predicted_x = np.clip(predicted_x, a_min=0, a_max=20)
+            # put it in an ann data and then grab it out
+            predicted_ann_data = sc.AnnData(predicted_x)
+            predicted_ann_data = log_normalize_to_counts(
+                undo_log_normalization(predicted_ann_data)
+            )
+            predicted_x = predicted_ann_data.X
 
             tp_ann_data = first_tp_cells.copy()
             tp_ann_data.X = np.asarray(predicted_x, dtype=np.float32)

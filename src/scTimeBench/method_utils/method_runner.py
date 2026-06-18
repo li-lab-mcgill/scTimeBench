@@ -140,6 +140,13 @@ class BaseMethod:
                 result = self._generate_perturbation(test_ann_data)
                 result.write_h5ad(output_file)
 
+            elif (
+                required_output
+                == RequiredOutputFiles.PERTURBED_TEST_ANN_DATA_T_TO_T_PLUS_ONE
+            ):
+                result = self._generate_perturbation_t_to_t1(test_ann_data)
+                result.write_h5ad(output_file)
+
             elif required_output == RequiredOutputFiles.META_FLAG:
                 # this is just a placeholder file to indicate that the meta metric has been run
                 with open(output_file, "w") as f:
@@ -303,6 +310,55 @@ class BaseMethod:
         print("Finished generating perturbation across all timepoints.")
         self._check_from_first_tp(first_tp_cells, all_tps, all_gex)
         return all_gex
+
+    # ** NOTE: DO NOT OVERWRITE THIS FUNCTION **
+    def _generate_perturbation_t_to_t1(self, test_ann_data) -> sc.AnnData:
+        """
+        Generate predicted gene expression from timepoint t to timepoint t1 for a perturbation.
+        Returns: AnnData object with predicted gene expression from t to t1.
+        """
+        # here we generate the perturbation set
+        from scTimeBench.shared.perturbation_set import GlobalPerturbationSet
+        from scTimeBench.shared.constants import GLOBAL_PERTURBATION_SET_CONFIG_FILENAME
+
+        # read the yaml config
+        perturbation_config_path = os.path.join(
+            self.output_path, GLOBAL_PERTURBATION_SET_CONFIG_FILENAME
+        )
+        with open(perturbation_config_path, "r") as f:
+            perturbation_set_config = yaml.safe_load(f)
+        perturbation_set = GlobalPerturbationSet(perturbation_set_config)
+
+        # first let's get the timepoints
+        all_tps = sorted(test_ann_data.obs[ObservationColumns.TIMEPOINT.value].unique())
+
+        # now let's move everything from t to t + 1
+        test_ann_data = perturbation_set.apply_perturbation(test_ann_data)
+        final_ann_data = None
+        for t_idx in range(len(all_tps) - 1):
+            t = all_tps[t_idx]
+            t1 = all_tps[t_idx + 1]
+            print(f"Predicting cells from timepoint {t} to {t1}...")
+
+            ann_data_t = test_ann_data[
+                test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == t
+            ].copy()
+            ann_data_t1 = self.generate_gex_from_t_to_t1(ann_data_t, t, t1)
+            if final_ann_data is None:
+                final_ann_data = ann_data_t1.copy()
+            else:
+                final_ann_data = sc.concat([final_ann_data, ann_data_t1], axis=0)
+
+        # we should have original - tn # of cells
+        num_tn = len(
+            test_ann_data[
+                test_ann_data.obs[ObservationColumns.TIMEPOINT.value] == all_tps[-1]
+            ]
+        )
+        assert (
+            final_ann_data.shape[0] == test_ann_data.shape[0] - num_tn
+        ), f"Expected {test_ann_data.shape[0] - num_tn} cells in the final perturbed data, but got {final_ann_data.shape[0]}"
+        return final_ann_data
 
 
 def main(method_class: BaseMethod):

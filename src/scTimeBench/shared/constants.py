@@ -22,6 +22,10 @@ class RequiredOutputFiles(Enum):
     FROM_ZERO_TO_END_PRED_GEX = "from_zero_to_end_predicted_gene_expression.h5ad"
     # perturbation ann data
     PERTURBED_TEST_ANN_DATA = "perturbed_test_ann_data.h5ad"
+    # perturbation ann data for t to t + 1
+    PERTURBED_TEST_ANN_DATA_T_TO_T_PLUS_ONE = (
+        "perturbed_test_ann_data_t_to_t_plus_one.h5ad"
+    )
     # flag to make sure that the meta metric can run
     META_FLAG = "meta_flag.txt"
 
@@ -30,3 +34,4 @@ DATASET_DIR = "datasets"
 PICKLED_DATASET_FILENAME = "dataset.pkl"
 METHOD_CONFIG_FILENAME = "method_config.yaml"
 PERTURBATION_SET_CONFIG_FILENAME = "perturbation_config.yaml"
+GLOBAL_PERTURBATION_SET_CONFIG_FILENAME = "global_perturbation_config.yaml"

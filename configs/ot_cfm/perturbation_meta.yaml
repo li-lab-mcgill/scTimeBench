@@ -7,3 +7,6 @@ method:
 
 metrics:
   - name: MetaPerturbation
+  # - name: StackedBarPlot
+  # - name: StackedBarPlot
+  #   from_tp_zero: True
