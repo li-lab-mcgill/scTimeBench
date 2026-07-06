@@ -117,3 +117,9 @@ class MethodManager:
         # Generate a base64 encoded string of the unique string
         test_hash = hashlib.sha256(unique_string.encode()).hexdigest()
         return os.path.join(train_output_path, "test_outputs", test_hash)
+
+    def is_equiv(self, other_method) -> bool:
+        """
+        Check if two methods are equivalent based on their name and metadata.
+        """
+        return self._encode_output_path() == other_method._encode_output_path()
