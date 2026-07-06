@@ -4,6 +4,7 @@ depend on the dataset that they belong to.
 """
 
 from typing import final
+from enum import Enum
 
 from scTimeBench.config import Config, RunType
 from scTimeBench.metrics.method_manager import MethodManager
@@ -43,6 +44,12 @@ def skip_metric(cls):
     """Decorator to register a skip metric class in the SKIP_METRIC_REGISTRY."""
     SKIP_METRIC_REGISTRY[cls.__name__] = cls
     return cls
+
+
+class EvalResultKeys(Enum):
+    METHOD = "method"
+    DATASET = "dataset"
+    RESULT = "result"
 
 
 # also store a registry of metrics of name to class
@@ -109,7 +116,7 @@ class BaseMetric:
         # initialize the dataset splits dependent on the metric and initialize the model
         # with the dataset as its parameter, also create its preprocessing output path
         self._init_datasets()
-        self.methods = []
+        self.methods: list[MethodManager] = []
         for dataset in self.datasets:
             output_path = self._preprocess(dataset)
             logging.info(f"Output path for method: {output_path}")
@@ -151,7 +158,9 @@ class BaseMetric:
                 base.submetrics.append(cls)
 
     # ** METRIC EVALUATION SECTION, main function to be called (no others should be called) **
-    def _eval(self):
+    def _eval(
+        self, filter_dataset: BaseDataset = None, filter_method: MethodManager = None
+    ):
         """
         Main evaluation function which calls all the submetrics if applicable.
 
@@ -160,6 +169,9 @@ class BaseMetric:
 
         Subclasses should implement the method `_submetric_eval` to evaluate the metric
         based on the method outputs and the dataset.
+
+        If filter_dataset or filter_method is provided, we skip all methods/datasets
+        that are not that specific dataset/method.
         """
         # skip the metric if it's in the skip registry, unless it's force rerun
         if (
@@ -186,7 +198,31 @@ class BaseMetric:
             self.datasets
         ), "Number of methods and datasets must be the same."
 
+        """
+        The following will return a list of dictionaries of:
+        [
+            {
+                "method": method,
+                "dataset": dataset,
+                "result": result
+            }
+        ]
+        so that it works with multiple methods x datasets
+        """
+        eval_results = []
         for method, dataset in zip(self.methods, self.datasets):
+            if filter_dataset is not None and not filter_dataset.is_equiv(dataset):
+                logging.debug(
+                    f"Skipping dataset {dataset} as it does not match filter {filter_dataset}."
+                )
+                continue
+
+            if filter_method is not None and not filter_method.is_equiv(method):
+                logging.debug(
+                    f"Skipping method {method._get_name()} as it does not match filter {filter_method._get_name()}."
+                )
+                continue
+
             # first we skip if we already have the evaluation in the database
             if (
                 self.db_manager.has_eval(
@@ -290,9 +326,19 @@ class BaseMetric:
 
                 # finally, we evaluate on the test data (ground truth)
                 # and the predicted data from the method
-                return self._submetric_eval(
-                    **self._prep_kwargs_for_submetric_eval(output_path, dataset, method)
+                eval_results.append(
+                    {
+                        EvalResultKeys.METHOD: method,
+                        EvalResultKeys.DATASET: dataset,
+                        EvalResultKeys.RESULT: self._submetric_eval(
+                            **self._prep_kwargs_for_submetric_eval(
+                                output_path, dataset, method
+                            )
+                        ),
+                    }
                 )
+
+        return eval_results
 
     def _prep_kwargs_for_submetric_eval(
         self, output_path, dataset: BaseDataset, method
@@ -435,7 +481,9 @@ class BaseMetric:
         return output_path
 
     @final
-    def eval(self):
+    def eval(
+        self, filter_dataset: BaseDataset = None, filter_method: MethodManager = None
+    ):
         """
         Evaluation function that handles the calling of submetrics if applicable.
 
@@ -462,9 +510,9 @@ class BaseMetric:
                     self.db_manager,
                     self.metric_config,
                 )
-                submetric_instance.eval()
+                submetric_instance.eval(filter_dataset, filter_method)
         else:
-            return self._eval()
+            return self._eval(filter_dataset, filter_method)
 
     # ** PREPROCESSING DATASET SECTION **
     def _resolve_tag(self, to_match, dataset_tag):

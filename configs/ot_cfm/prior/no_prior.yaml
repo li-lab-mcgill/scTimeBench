@@ -1,12 +1,13 @@
 datasets:
   - tag: defaultGarciaAlonsoPseudotimeEvenCells
+  - tag: defaultGarciaAlonso
 
 method:
   name: ot_cfm
   train_and_test_script: ./methods/ot_cfm/train_and_test.sh
 
 metrics:
-  - name: MetaPerturbationCellTypePerTimepoint
-  # - name: StackedBarPlot
-  # - name: StackedBarPlot
-  #   from_tp_zero: True
+  - name: GraphSimMetric
+    trajectory_infer_model:
+      name: CellTypist
+      renormalize: True

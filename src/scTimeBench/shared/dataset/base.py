@@ -330,3 +330,12 @@ class BaseDataset:
         """
         os.makedirs(self.get_train_dataset_dir(), exist_ok=True)
         os.makedirs(self.get_test_dataset_dir(), exist_ok=True)
+
+    def is_equiv(self, other_dataset) -> bool:
+        """
+        Check if two datasets are equivalent based on their configuration and applied preprocessors.
+        """
+        return (
+            self.encode_dataset_dict() == other_dataset.encode_dataset_dict()
+            and self.encode_preprocessors() == other_dataset.encode_preprocessors()
+        )

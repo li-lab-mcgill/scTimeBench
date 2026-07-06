@@ -5,6 +5,8 @@ from scTimeBench.trajectory_infer.base import (
     per_tp_trajectory_to_cell_type_proportions,
     TrajectoryOutputConstants,
 )
+from scTimeBench.metrics.method_manager import MethodManager
+from scTimeBench.shared.dataset.base import BaseDataset
 from scipy.sparse import issparse
 
 import pandas as pd
@@ -191,7 +193,9 @@ class MetaPerturbation(MetaMetric):
             timepoint_mapping[cell_type] = timepoint_idx
         return timepoint_mapping
 
-    def _generate_submetric_result(self, output_path, dataset):
+    def _generate_submetric_result(
+        self, output_path, dataset: BaseDataset, method: MethodManager
+    ):
         """
         A generator to create the submetric results as required.
         """
@@ -220,7 +224,7 @@ class MetaPerturbation(MetaMetric):
             results = {}
             # now let's run the submetric
             for submetric in submetrics:
-                result = self._run_submetric(submetric)
+                result = self._run_submetric(submetric, dataset, method)
                 results[submetric["alias"]] = result
 
             yield results, cell_types, transition
@@ -236,7 +240,7 @@ class MetaPerturbationCellType(MetaPerturbation):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
         eval = {}
         for results, cell_types, transition in self._generate_submetric_result(
-            output_path, dataset
+            output_path, dataset, method
         ):
             # now we do for each cell type, we're going to calculate
             # 1. difference to baseline
@@ -375,7 +379,7 @@ class MetaPerturbationCellTypePerTimepoint(MetaPerturbation):
         logging.debug(f"Dataset cell lineage genes: {dataset.cell_lineage_genes}")
 
         for results, cell_types, transition in self._generate_submetric_result(
-            output_path, dataset
+            output_path, dataset, method
         ):
             for key, traj in results.items():
                 logging.debug(f"Trajectory for {key}: {traj}")
@@ -500,7 +504,7 @@ class MetaGenePerturbationOverTime(MetaPerturbation):
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
         for results, cell_types, transition in self._generate_submetric_result(
-            output_path, dataset
+            output_path, dataset, method
         ):
             genes = results["baseline"].keys()
 
